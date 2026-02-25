@@ -39,12 +39,26 @@ func (p *NopPlugin) Execute(item *storage.Item) (*storage.Item, error) {
 	return item, nil
 }
 
+// FetchContentPlugin is a placeholder for full content fetching logic
+type FetchContentPlugin struct{}
+
+func (p *FetchContentPlugin) Execute(item *storage.Item) (*storage.Item, error) {
+	// In the future, this will use an HTTP client to fetch the full HTML
+	// and extract the main content. For now, we ensure the field exists.
+	if item.Content == "" {
+		item.Content = item.Description
+	}
+	return item, nil
+}
+
 func init() {
 	nop := &NopPlugin{}
+	fetcher := &FetchContentPlugin{}
+
 	Register("nop", nop)
-	Register("fetch_content", nop)              // Placeholder
-	Register("fetch_meta", nop)                 // Placeholder
-	Register("cnbeta_fetch_content", nop)       // Placeholder
-	Register("hn_fetch_comments", nop)          // Placeholder
-	Register("zaihuapd_clean_description", nop) // Placeholder
+	Register("fetch_content", fetcher)
+	Register("fetch_meta", nop)
+	Register("cnbeta_fetch_content", nop)
+	Register("hn_fetch_comments", nop)
+	Register("zaihuapd_clean_description", nop)
 }
