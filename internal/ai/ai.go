@@ -78,15 +78,7 @@ type classifyResponse struct {
 }
 
 func (c *Client) Classify(ctx context.Context, title, content, rules string) (string, string, error) {
-	prompt := fmt.Sprintf(`Analyze the following news item and classify it based on the interest rules.
-Rules: %s
-Item Title: %s
-Item Content: %s
-
-Respond ONLY with a JSON object containing:
-"type": (one of: "high_interest", "interest", "other", "exclude")
-"reason": (a brief explanation)
-`, rules, title, content)
+	prompt := BuildClassifyPrompt(rules, title, content)
 
 	aiText, err := c.callAI(ctx, prompt, true)
 	if err != nil {
@@ -102,14 +94,11 @@ Respond ONLY with a JSON object containing:
 }
 
 func (c *Client) Summarize(ctx context.Context, title, content, lang string) (string, error) {
-	prompt := fmt.Sprintf(`Summarize the following news item in %s language. 
-The summary should be concise and in HTML format (e.g., using <p>, <ul>, <li>).
-Item Title: %s
-Item Content: %s
-`, lang, title, content)
+	prompt := BuildSummarizePrompt(lang, title, content)
 
 	return c.callAI(ctx, prompt, false)
 }
+
 
 // ==============================================================================
 // Gemini Provider
