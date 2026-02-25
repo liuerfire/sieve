@@ -26,9 +26,15 @@ jobs:
       - name: Build Sieve
         run: make build
 
+      - name: Create config.json from secret
+        env:
+          CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
+        run: echo "$CONFIG_JSON" > config.json
+
       - name: Run Sieve Aggregator
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         run: ./bin/sieve run
 
       - name: Generate HTML Report
