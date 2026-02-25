@@ -81,3 +81,20 @@ Interest levels:
   - Support Profile-Guided Optimization (PGO) via the `Makefile` for critical processing paths.
 - **Testing**: Follow standard Go testing patterns (`_test.go` files) and ensure 100% logic coverage using Mocks for AI interfaces.
 - **Agent Skills**: Use golang related skills for agent interactions.
+
+## Code Standards
+
+### Coding Style
+
+Before modifying files, you must read the existing content and strictly adhere to the original code/writing style.
+
+**Key Principle**: More detailed $\neq$ more helpful. If the existing content is concise, new additions must also be concise.
+
+### Git Operations
+
+**Automatic committing and pushing of code is prohibited** unless explicitly instructed by the user (e.g., "commit this," "push").
+
+* After modifying code, wait for user instructions before committing.
+* Do not proactively run `git commit` or `git push`.
+* The user may need to review changes or perform other operations first.
+* All commit messages must be written in English.

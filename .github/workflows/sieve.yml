@@ -1,0 +1,51 @@
+name: Sieve Auto Aggregator
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # 每 6 小时运行一次
+  workflow_dispatch:      # 支持手动点击运行
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # 允许提交数据库回仓库
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache: true
+
+      - name: Build Sieve
+        run: make build
+
+      - name: Run Sieve Aggregator
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: ./bin/sieve run
+
+      - name: Generate HTML Report
+        run: ./bin/sieve report
+
+      - name: Commit and Push Database Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # 强制添加被 .gitignore 忽略的数据库和生成文件
+          git add -f sieve.db index.html index.json
+          git commit -m "chore: auto-update database and reports [skip ci]" || echo "No changes to commit"
+          git push origin master
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_files: index.html,index.json
