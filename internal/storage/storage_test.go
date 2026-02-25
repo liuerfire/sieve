@@ -84,3 +84,39 @@ func TestSaveItemAndGetItems(t *testing.T) {
 		t.Errorf("expected published_at %v, got %v", now, items[0].PublishedAt)
 	}
 }
+
+func TestExists(t *testing.T) {
+	dbPath := "test_exists.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(context.Background(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	ctx := context.Background()
+	id := "test-exists-id"
+
+	// Should not exist initially
+	exists, err := s.Exists(ctx, id)
+	if err != nil {
+		t.Fatalf("failed to check exists: %v", err)
+	}
+	if exists {
+		t.Fatal("expected false for non-existent item")
+	}
+
+	// Save and check again
+	item := &Item{ID: id, PublishedAt: time.Now()}
+	if err := s.SaveItem(ctx, item); err != nil {
+		t.Fatalf("failed to save item: %v", err)
+	}
+
+	exists, err = s.Exists(ctx, id)
+	if err != nil {
+		t.Fatalf("failed to check exists after save: %v", err)
+	}
+	if !exists {
+		t.Fatal("expected true for existing item")
+	}
+}

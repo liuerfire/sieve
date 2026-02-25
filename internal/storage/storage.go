@@ -93,6 +93,13 @@ func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 	return err
 }
 
+func (s *Storage) Exists(ctx context.Context, id string) (bool, error) {
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM items WHERE id = ?)`
+	err := s.db.QueryRowContext(ctx, query, id).Scan(&exists)
+	return exists, err
+}
+
 func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 	return func(yield func(*Item, error) bool) {
 		query := `
