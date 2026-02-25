@@ -26,6 +26,14 @@ jobs:
       - name: Build Sieve
         run: make build
 
+      - name: Restore Database Cache
+        uses: actions/cache@v4
+        with:
+          path: sieve.db
+          key: ${{ runner.os }}-sieve-db-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-sieve-db-
+
       - name: Create config.json from secret
         env:
           CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
@@ -40,15 +48,6 @@ jobs:
       - name: Generate HTML Report
         run: ./bin/sieve report
 
-      - name: Commit and Push Database Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # 强制添加被 .gitignore 忽略的数据库和生成文件
-          git add -f sieve.db index.html index.json
-          git commit -m "chore: auto-update database and reports [skip ci]" || echo "No changes to commit"
-          git push origin master
-
       - name: Prepare Deployment
         run: |
           mkdir -p public
@@ -59,3 +58,9 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
+
+      - name: Upload Database Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sieve-db
+          path: sieve.db
