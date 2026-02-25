@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Sieve RSS Configuration",
+  "description": "RSS sources and interest configuration",
+  "type": "object",
+  "required": ["global", "sources"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URI"
+    },
+    "global": {
+      "type": "object",
+      "description": "Global interest configuration",
+      "required": [
+        "high_interest",
+        "interest",
+        "uninterested",
+        "exclude",
+        "preferred_language",
+        "timeout"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "high_interest": {
+          "type": "string",
+          "description": "High interest topics (comma separated)"
+        },
+        "interest": {
+          "type": "string",
+          "description": "General interest topics (comma separated)"
+        },
+        "uninterested": {
+          "type": "string",
+          "description": "Uninterested topics (comma separated)"
+        },
+        "exclude": {
+          "type": "string",
+          "description": "Strictly excluded topics (comma separated)"
+        },
+        "preferred_language": {
+          "type": "string",
+          "description": "Preferred language code, e.g., zh, en",
+          "default": "zh"
+        },
+        "timeout": {
+          "type": "integer",
+          "description": "Global default AI execution timeout (minutes)",
+          "minimum": 1
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "description": "RSS source list",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "url"],
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Source name"
+          },
+          "title": {
+            "type": "string",
+            "description": "RSS title (optional, defaults to original RSS title)"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "RSS feed URL"
+          },
+          "high_interest": {
+            "type": "string",
+            "description": "Source-specific high interest topics (comma separated)"
+          },
+          "interest": {
+            "type": "string",
+            "description": "Source-specific general interest topics (comma separated)"
+          },
+          "uninterested": {
+            "type": "string",
+            "description": "Source-specific uninterested topics (comma separated)"
+          },
+          "exclude": {
+            "type": "string",
+            "description": "Source-specific strictly excluded topics (comma separated)"
+          },
+          "plugins": {
+            "type": "array",
+            "description": "Enabled plugins list",
+            "items": {
+              "type": "string",
+              "enum": [
+                "fetch_meta",
+                "fetch_content",
+                "cnbeta_fetch_content",
+                "hn_fetch_comments",
+                "zaihuapd_clean_description"
+              ]
+            },
+            "default": []
+          },
+          "summarize": {
+            "type": "boolean",
+            "description": "Whether to analyze and summarize in preferred_language",
+            "default": false
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "AI execution timeout (minutes), overrides global.timeout",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

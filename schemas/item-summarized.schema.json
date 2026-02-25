@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Summarized RSS Item",
+  "description": "Summarized RSS item (contains only summary fields)",
+  "type": "object",
+  "required": ["guid", "title", "description"],
+  "additionalProperties": false,
+  "properties": {
+    "guid": {
+      "type": "string",
+      "description": "Item unique identifier"
+    },
+    "title": {
+      "type": "string",
+      "description": "Summarized title (in preferred language)"
+    },
+    "description": {
+      "type": "string",
+      "description": "HTML formatted summary"
+    }
+  }
+}
