@@ -106,3 +106,52 @@ func TestEngine_Run(t *testing.T) {
 		t.Errorf("index.json was not generated")
 	}
 }
+
+func TestEngine_ProcessItem_Pipeline(t *testing.T) {
+	ctx := context.Background()
+	dbPath := "test_pipeline.db"
+	defer os.Remove(dbPath)
+	s, _ := storage.InitDB(ctx, dbPath)
+	defer s.Close()
+
+	// Mock AI - First call returns high_interest, second returns interest
+	aiCalls := 0
+	aiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		aiCalls++
+		w.Header().Set("Content-Type", "application/json")
+		level := "high_interest"
+		if aiCalls > 1 {
+			level = "interest" // Changed in second pass
+		}
+		resp := fmt.Sprintf(`{"candidates": [{"content": {"parts": [{"text": "{\"type\": \"%s\", \"reason\": \"pass %d\"}"}]}}]}`, level, aiCalls)
+		w.Write([]byte(resp))
+	}))
+	defer aiServer.Close()
+
+	a := ai.NewClient(ai.Gemini, "dummy-key", ai.WithBaseURL(aiServer.URL))
+	cfg := &config.Config{Global: config.GlobalConfig{PreferredLanguage: "en"}}
+	eng := NewEngine(cfg, s, a)
+
+	src := config.SourceConfig{Name: "test", Summarize: true}
+	item := &storage.Item{ID: "unique-1", Title: "Title", Description: "Long enough description for summarization"}
+
+	// 1. First run: Should do Phase 1 -> Summarize -> Phase 2
+	err := eng.processItem(ctx, src, item, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 3 AI calls: 1 (classify) + 1 (summarize) + 1 (classify again)
+	if aiCalls != 3 {
+		t.Errorf("expected 3 AI calls (classify, summarize, re-classify), got %d", aiCalls)
+	}
+
+	// 2. Second run: Should skip immediately due to GUID check
+	err = eng.processItem(ctx, src, item, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if aiCalls != 3 {
+		t.Errorf("expected still 3 AI calls after second run (early exit), got %d", aiCalls)
+	}
+}

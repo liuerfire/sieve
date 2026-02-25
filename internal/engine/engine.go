@@ -128,7 +128,16 @@ func (e *Engine) Run(ctx context.Context) error {
 }
 
 func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item *storage.Item, rules string) error {
-	// Run plugins
+	// 1. Early Exit check
+	exists, err := e.storage.Exists(ctx, item.ID)
+	if err != nil {
+		return fmt.Errorf("check exists: %w", err)
+	}
+	if exists {
+		return nil
+	}
+
+	// 2. Run initial plugins (e.g., fetch_content)
 	for _, pluginName := range src.Plugins {
 		p, err := plugin.Get(pluginName)
 		if err != nil {
@@ -141,27 +150,47 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		}
 	}
 
-	// Classify
-	level, reason, err := e.ai.Classify(ctx, item.Title, item.Description, rules)
+	// 3. Phase 1: Initial Classification (Title + RSS Description)
+	level1, reason1, err := e.ai.Classify(ctx, item.Title, item.Description, rules)
 	if err != nil {
-		slog.Warn("AI classification failed, falling back to other", "title", item.Title, "err", err)
-		level = "other"
-		reason = "AI classification failed"
+		slog.Warn("AI initial classification failed", "title", item.Title, "err", err)
+		level1 = "uninterested"
+		reason1 = "AI classification failed"
 	}
-	item.InterestLevel = level
-	item.Reason = reason
 
-	// Summarize if needed
-	if src.Summarize && level != "exclude" {
-		summary, err := e.ai.Summarize(ctx, item.Title, item.Description, e.cfg.Global.PreferredLanguage)
+	// 4. Conditional Deep Processing (Summarization + Phase 2 Classification)
+	if src.Summarize && (level1 == "high_interest" || level1 == "interest") {
+		// Determine best content for summarization
+		content := item.Content
+		if len(content) < 100 {
+			content = item.Description
+		}
+
+		// AI Summarize
+		summary, err := e.ai.Summarize(ctx, item.Title, content, e.cfg.Global.PreferredLanguage)
 		if err != nil {
 			slog.Warn("AI summarization failed", "title", item.Title, "err", err)
+			item.InterestLevel = level1
+			item.Reason = reason1
 		} else {
 			item.Summary = summary
+			// Phase 2: Final Classification based on AI Summary
+			level2, reason2, err := e.ai.Classify(ctx, item.Title, summary, rules)
+			if err != nil {
+				slog.Warn("AI final classification failed", "title", item.Title, "err", err)
+				item.InterestLevel = level1
+				item.Reason = reason1
+			} else {
+				item.InterestLevel = level2
+				item.Reason = reason2
+			}
 		}
+	} else {
+		item.InterestLevel = level1
+		item.Reason = reason1
 	}
 
-	// Save to storage
+	// 5. Atomic Persistence
 	return e.storage.SaveItem(ctx, item)
 }
 
