@@ -17,10 +17,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+type ProgressEvent struct {
+	Type    string // "source_start", "source_done", "item_start", "item_done", "gen_start", "gen_done"
+	Source  string
+	Item    string
+	Message string
+	Level   string
+	Count   int
+	Total   int
+}
+
 type Engine struct {
-	cfg     *config.Config
-	storage *storage.Storage
-	ai      *ai.Client
+	cfg        *config.Config
+	storage    *storage.Storage
+	ai         *ai.Client
+	OnProgress func(ProgressEvent)
 }
 
 func NewEngine(cfg *config.Config, s *storage.Storage, a *ai.Client) *Engine {
@@ -28,6 +39,12 @@ func NewEngine(cfg *config.Config, s *storage.Storage, a *ai.Client) *Engine {
 		cfg:     cfg,
 		storage: s,
 		ai:      a,
+	}
+}
+
+func (e *Engine) report(ev ProgressEvent) {
+	if e.OnProgress != nil {
+		e.OnProgress(ev)
 	}
 }
 
@@ -39,9 +56,10 @@ func (e *Engine) Run(ctx context.Context) error {
 	for _, src := range e.cfg.Sources {
 		src := src // capture range variable
 		g.Go(func() error {
-			slog.Info("Processing source", "name", src.Name)
+			e.report(ProgressEvent{Type: "source_start", Source: src.Name})
 			items, err := rss.FetchItems(src.URL, src.Name)
 			if err != nil {
+				e.report(ProgressEvent{Type: "source_done", Source: src.Name, Message: fmt.Sprintf("Error fetching items: %v", err)})
 				slog.Error("Error fetching items", "source", src.Name, "url", src.URL, "err", err)
 				return nil // continue with other sources
 			}
@@ -54,17 +72,20 @@ func (e *Engine) Run(ctx context.Context) error {
 			rules := fmt.Sprintf("High: %s, Interest: %s, Uninterested: %s, Exclude: %s",
 				high, interest, uninterested, exclude)
 
-			for _, item := range items {
+			for i, item := range items {
 				select {
 				case <-ctx.Done():
 					return ctx.Err()
 				default:
+					e.report(ProgressEvent{Type: "item_start", Source: src.Name, Item: item.Title, Count: i + 1, Total: len(items)})
 					if err := e.processItem(ctx, src, item, rules); err != nil {
 						slog.Error("Error processing item", "source", src.Name, "title", item.Title, "err", err)
 						continue
 					}
+					e.report(ProgressEvent{Type: "item_done", Source: src.Name, Item: item.Title, Level: item.InterestLevel, Count: i + 1, Total: len(items)})
 				}
 			}
+			e.report(ProgressEvent{Type: "source_done", Source: src.Name, Count: len(items), Total: len(items)})
 			return nil
 		})
 	}
@@ -74,7 +95,12 @@ func (e *Engine) Run(ctx context.Context) error {
 	}
 
 	// Generate final output
-	return e.GenerateJSON(parentCtx, "index.json")
+	e.report(ProgressEvent{Type: "gen_start", Message: "Generating reports"})
+	if err := e.GenerateJSON(parentCtx, "index.json"); err != nil {
+		return err
+	}
+	e.report(ProgressEvent{Type: "gen_done", Message: "Reports generated"})
+	return nil
 }
 
 func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item *storage.Item, rules string) error {

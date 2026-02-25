@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -12,6 +13,7 @@ import (
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/engine"
 	"github.com/liuerfire/sieve/internal/storage"
+	"github.com/liuerfire/sieve/internal/ui"
 )
 
 var runCmd = &cobra.Command{
@@ -25,6 +27,7 @@ var runCmd = &cobra.Command{
 
 		configFile, _ := cmd.Flags().GetString("config")
 		dbFile, _ := cmd.Flags().GetString("db")
+		useUI, _ := cmd.Flags().GetBool("ui")
 
 		cfg, err := config.LoadConfig(configFile)
 		if err != nil {
@@ -51,6 +54,21 @@ var runCmd = &cobra.Command{
 		a := ai.NewClient(provider, apiKey)
 		eng := engine.NewEngine(cfg, s, a)
 
+		if useUI {
+			// Make slog quiet during TUI operation
+			slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+
+			sourceNames := make([]string, len(cfg.Sources))
+			for i, s := range cfg.Sources {
+				sourceNames[i] = s.Name
+			}
+
+			return ui.RunDashboard(ctx, sourceNames, func(report func(engine.ProgressEvent)) error {
+				eng.OnProgress = report
+				return eng.Run(ctx)
+			})
+		}
+
 		slog.Info("Starting Sieve aggregator...")
 		if err := eng.Run(ctx); err != nil {
 			return fmt.Errorf("aggregator run: %w", err)
@@ -62,5 +80,6 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
+	runCmd.Flags().Bool("ui", false, "Show TUI dashboard")
 	rootCmd.AddCommand(runCmd)
 }
