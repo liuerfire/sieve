@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/spf13/cobra"
+
 	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/engine"

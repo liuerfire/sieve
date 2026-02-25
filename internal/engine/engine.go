@@ -9,11 +9,13 @@ import (
 	"os"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+	"golang.org/x/time/rate"
+
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/plugin"
 	"github.com/liuerfire/sieve/internal/rss"
 	"github.com/liuerfire/sieve/internal/storage"
-	"golang.org/x/sync/errgroup"
 )
 
 type ProgressEvent struct {
@@ -56,8 +58,11 @@ func (e *Engine) Run(ctx context.Context) error {
 	parentCtx := ctx
 	g, ctx := errgroup.WithContext(ctx)
 
+	// AI Rate Limiter: Limit total requests per second to avoid hitting bursts
+	// 2 requests per second, with a burst of 5
+	limiter := rate.NewLimiter(rate.Every(500*time.Millisecond), 5)
+
 	// AI Semaphore: Limit total concurrent AI requests
-	// Most AI providers have limits on concurrent calls.
 	const maxAIConcurrency = 5
 	aiSem := make(chan struct{}, maxAIConcurrency)
 
@@ -88,7 +93,11 @@ func (e *Engine) Run(ctx context.Context) error {
 				default:
 					e.report(ProgressEvent{Type: "item_start", Source: src.Name, Item: item.Title, Count: i + 1, Total: len(items)})
 
-					// Acquire semaphore before AI processing
+					// Backpressure: Wait for limiter and acquire semaphore
+					if err := limiter.Wait(ctx); err != nil {
+						return err
+					}
+
 					aiSem <- struct{}{}
 					err := e.processItem(ctx, src, item, rules)
 					<-aiSem // Release semaphore
@@ -173,20 +182,18 @@ type jsonReport struct {
 }
 
 func (e *Engine) GenerateJSON(ctx context.Context, outputPath string) error {
-	allItems, err := e.storage.GetItems(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get items from storage: %w", err)
-	}
-
 	report := jsonReport{
 		SourceName:  "Sieve",
 		SourceURL:   "https://github.com/liuerfire/sieve",
 		SourceTitle: "Sieve Aggregated Report",
-		TotalItems:  len(allItems),
-		Items:       make([]jsonItem, 0, len(allItems)),
+		Items:       make([]jsonItem, 0),
 	}
 
-	for _, it := range allItems {
+	for it, err := range e.storage.AllItems(ctx) {
+		if err != nil {
+			return fmt.Errorf("failed to get item from storage: %w", err)
+		}
+
 		title := it.Title
 		switch it.InterestLevel {
 		case "high_interest":
@@ -208,6 +215,7 @@ func (e *Engine) GenerateJSON(ctx context.Context, outputPath string) error {
 			Description: desc,
 		})
 	}
+	report.TotalItems = len(report.Items)
 
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
@@ -218,16 +226,11 @@ func (e *Engine) GenerateJSON(ctx context.Context, outputPath string) error {
 		return fmt.Errorf("failed to write %s: %w", outputPath, err)
 	}
 
-	slog.Info("Successfully generated JSON report", "path", outputPath, "items", len(allItems))
+	slog.Info("Successfully generated JSON report", "path", outputPath, "items", report.TotalItems)
 	return nil
 }
 
 func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
-	allItems, err := e.storage.GetItems(ctx)
-	if err != nil {
-		return fmt.Errorf("get items: %w", err)
-	}
-
 	funcMap := template.FuncMap{
 		"stars": func(level string) string {
 			switch level {
@@ -275,12 +278,14 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 		SourceName:  "Sieve",
 		SourceURL:   "https://github.com/liuerfire/sieve",
 		SourceTitle: "Sieve Aggregated Report",
-		TotalItems:  len(allItems),
 		GeneratedAt: time.Now().Format("2006-01-02 15:04:05"),
-		Items:       make([]htmlItem, 0, len(allItems)),
+		Items:       make([]htmlItem, 0),
 	}
 
-	for _, it := range allItems {
+	for it, err := range e.storage.AllItems(ctx) {
+		if err != nil {
+			return fmt.Errorf("get item: %w", err)
+		}
 		desc := it.Description
 		if it.Summary != "" {
 			desc = it.Summary
@@ -297,12 +302,13 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 			Reason:        it.Reason,
 		})
 	}
+	report.TotalItems = len(report.Items)
 
 	if err := tmpl.Execute(f, report); err != nil {
 		return fmt.Errorf("execute template: %w", err)
 	}
 
-	slog.Info("Successfully generated HTML report", "path", outputPath, "items", len(allItems))
+	slog.Info("Successfully generated HTML report", "path", outputPath, "items", report.TotalItems)
 	return nil
 }
 

@@ -64,9 +64,12 @@ func TestSaveItemAndGetItems(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	items, err := s.GetItems(ctx)
-	if err != nil {
-		t.Fatalf("failed to get items: %v", err)
+	var items []*Item
+	for it, err := range s.AllItems(ctx) {
+		if err != nil {
+			t.Fatalf("failed to get item: %v", err)
+		}
+		items = append(items, it)
 	}
 
 	if len(items) != 1 {

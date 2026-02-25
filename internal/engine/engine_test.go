@@ -85,9 +85,12 @@ func TestEngine_Run(t *testing.T) {
 	defer os.Remove("index.json")
 
 	// Verify items in storage
-	items, err := s.GetItems(ctx)
-	if err != nil {
-		t.Fatal(err)
+	var items []*storage.Item
+	for it, err := range s.AllItems(ctx) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		items = append(items, it)
 	}
 
 	if len(items) != 1 {

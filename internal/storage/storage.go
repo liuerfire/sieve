@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"iter"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -92,38 +93,44 @@ func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 	return err
 }
 
-func (s *Storage) GetItems(ctx context.Context) ([]*Item, error) {
-	query := `
+func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
+	return func(yield func(*Item, error) bool) {
+		query := `
     SELECT id, source, title, link, description, content, summary, reason, interest_level, published_at
     FROM items
     WHERE interest_level != 'exclude'
     ORDER BY published_at DESC`
 
-	rows, err := s.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var items []*Item
-	for rows.Next() {
-		var item Item
-		err := rows.Scan(
-			&item.ID,
-			&item.Source,
-			&item.Title,
-			&item.Link,
-			&item.Description,
-			&item.Content,
-			&item.Summary,
-			&item.Reason,
-			&item.InterestLevel,
-			&item.PublishedAt,
-		)
+		rows, err := s.db.QueryContext(ctx, query)
 		if err != nil {
-			return nil, err
+			yield(nil, err)
+			return
 		}
-		items = append(items, &item)
+		defer rows.Close()
+
+		for rows.Next() {
+			var item Item
+			err := rows.Scan(
+				&item.ID,
+				&item.Source,
+				&item.Title,
+				&item.Link,
+				&item.Description,
+				&item.Content,
+				&item.Summary,
+				&item.Reason,
+				&item.InterestLevel,
+				&item.PublishedAt,
+			)
+			if err != nil {
+				if !yield(nil, err) {
+					return
+				}
+				continue
+			}
+			if !yield(&item, nil) {
+				return
+			}
+		}
 	}
-	return items, nil
 }

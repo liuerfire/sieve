@@ -11,17 +11,21 @@ import (
 	"time"
 )
 
-type Provider string
+type ProviderType string
 
 const (
-	Gemini Provider = "gemini"
-	Qwen   Provider = "qwen"
+	Gemini ProviderType = "gemini"
+	Qwen   ProviderType = "qwen"
 )
+
+type Provider interface {
+	buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error)
+	parseResponse(body []byte) (string, error)
+}
 
 type Client struct {
 	provider Provider
 	apiKey   string
-	baseURL  string
 	http     *http.Client
 }
 
@@ -38,21 +42,27 @@ func WithHTTPClient(httpClient *http.Client) Option {
 // WithBaseURL sets a custom base URL (useful for testing).
 func WithBaseURL(url string) Option {
 	return func(c *Client) {
-		c.baseURL = url
+		if gp, ok := c.provider.(*geminiProvider); ok {
+			gp.baseURL = url
+		} else if qp, ok := c.provider.(*qwenProvider); ok {
+			qp.baseURL = url
+		}
 	}
 }
 
-func NewClient(provider Provider, apiKey string, opts ...Option) *Client {
-	c := &Client{
-		provider: provider,
-		apiKey:   apiKey,
-		http:     &http.Client{Timeout: 30 * time.Second},
+func NewClient(t ProviderType, apiKey string, opts ...Option) *Client {
+	var p Provider
+	switch t {
+	case Gemini:
+		p = &geminiProvider{baseURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"}
+	case Qwen:
+		p = &qwenProvider{baseURL: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"}
 	}
 
-	if provider == Gemini {
-		c.baseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-	} else if provider == Qwen {
-		c.baseURL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+	c := &Client{
+		provider: p,
+		apiKey:   apiKey,
+		http:     &http.Client{Timeout: 30 * time.Second},
 	}
 
 	for _, opt := range opts {
@@ -101,52 +111,118 @@ Item Content: %s
 	return c.callAI(ctx, prompt, false)
 }
 
-func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string, error) {
-	var requestBody []byte
-	var err error
-	var url string
+// ==============================================================================
+// Gemini Provider
+// ==============================================================================
 
-	if c.provider == Gemini {
-		url = fmt.Sprintf("%s?key=%s", c.baseURL, c.apiKey)
-		reqBody := map[string]interface{}{
-			"contents": []map[string]interface{}{
-				{
-					"parts": []map[string]interface{}{
-						{"text": prompt},
-					},
+type geminiProvider struct {
+	baseURL string
+}
+
+func (p *geminiProvider) buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error) {
+	url := fmt.Sprintf("%s?key=%s", p.baseURL, apiKey)
+	reqBody := map[string]any{
+		"contents": []map[string]any{
+			{
+				"parts": []map[string]any{
+					{"text": prompt},
 				},
 			},
-		}
-		if isJSON {
-			reqBody["generationConfig"] = map[string]interface{}{
-				"responseMimeType": "application/json",
-			}
-		}
-		requestBody, err = json.Marshal(reqBody)
-	} else if c.provider == Qwen {
-		url = c.baseURL
-		reqBody := map[string]interface{}{
-			"model": "qwen-max",
-			"input": map[string]interface{}{
-				"messages": []map[string]interface{}{
-					{"role": "user", "content": prompt},
-				},
-			},
-			"parameters": map[string]interface{}{
-				"result_format": "message",
-			},
-		}
-		requestBody, err = json.Marshal(reqBody)
+		},
 	}
-
+	if isJSON {
+		reqBody["generationConfig"] = map[string]any{
+			"responseMimeType": "application/json",
+		}
+	}
+	data, err := json.Marshal(reqBody)
 	if err != nil {
-		return "", fmt.Errorf("marshal request: %w", err)
+		return nil, err
 	}
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	return req, nil
+}
 
+func (p *geminiProvider) parseResponse(body []byte) (string, error) {
+	var resp struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return "", err
+	}
+	if len(resp.Candidates) > 0 && len(resp.Candidates[0].Content.Parts) > 0 {
+		return resp.Candidates[0].Content.Parts[0].Text, nil
+	}
+	return "", fmt.Errorf("empty response from Gemini")
+}
+
+// ==============================================================================
+// Qwen Provider
+// ==============================================================================
+
+type qwenProvider struct {
+	baseURL string
+}
+
+func (p *qwenProvider) buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error) {
+	reqBody := map[string]any{
+		"model": "qwen-max",
+		"input": map[string]any{
+			"messages": []map[string]any{
+				{"role": "user", "content": prompt},
+			},
+		},
+		"parameters": map[string]any{
+			"result_format": "message",
+		},
+	}
+	data, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(data))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	return req, nil
+}
+
+func (p *qwenProvider) parseResponse(body []byte) (string, error) {
+	var resp struct {
+		Output struct {
+			Choices []struct {
+				Message struct {
+					Content string `json:"content"`
+				} `json:"message"`
+			} `json:"choices"`
+		} `json:"output"`
+	}
+	if err := json.Unmarshal(body, &resp); err != nil {
+		return "", err
+	}
+	if len(resp.Output.Choices) > 0 {
+		return resp.Output.Choices[0].Message.Content, nil
+	}
+	return "", fmt.Errorf("empty response from Qwen")
+}
+
+func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string, error) {
 	// Retry logic with exponential backoff
 	maxRetries := 3
 	var lastErr error
-	for i := 0; i < maxRetries; i++ {
+	for i := range maxRetries {
 		if i > 0 {
 			// Exponential backoff: 1s, 2s, 4s
 			backoff := time.Duration(1<<uint(i-1)) * time.Second
@@ -157,13 +233,9 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 			}
 		}
 
-		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+		req, err := c.provider.buildRequest(ctx, prompt, isJSON, c.apiKey)
 		if err != nil {
-			return "", fmt.Errorf("create request: %w", err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-		if c.provider == Qwen {
-			req.Header.Set("Authorization", "Bearer "+c.apiKey)
+			return "", fmt.Errorf("build request: %w", err)
 		}
 
 		resp, err := c.http.Do(req)
@@ -181,52 +253,19 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 
 		if resp.StatusCode != http.StatusOK {
 			lastErr = fmt.Errorf("AI request failed with status %d: %s", resp.StatusCode, string(body))
-			// If it's a 429 (Too Many Requests), definitely retry
-			// If it's a 5xx, retry
 			if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 				continue
 			}
-			return "", lastErr // For 4xx errors other than 429, don't retry
+			return "", lastErr
 		}
 
-		var aiText string
-		if c.provider == Gemini {
-			var geminiResp struct {
-				Candidates []struct {
-					Content struct {
-						Parts []struct {
-							Text string `json:"text"`
-						} `json:"parts"`
-					} `json:"content"`
-				} `json:"candidates"`
-			}
-			if err := json.Unmarshal(body, &geminiResp); err != nil {
-				return "", fmt.Errorf("unmarshal gemini: %w", err)
-			}
-			if len(geminiResp.Candidates) > 0 && len(geminiResp.Candidates[0].Content.Parts) > 0 {
-				aiText = geminiResp.Candidates[0].Content.Parts[0].Text
-			}
-		} else if c.provider == Qwen {
-			var qwenResp struct {
-				Output struct {
-					Choices []struct {
-						Message struct {
-							Content string `json:"content"`
-						} `json:"message"`
-					} `json:"choices"`
-				} `json:"choices"`
-			}
-			if err := json.Unmarshal(body, &qwenResp); err != nil {
-				return "", fmt.Errorf("unmarshal qwen: %w", err)
-			}
-			if len(qwenResp.Output.Choices) > 0 {
-				aiText = qwenResp.Output.Choices[0].Message.Content
-			}
+		aiText, err := c.provider.parseResponse(body)
+		if err != nil {
+			return "", fmt.Errorf("parse response: %w", err)
 		}
 
 		aiText = strings.TrimSpace(aiText)
 		if isJSON {
-			// Clean up markdown code blocks if AI produced them
 			aiText = strings.TrimPrefix(aiText, "```json")
 			aiText = strings.TrimPrefix(aiText, "```")
 			aiText = strings.TrimSuffix(aiText, "```")

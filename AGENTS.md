@@ -57,17 +57,27 @@ Interest levels:
 
 ## Technical Conventions
 
-- **Language**: Go 1.25
-- **CLI Framework**: Cobra
-- **Database**: SQLite (using `modernc.org/sqlite` for CGO-free operation)
-- **Concurrency**: 
-  - Uses `golang.org/x/sync/errgroup` for parallel processing of RSS sources.
-  - Context-aware operations with proper cancellation propagation.
-- **AI Integration**:
-  - Custom client supporting Gemini and Qwen providers.
-  - Uses functional options pattern (`WithHTTPClient`, `WithBaseURL`).
-  - Implements AI-driven JSON classification with markdown cleanup.
-- **Error Handling**: Use `fmt.Errorf` with `%w` for error wrapping.
-- **Logging**: Uses `log/slog` for structured logging.
-- **Testing**: Follow standard Go testing patterns (`_test.go` files).
+- **Language**: Go 1.25 (Strict Adherence)
+  - Use `any` instead of `interface{}`.
+  - Use `range over int` for count-based loops (`for i := range n`).
+  - Use `iter.Seq` and `iter.Seq2` for streaming data from storage to reports to maintain O(1) memory complexity.
+- **Project Architecture**:
+  - **Strategy Pattern**: Decouple AI logic into `Provider` interfaces to allow seamless addition of new LLM backends.
+  - **Dependency Inversion**: High-level modules (Engine) must depend on abstractions (Interfaces), not concrete implementations.
+- **Concurrency & Reliability**:
+  - **Worker Pools & Semaphores**: Always limit concurrent external API calls (AI, RSS) using semaphores to avoid rate limiting.
+  - **Backpressure**: Use `golang.org/x/time/rate` to maintain smooth request flow and handle provider-side bottlenecks.
+  - **Resilience**: Implement exponential backoff for all external network requests.
+- **Storage**:
+  - **SQLite WAL Mode**: Enable Write-Ahead Logging for improved concurrent read/write performance.
+  - **Temporary Files**: Ensure `.db-wal` and `.db-shm` are excluded from version control.
+- **Code Style**:
+  - **Import Grouping**: Strictly separate imports into three blocks separated by a newline:
+    1. Standard library
+    2. Third-party libraries
+    3. Internal project modules
+  - **Naming**: Prefer concise interface names (e.g., `Provider`) and descriptive enum types (e.g., `ProviderType`).
+- **Performance**:
+  - Support Profile-Guided Optimization (PGO) via the `Makefile` for critical processing paths.
+- **Testing**: Follow standard Go testing patterns (`_test.go` files) and ensure 100% logic coverage using Mocks for AI interfaces.
 - **Agent Skills**: Use golang related skills for agent interactions.
