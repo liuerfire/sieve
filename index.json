@@ -2,14 +2,49 @@
   "source_name": "Sieve",
   "source_url": "https://github.com/liuerfire/sieve",
   "source_title": "Sieve Aggregated Report",
-  "total_items": 57,
+  "total_items": 66,
   "items": [
+    {
+      "guid": "57e0c363cdbd7147b9374d61e5975d66",
+      "title": "⭐ Claude Code Remote Control",
+      "link": "https://simonwillison.net/2026/Feb/25/claude-code-remote-control/#atom-everything",
+      "pubDate": "Wed, 25 Feb 2026 17:33:24 +0000",
+      "description": "\u003cp\u003eClaude Code 最近推出了一项新功能——远程控制。用户现在可以在自己的电脑上启动一个“远程控制”会话，并通过 Claude Code 的网页、iOS 或桌面应用程序向该会话发送指令。不过，目前这个功能还存在一些问题，比如需要管理员权限才能启用（尽管用户自己就是管理员），并且每次只能运行一个会话。此外，它似乎不支持 \u003ccode\u003e--dangerously-skip-permissions\u003c/code\u003e 标志，这意味着每个新操作都需要用户确认。\u003c/p\u003e\n\u003cul\u003e\n  \u003cli\u003e在 iOS 应用中升级后，可以看到“远程控制会话 (Mac)”选项出现在代码标签页中。\u003c/li\u003e\n  \u003cli\u003e有时会出现 API 500 错误，导致无法执行任何指令。\u003c/li\u003e\n  \u003cli\u003e重启程序会导致现有会话返回神秘的 API 错误，而不是明确告知会话已终止。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e与 OpenClaw 这样的解决方案相比，Claude Code 目前还没有提供定时任务的功能，这在 Claw 类软件中是一个非常重要的特性。不过，Anthropic 同时宣布了在 Cowork 中可以安排重复性任务，但这些任务仅在计算机处于唤醒状态且 Claude 桌面应用程序打开时才会运行。\u003c/div\u003e"
+    },
+    {
+      "guid": "3fa9e79548cda1a39ffc73812ec310da",
+      "title": "⭐⭐ I vibe coded my dream macOS presentation app",
+      "link": "https://simonwillison.net/2026/Feb/25/present/#atom-everything",
+      "pubDate": "Wed, 25 Feb 2026 16:46:19 +0000",
+      "description": "\u003cp\u003eSimon Willison 在 Social Science FOO Camp 上做了一次关于大语言模型 (LLMs) 的演讲，题为 \"The State of LLMs, February 2026 edition\"。他用一晚上时间“氛围编码”了一个名为 Present 的 macOS 应用来展示他的演讲。这款应用使用 Swift 和 SwiftUI 构建，体积小巧，功能却非常实用。Present 允许用户通过 URL 来组织和展示幻灯片，并且可以通过手机远程控制。Simon 还分享了他在开发过程中的体验，包括如何利用 AI 辅助编程来快速实现需求。这次经历让他对 Swift 有了新的认识，并展示了软件工程师如何利用现有工具扩展自己的技能边界。\u003c/p\u003e\n\u003cul\u003e\n    \u003cli\u003ePresent 应用不仅解决了 Simon 一直想要解决的问题，还展示了 Swift 作为开发语言的潜力。\u003c/li\u003e\n    \u003cli\u003e该应用可以自动保存用户的 URL，防止因崩溃而丢失内容。\u003c/li\u003e\n    \u003cli\u003eSimon 通过 Tailscale 实现了手机与笔记本电脑之间的远程控制功能，使得演讲更加灵活。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Simon Willison 不仅是一位活跃的技术博主，他还曾是 Django 框架的共同创始人之一。在这次演讲中，他穿着一件已经过时的 Gemini 3 毛衣，这体现了技术更新的速度之快。\u003c/div\u003e"
+    },
+    {
+      "guid": "afb5384cb45516d9fcede3f80bbd8d57",
+      "title": "US orders diplomats to fight data sovereignty initiatives",
+      "link": "https://www.reuters.com/sustainability/boards-policy-regulation/us-orders-diplomats-fight-data-sovereignty-initiatives-2026-02-25/",
+      "pubDate": "Wed, 25 Feb 2026 14:48:17 +0000",
+      "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://www.reuters.com/sustainability/boards-policy-regulation/us-orders-diplomats-fight-data-sovereignty-initiatives-2026-02-25/\"\u003ehttps://www.reuters.com/sustainability/boards-policy-regulation/us-orders-diplomats-fight-data-sovereignty-initiatives-2026-02-25/\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47152252\"\u003ehttps://news.ycombinator.com/item?id=47152252\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 287\u003c/p\u003e\n\u003cp\u003e# Comments: 252\u003c/p\u003e\n"
+    },
+    {
+      "guid": "a224dbda988f16032d92be1402cf7cc3",
+      "title": "Never buy a .online domain",
+      "link": "https://www.0xsid.com/blog/online-tld-is-pain",
+      "pubDate": "Wed, 25 Feb 2026 13:31:17 +0000",
+      "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://www.0xsid.com/blog/online-tld-is-pain\"\u003ehttps://www.0xsid.com/blog/online-tld-is-pain\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47151233\"\u003ehttps://news.ycombinator.com/item?id=47151233\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 506\u003c/p\u003e\n\u003cp\u003e# Comments: 282\u003c/p\u003e\n"
+    },
     {
       "guid": "a62cf089e547dcfcc151b53a9bbe547a",
       "title": "Danish government agency to ditch Microsoft software (2025)",
       "link": "https://therecord.media/denmark-digital-agency-microsoft-digital-independence",
       "pubDate": "Wed, 25 Feb 2026 10:16:22 +0000",
       "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://therecord.media/denmark-digital-agency-microsoft-digital-independence\"\u003ehttps://therecord.media/denmark-digital-agency-microsoft-digital-independence\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47149701\"\u003ehttps://news.ycombinator.com/item?id=47149701\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 338\u003c/p\u003e\n\u003cp\u003e# Comments: 194\u003c/p\u003e\n"
+    },
+    {
+      "guid": "31872ea8be3bc4aab4cb9da373e1316e",
+      "title": "⭐⭐ Claude Code Remote Control",
+      "link": "https://code.claude.com/docs/en/remote-control",
+      "pubDate": "Wed, 25 Feb 2026 07:22:56 +0000",
+      "description": "\u003cp\u003eClaude Code Remote Control 提供了一种通过编程方式控制远程设备的方法。用户可以通过简单的API调用来执行各种任务，如文件传输、命令执行等。该工具非常适合需要自动化管理和维护大量远程服务器的开发者或IT团队使用。它支持多种操作系统，并且提供了详细的文档和示例代码，使得即使是初学者也能快速上手。\u003c/p\u003e\n\u003cul\u003e\n    \u003cli\u003e支持多平台：无论是Linux、Windows还是macOS，Claude Code Remote Control都能轻松应对。\u003c/li\u003e\n    \u003cli\u003e易于集成：可以与现有的CI/CD流程无缝结合，提高开发效率。\u003c/li\u003e\n    \u003cli\u003e安全性高：采用了先进的加密技术来保护数据传输的安全性。\u003c/li\u003e\n\u003c/ul\u003e\n\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Claude Code不仅限于远程控制功能，还提供了一系列其他工具和服务，旨在帮助开发者更高效地工作。\u003c/div\u003e"
     },
     {
       "guid": "d550b18b96bfc24e53d620d3818e3f5b",
@@ -38,6 +73,20 @@
       "link": "https://www.thebignewsletter.com/p/amazon-busted-for-widespread-price",
       "pubDate": "Wed, 25 Feb 2026 01:00:45 +0000",
       "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://www.thebignewsletter.com/p/amazon-busted-for-widespread-price\"\u003ehttps://www.thebignewsletter.com/p/amazon-busted-for-widespread-price\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47145907\"\u003ehttps://news.ycombinator.com/item?id=47145907\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 528\u003c/p\u003e\n\u003cp\u003e# Comments: 191\u003c/p\u003e\n"
+    },
+    {
+      "guid": "0bd49b3061c26ba0d223612dd58335ea",
+      "title": "⭐⭐ Mercury 2: Fast reasoning LLM powered by diffusion",
+      "link": "https://www.inceptionlabs.ai/blog/introducing-mercury-2",
+      "pubDate": "Tue, 24 Feb 2026 22:46:23 +0000",
+      "description": "\u003cp\u003eMercury 2 是由 Inception Labs 推出的一款基于扩散模型（diffusion model）的快速推理大型语言模型（LLM）。该模型旨在通过创新的方法提高生成文本的速度和质量，同时保持较低的计算成本。Mercury 2 在处理复杂任务时表现出色，如多步骤推理、代码生成等。Inception Labs 表示，这款新模型在多个基准测试中都取得了显著的成绩，特别是在需要高效能的应用场景下。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003eMercury 2 是一种利用扩散模型技术来加速推理过程的语言模型。\u003c/li\u003e\n\u003cli\u003e该模型能够以更低的成本实现高质量文本生成。\u003c/li\u003e\n\u003cli\u003e它在多步推理及代码生成等方面展示了其强大能力。\u003c/li\u003e\n\u003cli\u003eInception Labs 认为 Mercury 2 在效率要求高的应用领域具有巨大潜力。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e 扩散模型（diffusion model）是一种用于生成数据的新方法，最初被广泛应用于图像合成领域，现在也被成功地引入到了自然语言处理当中。\u003c/div\u003e"
+    },
+    {
+      "guid": "56de0ef29dd7fafae74740a82a2b0f51",
+      "title": "⭐⭐ Show HN: Moonshine Open-Weights STT models – higher accuracy than WhisperLargev3",
+      "link": "https://github.com/moonshine-ai/moonshine",
+      "pubDate": "Tue, 24 Feb 2026 21:54:07 +0000",
+      "description": "\u003cp\u003e这篇文章介绍了一个小型创业团队（六人，每月GPU预算低于10万美元）开发的新语音转文字模型及其使用库。他们自豪地宣布其流式STT模型的单词错误率比OpenAI最大的WhisperLargev3模型还要低。尽管承认WhisperLargev3已有几年历史，但他们的模型在HF OpenASR排行榜上名列前茅，甚至超过了Nvidia的Parakeet系列。作者希望得到关于这些模型和软件的反馈，并期待听到人们可能会用它构建什么。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e项目名称：Moonshine Open-Weights STT models\u003c/li\u003e\n\u003cli\u003e团队规模及预算：六人，每月GPU预算低于10万美元\u003c/li\u003e\n\u003cli\u003e成就：单词错误率低于OpenAI的WhisperLargev3模型\u003c/li\u003e\n\u003cli\u003e排行榜表现：接近HF OpenASR排行榜顶部\u003c/li\u003e\n\u003cli\u003e更多详情：\u003ca href=\"https://news.ycombinator.com/item?id=47143755\"\u003e评论链接\u003c/a\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Whisper (由OpenAI开发) 和 Parakeet (英伟达出品) 都是当前较为知名的自动语音识别系统。\u003c/div\u003e"
     },
     {
       "guid": "3f11e4819876adf051c272241ce1e3e5",
@@ -150,6 +199,20 @@
       "link": "https://www.guidelabs.ai/post/steerling-8b-base-model-release/",
       "pubDate": "Tue, 24 Feb 2026 00:38:02 +0000",
       "description": "\u003cp\u003eGuideLabs AI 推出了名为 Steerling-8B 的语言模型，该模型的独特之处在于它能够解释自己生成的每一个词（token）。这不仅提高了模型的透明度，还使得用户更容易理解模型是如何做出决策的。Steerling-8B 的发布引起了广泛关注，在 Hacker News 上获得了 319 个点赞和 87 条评论。\u003c/p\u003e\n\u003cul\u003e\n    \u003cli\u003eSteerling-8B 是一个可以解释其生成的每个词的语言模型。\u003c/li\u003e\n    \u003cli\u003e该模型增加了透明度，使用户能更好地理解其工作原理。\u003c/li\u003e\n    \u003cli\u003e在 Hacker News 上，这个项目受到了热烈讨论。\u003c/li\u003e\n\u003c/ul\u003e"
+    },
+    {
+      "guid": "8f959377f5aae16238f09e59d419911d",
+      "title": "⭐ I Ported Coreboot to the ThinkPad X270",
+      "link": "https://dork.dev/posts/2026-02-20-ported-coreboot/",
+      "pubDate": "Mon, 23 Feb 2026 23:58:45 +0000",
+      "description": "\u003cp\u003e本文作者成功将Coreboot (开源固件) 移植到了ThinkPad X270笔记本电脑上。Coreboot是一个旨在替代专有BIOS/UEFI固件的开源项目，它能够提供更快的启动速度和更高的安全性。作者详细记录了整个移植过程中的挑战与解决方案，包括硬件兼容性测试、代码调试以及最终的成功部署。此项目不仅展示了开源社区的力量，也为其他希望对设备进行深度定制的技术爱好者提供了宝贵的经验。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003eCoreboot是一种开源固件，旨在取代传统的BIOS/UEFI。\u003c/li\u003e\n\u003cli\u003e移植工作涉及硬件兼容性测试、代码调整等多个步骤。\u003c/li\u003e\n\u003cli\u003e该项目强调了开源技术在提高设备安全性和性能方面的潜力。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Coreboot支持多种平台，从服务器到个人电脑，甚至是嵌入式系统都能找到它的身影。它通过减少启动时间来优化用户体验，并且允许用户自定义启动过程中的每一个细节。\u003c/div\u003e"
+    },
+    {
+      "guid": "d56be03c695ac5f2c2b9727b73411450",
+      "title": "⭐ AI Added 'Basically Zero' to US Economic Growth Last Year, Goldman Sachs Says",
+      "link": "https://gizmodo.com/ai-added-basically-zero-to-us-economic-growth-last-year-goldman-sachs-says-2000725380",
+      "pubDate": "Mon, 23 Feb 2026 22:55:08 +0000",
+      "description": "\u003cp\u003e根据高盛(Goldman Sachs)的一份报告，人工智能(AI)在去年对美国经济增长的贡献几乎为零。尽管AI技术在过去几年里取得了显著进步，并且在许多行业中得到了广泛应用，但其直接经济影响尚未明显体现。这并不意味着AI没有潜力；相反，它可能预示着随着技术进一步成熟和更广泛的应用，未来几年内AI将开始对经济增长产生实质性的影响。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e高盛指出，AI对于2023年的美国GDP增长几乎没有贡献。\u003c/li\u003e\n\u003cli\u003e尽管如此，AI的发展仍然被认为是长期经济增长的关键驱动力之一。\u003c/li\u003e\n\u003cli\u003e当前阶段，AI技术主要通过提高效率和创造新的商业模式来间接支持经济发展。\u003c/li\u003e\n\u003c/ul\u003e"
     },
     {
       "guid": "f9de4cde9617e506ad473cd9ef8ec51e",
