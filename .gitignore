@@ -6,6 +6,8 @@ sieve.exe
 # SQLite
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 
 # Output
 index.json

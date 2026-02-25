@@ -143,73 +143,98 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 		return "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", fmt.Errorf("create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	if c.provider == Qwen {
-		req.Header.Set("Authorization", "Bearer "+c.apiKey)
-	}
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("do request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("AI request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var aiText string
-	if c.provider == Gemini {
-		var geminiResp struct {
-			Candidates []struct {
-				Content struct {
-					Parts []struct {
-						Text string `json:"text"`
-					} `json:"parts"`
-				} `json:"content"`
-			} `json:"candidates"`
+	// Retry logic with exponential backoff
+	maxRetries := 3
+	var lastErr error
+	for i := 0; i < maxRetries; i++ {
+		if i > 0 {
+			// Exponential backoff: 1s, 2s, 4s
+			backoff := time.Duration(1<<uint(i-1)) * time.Second
+			select {
+			case <-ctx.Done():
+				return "", ctx.Err()
+			case <-time.After(backoff):
+			}
 		}
-		if err := json.Unmarshal(body, &geminiResp); err != nil {
-			return "", fmt.Errorf("unmarshal gemini: %w", err)
+
+		req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(requestBody))
+		if err != nil {
+			return "", fmt.Errorf("create request: %w", err)
 		}
-		if len(geminiResp.Candidates) > 0 && len(geminiResp.Candidates[0].Content.Parts) > 0 {
-			aiText = geminiResp.Candidates[0].Content.Parts[0].Text
+		req.Header.Set("Content-Type", "application/json")
+		if c.provider == Qwen {
+			req.Header.Set("Authorization", "Bearer "+c.apiKey)
 		}
-	} else if c.provider == Qwen {
-		var qwenResp struct {
-			Output struct {
-				Choices []struct {
-					Message struct {
-						Content string `json:"content"`
-					} `json:"message"`
+
+		resp, err := c.http.Do(req)
+		if err != nil {
+			lastErr = fmt.Errorf("do request: %w", err)
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("read response: %w", err)
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			lastErr = fmt.Errorf("AI request failed with status %d: %s", resp.StatusCode, string(body))
+			// If it's a 429 (Too Many Requests), definitely retry
+			// If it's a 5xx, retry
+			if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
+				continue
+			}
+			return "", lastErr // For 4xx errors other than 429, don't retry
+		}
+
+		var aiText string
+		if c.provider == Gemini {
+			var geminiResp struct {
+				Candidates []struct {
+					Content struct {
+						Parts []struct {
+							Text string `json:"text"`
+						} `json:"parts"`
+					} `json:"content"`
+				} `json:"candidates"`
+			}
+			if err := json.Unmarshal(body, &geminiResp); err != nil {
+				return "", fmt.Errorf("unmarshal gemini: %w", err)
+			}
+			if len(geminiResp.Candidates) > 0 && len(geminiResp.Candidates[0].Content.Parts) > 0 {
+				aiText = geminiResp.Candidates[0].Content.Parts[0].Text
+			}
+		} else if c.provider == Qwen {
+			var qwenResp struct {
+				Output struct {
+					Choices []struct {
+						Message struct {
+							Content string `json:"content"`
+						} `json:"message"`
+					} `json:"choices"`
 				} `json:"choices"`
-			} `json:"output"`
+			}
+			if err := json.Unmarshal(body, &qwenResp); err != nil {
+				return "", fmt.Errorf("unmarshal qwen: %w", err)
+			}
+			if len(qwenResp.Output.Choices) > 0 {
+				aiText = qwenResp.Output.Choices[0].Message.Content
+			}
 		}
-		if err := json.Unmarshal(body, &qwenResp); err != nil {
-			return "", fmt.Errorf("unmarshal qwen: %w", err)
-		}
-		if len(qwenResp.Output.Choices) > 0 {
-			aiText = qwenResp.Output.Choices[0].Message.Content
-		}
-	}
 
-	aiText = strings.TrimSpace(aiText)
-	if isJSON {
-		// Clean up markdown code blocks if AI produced them
-		aiText = strings.TrimPrefix(aiText, "```json")
-		aiText = strings.TrimPrefix(aiText, "```")
-		aiText = strings.TrimSuffix(aiText, "```")
 		aiText = strings.TrimSpace(aiText)
+		if isJSON {
+			// Clean up markdown code blocks if AI produced them
+			aiText = strings.TrimPrefix(aiText, "```json")
+			aiText = strings.TrimPrefix(aiText, "```")
+			aiText = strings.TrimSuffix(aiText, "```")
+			aiText = strings.TrimSpace(aiText)
+		}
+
+		return aiText, nil
 	}
 
-	return aiText, nil
+	return "", fmt.Errorf("all retries failed: %w", lastErr)
 }

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -29,6 +30,18 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
+	}
+
+	// Optimize SQLite for concurrent access and performance
+	// Set connection limits: 1 for writing (SQLite requirement), multiple for reading if needed
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+	db.SetConnMaxLifetime(time.Hour)
+
+	// Enable WAL mode
+	if _, err := db.ExecContext(ctx, "PRAGMA journal_mode=WAL;"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("enable WAL: %w", err)
 	}
 
 	schema := `

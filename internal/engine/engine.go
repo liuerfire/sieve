@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/plugin"
 	"github.com/liuerfire/sieve/internal/rss"
@@ -27,14 +26,19 @@ type ProgressEvent struct {
 	Total   int
 }
 
+type Classifier interface {
+	Classify(ctx context.Context, title, desc, rules string) (string, string, error)
+	Summarize(ctx context.Context, title, desc, lang string) (string, error)
+}
+
 type Engine struct {
 	cfg        *config.Config
 	storage    *storage.Storage
-	ai         *ai.Client
+	ai         Classifier
 	OnProgress func(ProgressEvent)
 }
 
-func NewEngine(cfg *config.Config, s *storage.Storage, a *ai.Client) *Engine {
+func NewEngine(cfg *config.Config, s *storage.Storage, a Classifier) *Engine {
 	return &Engine{
 		cfg:     cfg,
 		storage: s,
@@ -51,6 +55,11 @@ func (e *Engine) report(ev ProgressEvent) {
 func (e *Engine) Run(ctx context.Context) error {
 	parentCtx := ctx
 	g, ctx := errgroup.WithContext(ctx)
+
+	// AI Semaphore: Limit total concurrent AI requests
+	// Most AI providers have limits on concurrent calls.
+	const maxAIConcurrency = 5
+	aiSem := make(chan struct{}, maxAIConcurrency)
 
 	// Process each source in parallel
 	for _, src := range e.cfg.Sources {
@@ -78,7 +87,13 @@ func (e *Engine) Run(ctx context.Context) error {
 					return ctx.Err()
 				default:
 					e.report(ProgressEvent{Type: "item_start", Source: src.Name, Item: item.Title, Count: i + 1, Total: len(items)})
-					if err := e.processItem(ctx, src, item, rules); err != nil {
+
+					// Acquire semaphore before AI processing
+					aiSem <- struct{}{}
+					err := e.processItem(ctx, src, item, rules)
+					<-aiSem // Release semaphore
+
+					if err != nil {
 						slog.Error("Error processing item", "source", src.Name, "title", item.Title, "err", err)
 						continue
 					}
