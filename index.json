@@ -2,7 +2,7 @@
   "source_name": "Sieve",
   "source_url": "https://github.com/liuerfire/sieve",
   "source_title": "Sieve Aggregated Report",
-  "total_items": 80,
+  "total_items": 83,
   "items": [
     {
       "guid": "1d9836cf627c3ebfd076bbec3a4b3cf5",
@@ -17,6 +17,27 @@
       "link": "https://simonwillison.net/2026/Feb/26/benedict-evans/#atom-everything",
       "pubDate": "Thu, 26 Feb 2026 03:44:56 +0000",
       "description": "\u003cp\u003e根据Benedict Evans的观点，如果用户每周只使用OpenAI的产品几次，并且在大多数日子里想不到如何利用它，那么这种产品并没有真正改变他们的生活。OpenAI自己也承认存在一个“能力差距”，即模型的能力与用户的实际使用之间存在不匹配的问题。这实际上意味着OpenAI还没有找到明确的产品市场定位。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e为了解决这一问题，OpenAI推出了广告项目，一方面是为了覆盖那些不付费的90%以上用户的成本，同时也在早期与广告商建立合作关系；\u003c/li\u003e\n\u003cli\u003e更重要的是，通过这个项目，OpenAI希望能够向这些用户提供最新和最强大的（即成本较高的）模型版本，以此来加深用户的参与度。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e OpenAI不仅关注于技术的发展，还致力于探索如何让这些先进的技术更好地服务于大众，实现真正的价值转化。\u003c/div\u003e"
+    },
+    {
+      "guid": "1a0c5481f491b9f0ab7609ee77b0fa25",
+      "title": "⭐ RAM now represents 35 percent of bill of materials for HP PCs",
+      "link": "https://arstechnica.com/gadgets/2026/02/ram-now-represents-35-percent-of-bill-of-materials-for-hp-pcs/",
+      "pubDate": "Thu, 26 Feb 2026 02:43:26 +0000",
+      "description": "\u003cp\u003e根据Ars Technica的报道，内存（RAM）现在占惠普（HP）个人电脑物料清单成本的35%。这一变化反映了近年来内存价格的上涨趋势及其在现代计算设备中的重要性日益增加。对于消费者而言，这意味着购买新电脑时，内存配置的选择将对最终价格产生显著影响。\u003c/p\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e 物料清单（Bill of Materials, BOM）是指制造产品所需的所有组件和原材料的详细列表及其成本。\u003c/div\u003e"
+    },
+    {
+      "guid": "784f25ced5d9b1ff1ca245d3f9c54864",
+      "title": "Tech companies shouldn't be bullied into doing surveillance",
+      "link": "https://www.eff.org/deeplinks/2026/02/tech-companies-shouldnt-be-bullied-doing-surveillance",
+      "pubDate": "Thu, 26 Feb 2026 00:37:32 +0000",
+      "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://www.eff.org/deeplinks/2026/02/tech-companies-shouldnt-be-bullied-doing-surveillance\"\u003ehttps://www.eff.org/deeplinks/2026/02/tech-companies-shouldnt-be-bullied-doing-surveillance\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47160226\"\u003ehttps://news.ycombinator.com/item?id=47160226\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 332\u003c/p\u003e\n\u003cp\u003e# Comments: 106\u003c/p\u003e\n"
+    },
+    {
+      "guid": "8ebaab697ba617ffa02986064bc699b7",
+      "title": "⭐ How will OpenAI compete?",
+      "link": "https://www.ben-evans.com/benedictevans/2026/2/19/how-will-openai-compete-nkg2x",
+      "pubDate": "Wed, 25 Feb 2026 22:29:25 +0000",
+      "description": "\u003cp\u003e本文探讨了OpenAI如何在竞争激烈的市场中保持领先地位。文章指出，OpenAI通过持续的技术创新、建立强大的开发者生态系统以及与行业领导者合作等方式来增强其竞争力。此外，OpenAI还面临着来自谷歌、微软等科技巨头的挑战，这些公司也在积极布局人工智能领域。为了应对这些挑战，OpenAI不仅需要继续推进技术研发，还需要找到可持续的商业模式。\u003c/p\u003e\n\u003cul\u003e\n    \u003cli\u003e技术创新：不断推出新的AI模型和服务\u003c/li\u003e\n    \u003cli\u003e生态系统建设：吸引和培养开发者社区\u003c/li\u003e\n    \u003cli\u003e合作伙伴关系：与不同领域的领先企业合作\u003c/li\u003e\n    \u003cli\u003e商业模式探索：寻找可持续发展的盈利方式\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003eDid you know?\u003c/strong\u003e OpenAI最初是一个非营利组织，但后来成立了一个名为OpenAI LP的营利性实体，以更好地筹集资金支持其研究和发展。\u003c/div\u003e"
     },
     {
       "guid": "3956db3e63ed8cdf3f644b41af130862",
