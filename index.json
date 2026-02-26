@@ -2,8 +2,22 @@
   "source_name": "Sieve",
   "source_url": "https://github.com/liuerfire/sieve",
   "source_title": "Sieve Aggregated Report",
-  "total_items": 75,
+  "total_items": 80,
   "items": [
+    {
+      "guid": "1d9836cf627c3ebfd076bbec3a4b3cf5",
+      "title": "⭐⭐ Google API Keys Weren't Secrets. But then Gemini Changed the Rules.",
+      "link": "https://simonwillison.net/2026/Feb/26/google-api-keys/#atom-everything",
+      "pubDate": "Thu, 26 Feb 2026 04:28:55 +0000",
+      "description": "\u003cp\u003e最近，Truffle Security 发现了一个关于 Google API 密钥的重大安全问题。原本设计为公开的 Google Maps API 密钥（用于嵌入网页）与 Gemini API 共享相同的密钥。然而，Gemini API 密钥可以访问私有文件并进行计费请求，因此不应该被公开。如果开发者在项目中启用了 Gemini API 而未意识到这一点，那么之前公开的 API 密钥可能会意外地获得访问敏感资源的权限，从而导致账单问题或数据泄露。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e开发者创建一个 API 密钥并将其嵌入到网站中用于 Google Maps。\u003c/li\u003e\n\u003cli\u003e在同一项目中启用 Gemini API，使得该密钥可以访问敏感的 Gemini 端点。\u003c/li\u003e\n\u003cli\u003e开发者没有收到任何警告，告知密钥的权限已经改变（从公共标识符变为秘密凭证）。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Truffle Security 在 2025 年 11 月的 Common Crawl 中发现了 2,863 个可以访问 Gemini 的 API 密钥，其中包括几个属于 Google 自己的密钥，其中一个自 2023 年 2 月以来就已经部署。\u003c/div\u003e"
+    },
+    {
+      "guid": "5cdb2f43dab18da13889e01a2b45a6d6",
+      "title": "⭐ Quoting Benedict Evans",
+      "link": "https://simonwillison.net/2026/Feb/26/benedict-evans/#atom-everything",
+      "pubDate": "Thu, 26 Feb 2026 03:44:56 +0000",
+      "description": "\u003cp\u003e根据Benedict Evans的观点，如果用户每周只使用OpenAI的产品几次，并且在大多数日子里想不到如何利用它，那么这种产品并没有真正改变他们的生活。OpenAI自己也承认存在一个“能力差距”，即模型的能力与用户的实际使用之间存在不匹配的问题。这实际上意味着OpenAI还没有找到明确的产品市场定位。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e为了解决这一问题，OpenAI推出了广告项目，一方面是为了覆盖那些不付费的90%以上用户的成本，同时也在早期与广告商建立合作关系；\u003c/li\u003e\n\u003cli\u003e更重要的是，通过这个项目，OpenAI希望能够向这些用户提供最新和最强大的（即成本较高的）模型版本，以此来加深用户的参与度。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e OpenAI不仅关注于技术的发展，还致力于探索如何让这些先进的技术更好地服务于大众，实现真正的价值转化。\u003c/div\u003e"
+    },
     {
       "guid": "3956db3e63ed8cdf3f644b41af130862",
       "title": "⭐ tldraw issue: Move tests to closed source repo",
@@ -19,6 +33,13 @@
       "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://spectrum.ieee.org/jimi-hendrix-systems-engineer\"\u003ehttps://spectrum.ieee.org/jimi-hendrix-systems-engineer\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47157224\"\u003ehttps://news.ycombinator.com/item?id=47157224\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 304\u003c/p\u003e\n\u003cp\u003e# Comments: 108\u003c/p\u003e\n"
     },
     {
+      "guid": "1c3855d6091886a9cadd12c29603cf9f",
+      "title": "Google API keys weren't secrets, but then Gemini changed the rules",
+      "link": "https://trufflesecurity.com/blog/google-api-keys-werent-secrets-but-then-gemini-changed-the-rules",
+      "pubDate": "Wed, 25 Feb 2026 19:54:14 +0000",
+      "description": "\n\u003cp\u003eArticle URL: \u003ca href=\"https://trufflesecurity.com/blog/google-api-keys-werent-secrets-but-then-gemini-changed-the-rules\"\u003ehttps://trufflesecurity.com/blog/google-api-keys-werent-secrets-but-then-gemini-changed-the-rules\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47156925\"\u003ehttps://news.ycombinator.com/item?id=47156925\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 282\u003c/p\u003e\n\u003cp\u003e# Comments: 64\u003c/p\u003e\n"
+    },
+    {
       "guid": "c14231565e77cb06669b41f37b924451",
       "title": "⭐⭐ The Om Programming Language",
       "link": "https://www.om-language.com/",
@@ -31,6 +52,13 @@
       "link": "https://simonwillison.net/2026/Feb/25/claude-code-remote-control/#atom-everything",
       "pubDate": "Wed, 25 Feb 2026 17:33:24 +0000",
       "description": "\u003cp\u003eClaude Code 最近推出了一项新功能——远程控制。用户现在可以在自己的电脑上启动一个“远程控制”会话，并通过 Claude Code 的网页、iOS 或桌面应用程序向该会话发送指令。不过，目前这个功能还存在一些问题，比如需要管理员权限才能启用（尽管用户自己就是管理员），并且每次只能运行一个会话。此外，它似乎不支持 \u003ccode\u003e--dangerously-skip-permissions\u003c/code\u003e 标志，这意味着每个新操作都需要用户确认。\u003c/p\u003e\n\u003cul\u003e\n  \u003cli\u003e在 iOS 应用中升级后，可以看到“远程控制会话 (Mac)”选项出现在代码标签页中。\u003c/li\u003e\n  \u003cli\u003e有时会出现 API 500 错误，导致无法执行任何指令。\u003c/li\u003e\n  \u003cli\u003e重启程序会导致现有会话返回神秘的 API 错误，而不是明确告知会话已终止。\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e与 OpenClaw 这样的解决方案相比，Claude Code 目前还没有提供定时任务的功能，这在 Claw 类软件中是一个非常重要的特性。不过，Anthropic 同时宣布了在 Cowork 中可以安排重复性任务，但这些任务仅在计算机处于唤醒状态且 Claude 桌面应用程序打开时才会运行。\u003c/div\u003e"
+    },
+    {
+      "guid": "861bebf1a412a0f4a7f93d928f82d59e",
+      "title": "⭐ Windows 11 Notepad to support Markdown",
+      "link": "https://blogs.windows.com/windows-insider/2026/01/21/notepad-and-paint-updates-begin-rolling-out-to-windows-insiders/",
+      "pubDate": "Wed, 25 Feb 2026 17:14:19 +0000",
+      "description": "\u003cp\u003e微软宣布，Windows 11的记事本将开始支持Markdown格式。这一更新将首先向Windows Insider项目的用户推出。通过这次更新，用户可以在记事本中直接编写和预览Markdown文档，使得这款经典的文本编辑器更加现代化和功能丰富。此外，画图工具也收到了一些改进，提升了用户体验。\u003c/p\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e Markdown是一种轻量级标记语言（Lightweight Markup Language），它允许人们使用易读易写的纯文本格式编写文档，然后转换成结构化的HTML文档。\u003c/div\u003e"
     },
     {
       "guid": "3fa9e79548cda1a39ffc73812ec310da",
@@ -185,6 +213,13 @@
       "link": "https://keepandroidopen.org/open-letter/",
       "pubDate": "Tue, 24 Feb 2026 17:21:11 +0000",
       "description": "\u003cp\u003e一封公开信呼吁谷歌重新考虑其要求所有开发者必须注册才能分发应用的政策。这封信由多个开源项目和个人共同签署，他们认为这一变化将对小型开发者和开源社区造成负面影响，增加开发成本，并可能阻碍创新。此外，强制注册还可能导致用户隐私问题，因为谷歌将收集更多关于开发者的信息。\u003c/p\u003e\n\u003cul\u003e\n\u003cli\u003e主要担忧：提高开发门槛、增加成本\u003c/li\u003e\n\u003cli\u003e受影响群体：小型开发者、开源社区\u003c/li\u003e\n\u003cli\u003e潜在风险：用户隐私问题\u003c/li\u003e\n\u003c/ul\u003e\n\u003cdiv class=\"did-you-know\"\u003e\u003cstrong\u003e你知道吗？\u003c/strong\u003e 谷歌的这一政策调整是出于安全考虑，旨在减少恶意软件和不合规应用的传播，但同时也引发了对开放性和可访问性的广泛讨论。\u003c/div\u003e"
+    },
+    {
+      "guid": "fb001081fb5fd644789763cbb707a93e",
+      "title": "Large-Scale Online Deanonymization with LLMs",
+      "link": "https://simonlermen.substack.com/p/large-scale-online-deanonymization",
+      "pubDate": "Tue, 24 Feb 2026 17:18:17 +0000",
+      "description": "\n\u003cp\u003ePdf: \u003ca href=\"https://arxiv.org/pdf/2602.16800\" rel=\"nofollow\"\u003ehttps://arxiv.org/pdf/2602.16800\u003c/a\u003e (via \u003ca href=\"https://arxiv.org/abs/2602.16800\" rel=\"nofollow\"\u003ehttps://arxiv.org/abs/2602.16800\u003c/a\u003e)\u003c/p\u003e\n\u003chr\u003e\n\u003cp\u003eComments URL: \u003ca href=\"https://news.ycombinator.com/item?id=47139716\"\u003ehttps://news.ycombinator.com/item?id=47139716\u003c/a\u003e\u003c/p\u003e\n\u003cp\u003ePoints: 236\u003c/p\u003e\n\u003cp\u003e# Comments: 180\u003c/p\u003e\n"
     },
     {
       "guid": "ed3e9a106b51091c2528c059ce036c8b",
