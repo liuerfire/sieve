@@ -1,3 +1,4 @@
+// Package ui provides a terminal user interface dashboard for monitoring aggregation progress.
 package ui
 
 import (
@@ -41,22 +42,22 @@ var (
 )
 
 type sourceStatus struct {
-	name    string
-	current int
-	total   int
-	status  string // "Pending", "Fetching", "Processing", "Done", "Error"
-	lastItem string
+	name      string
+	current   int
+	total     int
+	status    string // "Pending", "Fetching", "Processing", "Done", "Error"
+	lastItem  string
 	lastLevel string
 }
 
 type Model struct {
-	sources    map[string]*sourceStatus
-	sourceOrder []string
-	logs       []string
-	spinner    spinner.Model
-	quitting   bool
-	done       bool
-	startTime  time.Time
+	sources        map[string]*sourceStatus
+	sourceOrder    []string
+	logs           []string
+	spinner        spinner.Model
+	quitting       bool
+	done           bool
+	startTime      time.Time
 	totalProcessed int
 	highCount      int
 }

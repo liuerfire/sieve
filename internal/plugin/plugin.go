@@ -1,14 +1,17 @@
+// Package plugin provides a registry and interface for RSS content processing plugins.
 package plugin
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
+// Plugin defines the interface for content processing plugins.
 type Plugin interface {
-	Execute(item *storage.Item) (*storage.Item, error)
+	Execute(ctx context.Context, item *storage.Item) (*storage.Item, error)
 }
 
 var (
@@ -32,17 +35,17 @@ func Get(name string) (Plugin, error) {
 	return p, nil
 }
 
-// NopPlugin does nothing
+// NopPlugin does nothing and returns the item unchanged.
 type NopPlugin struct{}
 
-func (p *NopPlugin) Execute(item *storage.Item) (*storage.Item, error) {
+func (p *NopPlugin) Execute(ctx context.Context, item *storage.Item) (*storage.Item, error) {
 	return item, nil
 }
 
-// FetchContentPlugin is a placeholder for full content fetching logic
+// FetchContentPlugin is a placeholder for full content fetching logic.
 type FetchContentPlugin struct{}
 
-func (p *FetchContentPlugin) Execute(item *storage.Item) (*storage.Item, error) {
+func (p *FetchContentPlugin) Execute(ctx context.Context, item *storage.Item) (*storage.Item, error) {
 	// In the future, this will use an HTTP client to fetch the full HTML
 	// and extract the main content. For now, we ensure the field exists.
 	if item.Content == "" {

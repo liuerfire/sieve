@@ -1,3 +1,4 @@
+// Package config handles loading and parsing of JSON configuration files.
 package config
 
 import (

@@ -1,6 +1,7 @@
 package rss
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,7 @@ func TestFetchItems(t *testing.T) {
 	}))
 	defer server.Close()
 
-	items, err := FetchItems(server.URL, "test-source")
+	items, err := FetchItems(context.Background(), server.URL, "test-source")
 	if err != nil {
 		t.Fatalf("failed to fetch items: %v", err)
 	}

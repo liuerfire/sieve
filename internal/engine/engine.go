@@ -1,3 +1,4 @@
+// Package engine orchestrates RSS feed fetching, AI filtering, and report generation.
 package engine
 
 import (
@@ -16,6 +17,13 @@ import (
 	"github.com/liuerfire/sieve/internal/plugin"
 	"github.com/liuerfire/sieve/internal/rss"
 	"github.com/liuerfire/sieve/internal/storage"
+)
+
+// Concurrency and rate limiting configuration.
+const (
+	aiRateLimit      = 500 * time.Millisecond // Time between AI requests
+	aiBurstLimit     = 5                      // Max burst AI requests
+	maxAIConcurrency = 5                      // Max concurrent AI requests
 )
 
 type ProgressEvent struct {
@@ -59,19 +67,17 @@ func (e *Engine) Run(ctx context.Context) error {
 	g, ctx := errgroup.WithContext(ctx)
 
 	// AI Rate Limiter: Limit total requests per second to avoid hitting bursts
-	// 2 requests per second, with a burst of 5
-	limiter := rate.NewLimiter(rate.Every(500*time.Millisecond), 5)
+	limiter := rate.NewLimiter(rate.Every(aiRateLimit), aiBurstLimit)
 
 	// AI Semaphore: Limit total concurrent AI requests
-	const maxAIConcurrency = 5
 	aiSem := make(chan struct{}, maxAIConcurrency)
 
 	// Process each source in parallel
 	for _, src := range e.cfg.Sources {
-		src := src // capture range variable
+		src := src
 		g.Go(func() error {
 			e.report(ProgressEvent{Type: "source_start", Source: src.Name})
-			items, err := rss.FetchItems(src.URL, src.Name)
+			items, err := rss.FetchItems(ctx, src.URL, src.Name)
 			if err != nil {
 				e.report(ProgressEvent{Type: "source_done", Source: src.Name, Message: fmt.Sprintf("Error fetching items: %v", err)})
 				slog.Error("Error fetching items", "source", src.Name, "url", src.URL, "err", err)
@@ -144,7 +150,7 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 			slog.Warn("Plugin not found", "name", pluginName)
 			continue
 		}
-		item, err = p.Execute(item)
+		item, err = p.Execute(ctx, item)
 		if err != nil {
 			return fmt.Errorf("plugin %s failed: %w", pluginName, err)
 		}

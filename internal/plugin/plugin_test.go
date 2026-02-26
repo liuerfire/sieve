@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"context"
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/storage"
@@ -8,7 +9,7 @@ import (
 
 type mockPlugin struct{}
 
-func (p *mockPlugin) Execute(item *storage.Item) (*storage.Item, error) {
+func (p *mockPlugin) Execute(ctx context.Context, item *storage.Item) (*storage.Item, error) {
 	item.Content = "Mock Content"
 	return item, nil
 }
@@ -22,7 +23,7 @@ func TestPluginRegistry(t *testing.T) {
 	}
 
 	item := &storage.Item{Title: "Test"}
-	updatedItem, err := p.Execute(item)
+	updatedItem, err := p.Execute(context.Background(), item)
 	if err != nil {
 		t.Fatalf("plugin execution failed: %v", err)
 	}

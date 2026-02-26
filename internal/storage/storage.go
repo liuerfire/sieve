@@ -1,3 +1,4 @@
+// Package storage provides SQLite persistence for RSS items with WAL mode support.
 package storage
 
 import (

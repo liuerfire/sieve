@@ -1,3 +1,5 @@
+// Package ai provides AI provider clients for content classification and summarization.
+// It supports multiple AI backends (Gemini, Qwen) through a unified interface.
 package ai
 
 import (
@@ -11,6 +13,14 @@ import (
 	"time"
 )
 
+// AI provider endpoints and configuration constants.
+const (
+	geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+	qwenBaseURL   = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+	httpTimeout   = 30 * time.Second
+)
+
+// ProviderType identifies the AI provider backend.
 type ProviderType string
 
 const (
@@ -54,15 +64,15 @@ func NewClient(t ProviderType, apiKey string, opts ...Option) *Client {
 	var p Provider
 	switch t {
 	case Gemini:
-		p = &geminiProvider{baseURL: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"}
+		p = &geminiProvider{baseURL: geminiBaseURL}
 	case Qwen:
-		p = &qwenProvider{baseURL: "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"}
+		p = &qwenProvider{baseURL: qwenBaseURL}
 	}
 
 	c := &Client{
 		provider: p,
 		apiKey:   apiKey,
-		http:     &http.Client{Timeout: 30 * time.Second},
+		http:     &http.Client{Timeout: httpTimeout},
 	}
 
 	for _, opt := range opts {
@@ -98,7 +108,6 @@ func (c *Client) Summarize(ctx context.Context, title, content, lang string) (st
 
 	return c.callAI(ctx, prompt, false)
 }
-
 
 // ==============================================================================
 // Gemini Provider
@@ -253,11 +262,9 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 			return "", fmt.Errorf("parse response: %w", err)
 		}
 
-		aiText = strings.TrimSpace(aiText)
 		if isJSON {
-			aiText = strings.TrimPrefix(aiText, "```json")
-			aiText = strings.TrimPrefix(aiText, "```")
-			aiText = strings.TrimSuffix(aiText, "```")
+			aiText = cleanJSONResponse(aiText)
+		} else {
 			aiText = strings.TrimSpace(aiText)
 		}
 
@@ -265,4 +272,13 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 	}
 
 	return "", fmt.Errorf("all retries failed: %w", lastErr)
+}
+
+// cleanJSONResponse removes markdown code blocks and trims whitespace from AI response.
+func cleanJSONResponse(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "```json")
+	s = strings.TrimPrefix(s, "```")
+	s = strings.TrimSuffix(s, "```")
+	return strings.TrimSpace(s)
 }

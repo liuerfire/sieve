@@ -1,3 +1,4 @@
+// Package rss provides RSS feed fetching and parsing functionality.
 package rss
 
 import (
@@ -7,14 +8,14 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
-func FetchItems(url string, sourceName string) ([]*storage.Item, error) {
+// FetchItems fetches and parses an RSS feed, returning items with the given source name.
+// The provided context controls cancellation and timeout of the HTTP request.
+func FetchItems(ctx context.Context, url string, sourceName string) ([]*storage.Item, error) {
 	fp := gofeed.NewParser()
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	feed, err := fp.ParseURLWithContext(url, ctx)
 	if err != nil {
 		return nil, err
