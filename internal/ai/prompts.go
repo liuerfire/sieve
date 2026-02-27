@@ -73,5 +73,3 @@ func BuildClassifyPrompt(rules, title, content, lang string) string {
 func BuildSummarizePrompt(lang, title, content string) string {
 	return fmt.Sprintf(SummarizePrompt, lang, title, content)
 }
-
-

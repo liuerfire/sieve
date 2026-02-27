@@ -32,13 +32,12 @@ Ensure you have Go 1.25 or later installed:
 go build -o sieve github.com/liuerfire/sieve/cmd/sieve
 ```
 
-### 2. Configure API Key
+### 2. Configure AI Providers
 
-Sieve supports Gemini and Qwen (Tongyi Qianwen) AI providers. Please set the corresponding environment variables:
+Sieve supports Gemini and Qwen (Tongyi Qianwen) AI providers. You can provide one or both API keys. Sieve will prioritize them based on your configuration:
 
 ```bash
 export GEMINI_API_KEY=your_gemini_api_key
-# OR use Qwen
 export QWEN_API_KEY=your_qwen_api_key
 ```
 
@@ -87,7 +86,11 @@ If you only want to generate one of them, use the skip flags:
     "uninterested": "industry_figures,history,infrastructure,crypto,chips,iphone,autonomous_driving",
     "exclude": "nft,cars,aviation,gaming_consoles,development_boards,biographies",
     "preferred_language": "en",
-    "timeout": 5
+    "timeout": 5,
+    "ai": {
+      "provider": "gemini",
+      "model": "gemini-3-pro-preview"
+    }
   },
   "sources": [
     {

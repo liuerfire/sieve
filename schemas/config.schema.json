@@ -48,6 +48,15 @@
           "type": "integer",
           "description": "Global default AI execution timeout (minutes)",
           "minimum": 1
+        },
+        "ai": {
+          "type": "object",
+          "description": "Global AI provider and model configuration",
+          "properties": {
+            "provider": { "type": "string", "enum": ["gemini", "qwen"] },
+            "model": { "type": "string" }
+          },
+          "additionalProperties": false
         }
       }
     },
@@ -113,6 +122,15 @@
             "type": "integer",
             "description": "AI execution timeout (minutes), overrides global.timeout",
             "minimum": 1
+          },
+          "ai": {
+            "type": "object",
+            "description": "Source-specific AI provider and model configuration",
+            "properties": {
+              "provider": { "type": "string", "enum": ["gemini", "qwen"] },
+              "model": { "type": "string" }
+            },
+            "additionalProperties": false
           }
         }
       }

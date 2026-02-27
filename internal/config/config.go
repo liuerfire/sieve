@@ -12,26 +12,33 @@ type Config struct {
 	Sources []SourceConfig `json:"sources"`
 }
 
+type AIConfig struct {
+	Provider string `json:"provider,omitempty"`
+	Model    string `json:"model,omitempty"`
+}
+
 type GlobalConfig struct {
-	HighInterest      string `json:"high_interest"`
-	Interest          string `json:"interest"`
-	Uninterested      string `json:"uninterested"`
-	Exclude           string `json:"exclude"`
-	PreferredLanguage string `json:"preferred_language"`
-	Timeout           int    `json:"timeout"`
+	HighInterest      string    `json:"high_interest"`
+	Interest          string    `json:"interest"`
+	Uninterested      string    `json:"uninterested"`
+	Exclude           string    `json:"exclude"`
+	PreferredLanguage string    `json:"preferred_language"`
+	Timeout           int       `json:"timeout"`
+	AI                *AIConfig `json:"ai,omitempty"`
 }
 
 type SourceConfig struct {
-	Name         string   `json:"name"`
-	Title        string   `json:"title"`
-	URL          string   `json:"url"`
-	HighInterest string   `json:"high_interest"`
-	Interest     string   `json:"interest"`
-	Uninterested string   `json:"uninterested"`
-	Exclude      string   `json:"exclude"`
-	Plugins      []string `json:"plugins"`
-	Summarize    bool     `json:"summarize"`
-	Timeout      int      `json:"timeout"`
+	Name         string    `json:"name"`
+	Title        string    `json:"title"`
+	URL          string    `json:"url"`
+	HighInterest string    `json:"high_interest"`
+	Interest     string    `json:"interest"`
+	Uninterested string    `json:"uninterested"`
+	Exclude      string    `json:"exclude"`
+	Plugins      []string  `json:"plugins"`
+	Summarize    bool      `json:"summarize"`
+	Timeout      int       `json:"timeout"`
+	AI           *AIConfig `json:"ai,omitempty"`
 }
 
 func LoadConfig(path string) (*Config, error) {

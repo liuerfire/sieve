@@ -209,4 +209,3 @@ const htmlTemplate = `
 </body>
 </html>
 `
-

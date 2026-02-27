@@ -5,6 +5,7 @@ import (
 	"log/slog"
 
 	"github.com/spf13/cobra"
+
 	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/engine"
@@ -36,7 +37,7 @@ var reportCmd = &cobra.Command{
 		defer s.Close()
 
 		// Dummy AI client since report generation doesn't need it
-		a := ai.NewClient(ai.Gemini, "dummy")
+		a := ai.NewClient()
 		eng := engine.NewEngine(cfg, s, a)
 
 		if !skipJSON {

@@ -74,7 +74,9 @@ func TestEngine_Run(t *testing.T) {
 	defer s.Close()
 
 	// Setup AI Client
-	a := ai.NewClient(ai.Gemini, "dummy-key", ai.WithBaseURL(aiServer.URL))
+	a := ai.NewClient()
+	a.AddProvider(ai.Gemini, "dummy-key")
+	ai.WithBaseURL(ai.Gemini, aiServer.URL)(a)
 
 	// Setup Engine
 	eng := NewEngine(cfg, s, a)
@@ -140,7 +142,9 @@ func TestEngine_ProcessItem_Pipeline(t *testing.T) {
 	}))
 	defer aiServer.Close()
 
-	a := ai.NewClient(ai.Gemini, "dummy-key", ai.WithBaseURL(aiServer.URL))
+	a := ai.NewClient()
+	a.AddProvider(ai.Gemini, "dummy-key")
+	ai.WithBaseURL(ai.Gemini, aiServer.URL)(a)
 	cfg := &config.Config{Global: config.GlobalConfig{PreferredLanguage: "en"}}
 	eng := NewEngine(cfg, s, a)
 

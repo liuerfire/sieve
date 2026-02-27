@@ -11,11 +11,13 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/liuerfire/sieve/internal/config"
 )
 
 // AI provider endpoints and configuration constants.
 const (
-	geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+	geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta"
 	qwenBaseURL   = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
 	httpTimeout   = 30 * time.Second
 )
@@ -29,14 +31,13 @@ const (
 )
 
 type Provider interface {
-	buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error)
+	buildRequest(ctx context.Context, model, prompt string, isJSON bool) (*http.Request, error)
 	parseResponse(body []byte) (string, error)
 }
 
 type Client struct {
-	provider Provider
-	apiKey   string
-	http     *http.Client
+	providers map[ProviderType]Provider
+	http      *http.Client
 }
 
 // Option is a functional option for configuring the Client.
@@ -49,37 +50,37 @@ func WithHTTPClient(httpClient *http.Client) Option {
 	}
 }
 
-// WithBaseURL sets a custom base URL (useful for testing).
-func WithBaseURL(url string) Option {
+// WithBaseURL sets a custom base URL for a provider (useful for testing).
+func WithBaseURL(t ProviderType, url string) Option {
 	return func(c *Client) {
-		if gp, ok := c.provider.(*geminiProvider); ok {
-			gp.baseURL = url
-		} else if qp, ok := c.provider.(*qwenProvider); ok {
-			qp.baseURL = url
+		if p, ok := c.providers[t]; ok {
+			if gp, ok := p.(*geminiProvider); ok {
+				gp.baseURL = url
+			} else if qp, ok := p.(*qwenProvider); ok {
+				qp.baseURL = url
+			}
 		}
 	}
 }
 
-func NewClient(t ProviderType, apiKey string, opts ...Option) *Client {
-	var p Provider
-	switch t {
-	case Gemini:
-		p = &geminiProvider{baseURL: geminiBaseURL}
-	case Qwen:
-		p = &qwenProvider{baseURL: qwenBaseURL}
-	}
-
+func NewClient(opts ...Option) *Client {
 	c := &Client{
-		provider: p,
-		apiKey:   apiKey,
-		http:     &http.Client{Timeout: httpTimeout},
+		providers: make(map[ProviderType]Provider),
+		http:      &http.Client{Timeout: httpTimeout},
 	}
-
 	for _, opt := range opts {
 		opt(c)
 	}
-
 	return c
+}
+
+func (c *Client) AddProvider(t ProviderType, apiKey string) {
+	switch t {
+	case Gemini:
+		c.providers[Gemini] = &geminiProvider{baseURL: geminiBaseURL, apiKey: apiKey}
+	case Qwen:
+		c.providers[Qwen] = &qwenProvider{baseURL: qwenBaseURL, apiKey: apiKey}
+	}
 }
 
 type classifyResponse struct {
@@ -88,26 +89,26 @@ type classifyResponse struct {
 	Reason  string `json:"reason"`
 }
 
-func (c *Client) Classify(ctx context.Context, title, content, rules, lang string) (string, string, error) {
+func (c *Client) Classify(ctx context.Context, cfg *config.AIConfig, title, content, rules, lang string) (string, string, string, error) {
 	prompt := BuildClassifyPrompt(rules, title, content, lang)
 
-	aiText, err := c.callAI(ctx, prompt, true)
+	aiText, err := c.callAI(ctx, cfg, prompt, true)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
 	var result classifyResponse
 	if err := json.Unmarshal([]byte(aiText), &result); err != nil {
-		return "", "", fmt.Errorf("failed to parse AI JSON: %w, body: %s", err, aiText)
+		return "", "", "", fmt.Errorf("failed to parse AI JSON: %w, body: %s", err, aiText)
 	}
 
-	return result.Type, result.Reason, nil
+	return result.Thought, result.Type, result.Reason, nil
 }
 
-func (c *Client) Summarize(ctx context.Context, title, content, lang string) (string, error) {
+func (c *Client) Summarize(ctx context.Context, cfg *config.AIConfig, title, content, lang string) (string, error) {
 	prompt := BuildSummarizePrompt(lang, title, content)
 
-	return c.callAI(ctx, prompt, false)
+	return c.callAI(ctx, cfg, prompt, false)
 }
 
 // ==============================================================================
@@ -116,10 +117,11 @@ func (c *Client) Summarize(ctx context.Context, title, content, lang string) (st
 
 type geminiProvider struct {
 	baseURL string
+	apiKey  string
 }
 
-func (p *geminiProvider) buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error) {
-	url := fmt.Sprintf("%s?key=%s", p.baseURL, apiKey)
+func (p *geminiProvider) buildRequest(ctx context.Context, model, prompt string, isJSON bool) (*http.Request, error) {
+	url := fmt.Sprintf("%s/models/%s:generateContent?key=%s", p.baseURL, model, p.apiKey)
 	reqBody := map[string]any{
 		"contents": []map[string]any{
 			{
@@ -171,11 +173,12 @@ func (p *geminiProvider) parseResponse(body []byte) (string, error) {
 
 type qwenProvider struct {
 	baseURL string
+	apiKey  string
 }
 
-func (p *qwenProvider) buildRequest(ctx context.Context, prompt string, isJSON bool, apiKey string) (*http.Request, error) {
+func (p *qwenProvider) buildRequest(ctx context.Context, model, prompt string, isJSON bool) (*http.Request, error) {
 	reqBody := map[string]any{
-		"model": "qwen-max",
+		"model": model,
 		"input": map[string]any{
 			"messages": []map[string]any{
 				{"role": "user", "content": prompt},
@@ -194,7 +197,7 @@ func (p *qwenProvider) buildRequest(ctx context.Context, prompt string, isJSON b
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Authorization", "Bearer "+p.apiKey)
 	return req, nil
 }
 
@@ -217,7 +220,21 @@ func (p *qwenProvider) parseResponse(body []byte) (string, error) {
 	return "", fmt.Errorf("empty response from Qwen")
 }
 
-func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string, error) {
+func (c *Client) callAI(ctx context.Context, cfg *config.AIConfig, prompt string, isJSON bool) (string, error) {
+	providerType := Gemini
+	model := ""
+	if cfg != nil {
+		if cfg.Provider != "" {
+			providerType = ProviderType(cfg.Provider)
+		}
+		model = cfg.Model
+	}
+
+	p, ok := c.providers[providerType]
+	if !ok {
+		return "", fmt.Errorf("provider %s not configured", providerType)
+	}
+
 	// Retry logic with exponential backoff
 	maxRetries := 3
 	var lastErr error
@@ -232,7 +249,7 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 			}
 		}
 
-		req, err := c.provider.buildRequest(ctx, prompt, isJSON, c.apiKey)
+		req, err := p.buildRequest(ctx, model, prompt, isJSON)
 		if err != nil {
 			return "", fmt.Errorf("build request: %w", err)
 		}
@@ -258,7 +275,7 @@ func (c *Client) callAI(ctx context.Context, prompt string, isJSON bool) (string
 			return "", lastErr
 		}
 
-		aiText, err := c.provider.parseResponse(body)
+		aiText, err := p.parseResponse(body)
 		if err != nil {
 			return "", fmt.Errorf("parse response: %w", err)
 		}

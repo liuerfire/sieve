@@ -41,18 +41,22 @@ var runCmd = &cobra.Command{
 		}
 		defer s.Close()
 
-		apiKey := os.Getenv("GEMINI_API_KEY")
-		provider := ai.Gemini
-		if apiKey == "" {
-			apiKey = os.Getenv("QWEN_API_KEY")
-			provider = ai.Qwen
+		a := ai.NewClient()
+		hasProvider := false
+
+		if key := os.Getenv("GEMINI_API_KEY"); key != "" {
+			a.AddProvider(ai.Gemini, key)
+			hasProvider = true
+		}
+		if key := os.Getenv("QWEN_API_KEY"); key != "" {
+			a.AddProvider(ai.Qwen, key)
+			hasProvider = true
 		}
 
-		if apiKey == "" {
+		if !hasProvider {
 			return fmt.Errorf("GEMINI_API_KEY or QWEN_API_KEY must be set")
 		}
 
-		a := ai.NewClient(provider, apiKey)
 		eng := engine.NewEngine(cfg, s, a)
 
 		if useUI {

@@ -38,7 +38,8 @@ func TestEngine_GenerateHTML(t *testing.T) {
 	}
 
 	cfg := &config.Config{}
-	a := ai.NewClient(ai.Gemini, "dummy")
+	a := ai.NewClient()
+	a.AddProvider(ai.Gemini, "dummy")
 	eng := NewEngine(cfg, s, a)
 
 	outputPath := "test.html"

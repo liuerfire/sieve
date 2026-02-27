@@ -33,6 +33,7 @@ Use the `Makefile` for building and testing:
 ```bash
 make build   # Builds the binary into bin/sieve
 make test    # Runs all tests
+make fmt     # Formats code using goimports
 make clean   # Cleans up build artifacts and temporary databases
 ```
 
@@ -76,6 +77,7 @@ Interest levels:
     1. Standard library
     2. Third-party libraries
     3. Internal project modules
+    Use `goimports -local github.com/liuerfire/sieve` (via `make fmt`) to maintain this structure.
   - **Naming**: Prefer concise interface names (e.g., `Provider`) and descriptive enum types (e.g., `ProviderType`).
 - **Performance**:
   - Support Profile-Guided Optimization (PGO) via the `Makefile` for critical processing paths.

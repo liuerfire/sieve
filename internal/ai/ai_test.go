@@ -24,13 +24,18 @@ func TestClassify(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(Gemini, "dummy-key", WithBaseURL(server.URL))
+	client := NewClient()
+	client.AddProvider(Gemini, "dummy-key")
+	WithBaseURL(Gemini, server.URL)(client)
 
-	level, reason, err := client.Classify(context.Background(), "Test Title", "Test Content", "High Interest Rules", "en")
+	thought, level, reason, err := client.Classify(context.Background(), nil, "Test Title", "Test Content", "High Interest Rules", "en")
 	if err != nil {
 		t.Fatalf("failed to classify: %v", err)
 	}
 
+	if thought != "Matches high interest rules" {
+		t.Errorf("expected thought 'Matches high interest rules', got '%s'", thought)
+	}
 	if level != "high_interest" {
 		t.Errorf("expected level 'high_interest', got '%s'", level)
 	}
@@ -55,9 +60,11 @@ func TestSummarize(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := NewClient(Gemini, "dummy-key", WithBaseURL(server.URL))
+	client := NewClient()
+	client.AddProvider(Gemini, "dummy-key")
+	WithBaseURL(Gemini, server.URL)(client)
 
-	summary, err := client.Summarize(context.Background(), "Test Title", "Test Content", "zh")
+	summary, err := client.Summarize(context.Background(), nil, "Test Title", "Test Content", "zh")
 	if err != nil {
 		t.Fatalf("failed to summarize: %v", err)
 	}

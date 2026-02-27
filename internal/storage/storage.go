@@ -19,6 +19,7 @@ type Item struct {
 	Description   string
 	Content       string
 	Summary       string
+	Thought       string
 	Reason        string
 	InterestLevel string
 	PublishedAt   time.Time
@@ -55,6 +56,7 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
         description TEXT,
         content TEXT,
         summary TEXT,
+        thought TEXT,
         reason TEXT,
         interest_level TEXT,
         published_at DATETIME,
@@ -76,8 +78,8 @@ func (s *Storage) Close() error {
 func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 	query := `
     INSERT OR REPLACE INTO items (
-        id, source, title, link, description, content, summary, reason, interest_level, published_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        id, source, title, link, description, content, summary, thought, reason, interest_level, published_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	_, err := s.db.ExecContext(ctx, query,
 		item.ID,
@@ -87,6 +89,7 @@ func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 		item.Description,
 		item.Content,
 		item.Summary,
+		item.Thought,
 		item.Reason,
 		item.InterestLevel,
 		item.PublishedAt,
@@ -104,7 +107,7 @@ func (s *Storage) Exists(ctx context.Context, id string) (bool, error) {
 func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 	return func(yield func(*Item, error) bool) {
 		query := `
-    SELECT id, source, title, link, description, content, summary, reason, interest_level, published_at
+    SELECT id, source, title, link, description, content, summary, thought, reason, interest_level, published_at
     FROM items
     WHERE interest_level != 'exclude'
     ORDER BY published_at DESC`
@@ -126,6 +129,7 @@ func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 				&item.Description,
 				&item.Content,
 				&item.Summary,
+				&item.Thought,
 				&item.Reason,
 				&item.InterestLevel,
 				&item.PublishedAt,

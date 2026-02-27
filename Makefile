@@ -1,8 +1,10 @@
 BINARY_NAME=sieve
 BIN_DIR=bin
 CMD_DIR=github.com/liuerfire/sieve/cmd/sieve
+GOIMPORTS=$(HOME)/go/bin/goimports
+MODULE_NAME=github.com/liuerfire/sieve
 
-.PHONY: all build run report test clean
+.PHONY: all build run report test clean fmt
 
 all: build
 
@@ -19,8 +21,12 @@ run: build
 
 report: build
 	$(BIN_DIR)/$(BINARY_NAME) report
+
 test:
 	go test ./... -v
+
+fmt:
+	$(GOIMPORTS) -local $(MODULE_NAME) -w .
 
 pgo:
 	go test -cpuprofile=default.pgo ./internal/engine -run TestEngine_Run

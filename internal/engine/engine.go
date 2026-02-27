@@ -37,8 +37,8 @@ type ProgressEvent struct {
 }
 
 type Classifier interface {
-	Classify(ctx context.Context, title, desc, rules, lang string) (string, string, error)
-	Summarize(ctx context.Context, title, desc, lang string) (string, error)
+	Classify(ctx context.Context, cfg *config.AIConfig, title, desc, rules, lang string) (string, string, string, error)
+	Summarize(ctx context.Context, cfg *config.AIConfig, title, desc, lang string) (string, error)
 }
 
 type Engine struct {
@@ -60,6 +60,28 @@ func (e *Engine) report(ev ProgressEvent) {
 	if e.OnProgress != nil {
 		e.OnProgress(ev)
 	}
+}
+
+func (e *Engine) resolveAIConfig(src config.SourceConfig) *config.AIConfig {
+	// Start with global default
+	res := e.cfg.Global.AI
+
+	// Override with source-specific if present
+	if src.AI != nil {
+		if res == nil {
+			return src.AI
+		}
+		// Merge: only override non-empty fields
+		merged := *res
+		if src.AI.Provider != "" {
+			merged.Provider = src.AI.Provider
+		}
+		if src.AI.Model != "" {
+			merged.Model = src.AI.Model
+		}
+		return &merged
+	}
+	return res
 }
 
 func (e *Engine) Run(ctx context.Context) error {
@@ -156,15 +178,19 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		}
 	}
 
-	// 3. Phase 1: Initial Classification (Title + RSS Description)
-	level1, reason1, err := e.ai.Classify(ctx, item.Title, item.Description, rules, e.cfg.Global.PreferredLanguage)
+	// 3. Resolve AI settings
+	aiCfg := e.resolveAIConfig(src)
+
+	// 4. Phase 1: Initial Classification (Title + RSS Description)
+	thought1, level1, reason1, err := e.ai.Classify(ctx, aiCfg, item.Title, item.Description, rules, e.cfg.Global.PreferredLanguage)
 	if err != nil {
 		slog.Warn("AI initial classification failed", "title", item.Title, "err", err)
 		level1 = "uninterested"
-		reason1 = "AI classification failed"
+		reason1 = fmt.Sprintf("AI initial classification failed: %v", err)
 	}
+	item.Thought = thought1
 
-	// 4. Conditional Deep Processing (Summarization + Phase 2 Classification)
+	// 5. Conditional Deep Processing (Summarization + Phase 2 Classification)
 	if src.Summarize && (level1 == "high_interest" || level1 == "interest") {
 		// Determine best content for summarization
 		content := item.Content
@@ -173,7 +199,7 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		}
 
 		// AI Summarize
-		summary, err := e.ai.Summarize(ctx, item.Title, content, e.cfg.Global.PreferredLanguage)
+		summary, err := e.ai.Summarize(ctx, aiCfg, item.Title, content, e.cfg.Global.PreferredLanguage)
 		if err != nil {
 			slog.Warn("AI summarization failed", "title", item.Title, "err", err)
 			item.InterestLevel = level1
@@ -181,12 +207,13 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		} else {
 			item.Summary = summary
 			// Phase 2: Final Classification based on AI Summary
-			level2, reason2, err := e.ai.Classify(ctx, item.Title, summary, rules, e.cfg.Global.PreferredLanguage)
+			thought2, level2, reason2, err := e.ai.Classify(ctx, aiCfg, item.Title, summary, rules, e.cfg.Global.PreferredLanguage)
 			if err != nil {
 				slog.Warn("AI final classification failed", "title", item.Title, "err", err)
 				item.InterestLevel = level1
 				item.Reason = reason1
 			} else {
+				item.Thought = thought2
 				item.InterestLevel = level2
 				item.Reason = reason2
 			}
@@ -196,7 +223,7 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		item.Reason = reason1
 	}
 
-	// 5. Atomic Persistence
+	// 6. Atomic Persistence
 	return e.storage.SaveItem(ctx, item)
 }
 
