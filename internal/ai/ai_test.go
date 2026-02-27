@@ -16,7 +16,7 @@ func TestClassify(t *testing.T) {
 			"candidates": [{
 				"content": {
 					"parts": [{
-						"text": "{\"type\": \"high_interest\", \"reason\": \"matched keywords\"}"
+						"text": "{\"thought\": \"Matches high interest rules\", \"type\": \"high_interest\", \"reason\": \"matched keywords\"}"
 					}]
 				}
 			}]
@@ -26,7 +26,7 @@ func TestClassify(t *testing.T) {
 
 	client := NewClient(Gemini, "dummy-key", WithBaseURL(server.URL))
 
-	level, reason, err := client.Classify(context.Background(), "Test Title", "Test Content", "High Interest Rules")
+	level, reason, err := client.Classify(context.Background(), "Test Title", "Test Content", "High Interest Rules", "en")
 	if err != nil {
 		t.Fatalf("failed to classify: %v", err)
 	}

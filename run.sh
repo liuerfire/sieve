@@ -39,9 +39,9 @@ if [ $# -eq 0 ]; then
         echo "Tip: You can also run './run.sh report' to generate a local report."
         exit 1
     fi
-    
+
     echo "Starting Sieve aggregator (using default config: $CONFIG_FILE)..."
-    $BINARY run --config "$CONFIG_FILE" --db "$DB_FILE"
+    $BINARY run --ui --config "$CONFIG_FILE" --db "$DB_FILE"
 else
     # Forward all arguments to sieve
     echo "Executing: $BINARY $@"

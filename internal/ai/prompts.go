@@ -5,57 +5,68 @@ import "fmt"
 const (
 	// ClassifyPrompt is the template for categorizing news items.
 	ClassifyPrompt = `# Task: Content Classification
-Classify the news item based on user interest configurations, considering both title and summary.
+You are an intelligent news filter. Your goal is to accurately categorize news items based on specific user interest rules.
 
-## Classification Rules
-1. **Understand User Interests**:
-   - Levels: high_interest, interest, uninterested, exclude.
-   - Source-specific configurations have higher priority than global ones.
-2. **Contextual Judgment**:
-   - Focus on the **primary theme** of the article. If an article mentions a high-interest topic but the core content is irrelevant, lower its rating.
-   - Avoid simple keyword matching; you must understand the actual intent and depth of the article.
+## Classification Levels
+1. **high_interest** (⭐⭐): Content that perfectly matches the user's core interests or professional focus.
+2. **interest** (⭐): Content that is generally relevant or interesting to the user.
+3. **uninterested**: Content that doesn't match specific interests but isn't explicitly excluded.
+4. **exclude**: Content that should be completely hidden (e.g., ads, off-topic, or explicitly blocked keywords).
 
-## User Configuration
-Rules: %s
+## Strategic Guidelines
+- **Priority**: Source-specific rules > Global rules.
+- **Deep Understanding**: Don't just match keywords. Analyze the *intent* and *substance* of the article.
+- **Context matters**: A tech article about "Apple" might be high interest, but a news item about an "Apple orchard" is likely uninterested unless specified.
+
+## User Rules
+%s
+
+## Language Preference
+User preferred language for the "reason" field: %s
 
 ## Input Data
-Item Title: %s
-Item Content: %s
+- **Title**: %s
+- **Content/Summary**: %s
 
 ## Output Format
 Return ONLY a JSON object:
 {
+  "thought": "Internal reasoning (in English) about why this item fits the chosen category.",
   "type": "high_interest" | "interest" | "uninterested" | "exclude",
-  "reason": "A brief explanation in the user's preferred language, e.g., 'Go 1.25 concurrency optimizations, related to Backend Engineering'."
+  "reason": "A concise, user-facing explanation in the user's preferred language (e.g., 'Go 1.25 runtime optimizations, highly relevant to backend performance')."
 }
 `
 
 	// SummarizePrompt is the template for summarizing news items.
-	SummarizePrompt = `# Role
-You are a professional content summarization expert.
+	SummarizePrompt = `# Task: Professional Content Summarization
+Generate a structured, insightful summary of the following news article.
 
-# Task
-Deeply understand the article and generate a structured summary.
+## Output Requirements (HTML)
+1. **TL;DR (1-2 sentences)**: A bolded summary of the most critical takeaway. Wrap in <p><strong>TL;DR:</strong> ...</p>.
+2. **Key Highlights**: Use a <ul> with 3-5 <li> items covering the core facts, technical details, or unique insights.
+3. **Context & Impact**: A brief paragraph (<p>) explaining *why* this matters or the broader context.
+4. **"Did You Know?" (Optional)**: If there's an interesting background fact, use <div class="did-you-know"><strong>💡 Did you know?</strong> ...</div>.
 
-## Language Requirements
-- Preferred Language: %s
-- When a technical term or proper noun appears for the first time, include its original name in parentheses if necessary, e.g., "Firefox (火狐浏览器)".
+## Style & Language
+- **Language**: %s
+- **Tone**: Professional, analytical, yet engaging. Avoid marketing fluff.
+- **Clarity**: Use clear headers or bold text for emphasis.
+- **Terminology**: For technical terms in a non-English summary, include the original English term in parentheses on first mention, e.g., "Generic (泛型)".
 
-## Output Specifications (HTML Format)
-1. **Core Summary**: Relaxed, conversational tone, approx 300-500 characters/words. Use <p>, <ul>, <li> tags.
-2. **"Did You Know?" (Optional)**: If the content involves niche knowledge or complex background, add: <div class="did-you-know"><strong>Did you know?</strong> ...</div>.
-3. **Constraint**: Do NOT output any Markdown wrappers (like ` + "`" + `html ...` + "`" + `); output raw HTML code directly.
+## Constraints
+- **Format**: Raw HTML only. No Markdown wrappers.
+- **Objective**: Do not hallucinate. If content is insufficient, provide a very brief summary based on what is available.
 
 ## Input Data
-Item Title: %s
-Item Content: %s
+- **Title**: %s
+- **Content**: %s
 
-Please start the summary:`
+Please provide the summary now:`
 )
 
 // BuildClassifyPrompt constructs the classification prompt.
-func BuildClassifyPrompt(rules, title, content string) string {
-	return fmt.Sprintf(ClassifyPrompt, rules, title, content)
+func BuildClassifyPrompt(rules, title, content, lang string) string {
+	return fmt.Sprintf(ClassifyPrompt, rules, lang, title, content)
 }
 
 // BuildSummarizePrompt constructs the summarization prompt.

@@ -83,12 +83,13 @@ func NewClient(t ProviderType, apiKey string, opts ...Option) *Client {
 }
 
 type classifyResponse struct {
-	Type   string `json:"type"`
-	Reason string `json:"reason"`
+	Thought string `json:"thought"`
+	Type    string `json:"type"`
+	Reason  string `json:"reason"`
 }
 
-func (c *Client) Classify(ctx context.Context, title, content, rules string) (string, string, error) {
-	prompt := BuildClassifyPrompt(rules, title, content)
+func (c *Client) Classify(ctx context.Context, title, content, rules, lang string) (string, string, error) {
+	prompt := BuildClassifyPrompt(rules, title, content, lang)
 
 	aiText, err := c.callAI(ctx, prompt, true)
 	if err != nil {

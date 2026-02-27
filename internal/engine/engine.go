@@ -37,7 +37,7 @@ type ProgressEvent struct {
 }
 
 type Classifier interface {
-	Classify(ctx context.Context, title, desc, rules string) (string, string, error)
+	Classify(ctx context.Context, title, desc, rules, lang string) (string, string, error)
 	Summarize(ctx context.Context, title, desc, lang string) (string, error)
 }
 
@@ -157,7 +157,7 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 	}
 
 	// 3. Phase 1: Initial Classification (Title + RSS Description)
-	level1, reason1, err := e.ai.Classify(ctx, item.Title, item.Description, rules)
+	level1, reason1, err := e.ai.Classify(ctx, item.Title, item.Description, rules, e.cfg.Global.PreferredLanguage)
 	if err != nil {
 		slog.Warn("AI initial classification failed", "title", item.Title, "err", err)
 		level1 = "uninterested"
@@ -181,7 +181,7 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 		} else {
 			item.Summary = summary
 			// Phase 2: Final Classification based on AI Summary
-			level2, reason2, err := e.ai.Classify(ctx, item.Title, summary, rules)
+			level2, reason2, err := e.ai.Classify(ctx, item.Title, summary, rules, e.cfg.Global.PreferredLanguage)
 			if err != nil {
 				slog.Warn("AI final classification failed", "title", item.Title, "err", err)
 				item.InterestLevel = level1

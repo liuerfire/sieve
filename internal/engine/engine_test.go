@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/ai"
@@ -40,7 +41,7 @@ func TestEngine_Run(t *testing.T) {
 			"candidates": [{
 				"content": {
 					"parts": [{
-						"text": "{\"type\": \"high_interest\", \"reason\": \"matched keywords\"}"
+						"text": "{\"thought\": \"Reasoning\", \"type\": \"high_interest\", \"reason\": \"matched keywords\"}"
 					}]
 				}
 			}]
@@ -123,7 +124,18 @@ func TestEngine_ProcessItem_Pipeline(t *testing.T) {
 		if aiCalls > 1 {
 			level = "interest" // Changed in second pass
 		}
-		resp := fmt.Sprintf(`{"candidates": [{"content": {"parts": [{"text": "{\"type\": \"%s\", \"reason\": \"pass %d\"}"}]}}]}`, level, aiCalls)
+
+		// Distinguish between classification (which uses isJSON/JSON response) and summarization (which returns raw text)
+		var text string
+		if aiCalls == 2 {
+			// Second call in this test sequence is actually the Summarize call
+			text = "Summary text"
+		} else {
+			// First and third calls are Classify
+			text = fmt.Sprintf(`{"thought": "Thought %d", "type": "%s", "reason": "pass %d"}`, aiCalls, level, aiCalls)
+		}
+
+		resp := fmt.Sprintf(`{"candidates": [{"content": {"parts": [{"text": "%s"}]}}]}`, strings.ReplaceAll(text, `"`, `\"`))
 		w.Write([]byte(resp))
 	}))
 	defer aiServer.Close()
