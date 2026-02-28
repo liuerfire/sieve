@@ -3,7 +3,7 @@ package rss
 
 import (
 	"context"
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	"time"
 
@@ -24,7 +24,7 @@ func FetchItems(ctx context.Context, url string, sourceName string) ([]*storage.
 	var items []*storage.Item
 	for _, entry := range feed.Items {
 		item := &storage.Item{
-			ID:          generateID(entry.Link),
+			ID:          generateID(sourceName, entry.Link),
 			Source:      sourceName,
 			Title:       entry.Title,
 			Link:        entry.Link,
@@ -46,6 +46,9 @@ func FetchItems(ctx context.Context, url string, sourceName string) ([]*storage.
 	return items, nil
 }
 
-func generateID(link string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(link)))
+func generateID(source, link string) string {
+	// Use SHA-256 with source+link to prevent collisions across different sources
+	h := sha256.New()
+	h.Write([]byte(source + "|" + link))
+	return fmt.Sprintf("%x", h.Sum(nil))
 }

@@ -3,6 +3,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -50,5 +51,24 @@ func LoadConfig(path string) (*Config, error) {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return nil, err
 	}
+	if err := cfg.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid config: %w", err)
+	}
 	return &cfg, nil
+}
+
+// Validate checks that the configuration is valid and complete.
+func (c *Config) Validate() error {
+	if len(c.Sources) == 0 {
+		return fmt.Errorf("at least one source is required")
+	}
+	for i, src := range c.Sources {
+		if src.Name == "" {
+			return fmt.Errorf("source[%d]: name is required", i)
+		}
+		if src.URL == "" {
+			return fmt.Errorf("source[%d]: URL is required", i)
+		}
+	}
+	return nil
 }

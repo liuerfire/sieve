@@ -63,25 +63,7 @@ func (e *Engine) report(ev ProgressEvent) {
 }
 
 func (e *Engine) resolveAIConfig(src config.SourceConfig) *config.AIConfig {
-	// Start with global default
-	res := e.cfg.Global.AI
-
-	// Override with source-specific if present
-	if src.AI != nil {
-		if res == nil {
-			return src.AI
-		}
-		// Merge: only override non-empty fields
-		merged := *res
-		if src.AI.Provider != "" {
-			merged.Provider = src.AI.Provider
-		}
-		if src.AI.Model != "" {
-			merged.Model = src.AI.Model
-		}
-		return &merged
-	}
-	return res
+	return config.ResolveAIConfig(e.cfg.Global.AI, src.AI)
 }
 
 func (e *Engine) Run(ctx context.Context) error {
@@ -106,13 +88,7 @@ func (e *Engine) Run(ctx context.Context) error {
 				return nil // continue with other sources
 			}
 
-			high := merge(e.cfg.Global.HighInterest, src.HighInterest)
-			interest := merge(e.cfg.Global.Interest, src.Interest)
-			uninterested := merge(e.cfg.Global.Uninterested, src.Uninterested)
-			exclude := merge(e.cfg.Global.Exclude, src.Exclude)
-
-			rules := fmt.Sprintf("High: %s, Interest: %s, Uninterested: %s, Exclude: %s",
-				high, interest, uninterested, exclude)
+			rules := config.BuildRulesString(e.cfg.Global, src)
 
 			for i, item := range items {
 				select {
@@ -372,14 +348,4 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 
 	slog.Info("Successfully generated HTML report", "path", outputPath, "items", report.TotalItems)
 	return nil
-}
-
-func merge(global, specific string) string {
-	if specific == "" {
-		return global
-	}
-	if global == "" {
-		return specific
-	}
-	return global + "," + specific
 }
