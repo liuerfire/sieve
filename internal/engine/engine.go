@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log/slog"
 	"os"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -19,11 +20,11 @@ import (
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
-// Concurrency and rate limiting configuration.
+// Default concurrency and rate limiting configuration.
 const (
-	aiRateLimit      = 500 * time.Millisecond // Time between AI requests
-	aiBurstLimit     = 5                      // Max burst AI requests
-	maxAIConcurrency = 5                      // Max concurrent AI requests
+	defaultAIRateLimit      = 500 * time.Millisecond // Time between AI requests
+	defaultAIBurstLimit     = 5                      // Max burst AI requests
+	defaultAIMaxConcurrency = 5                      // Max concurrent AI requests
 )
 
 type ProgressEvent struct {
@@ -34,6 +35,19 @@ type ProgressEvent struct {
 	Level   string
 	Count   int
 	Total   int
+}
+
+type SourceError struct {
+	Name  string
+	URL   string
+	Error error
+}
+
+type EngineResult struct {
+	SourcesProcessed  int
+	SourcesFailed     []SourceError
+	ItemsProcessed    int
+	ItemsHighInterest int
 }
 
 type Classifier interface {
@@ -66,15 +80,30 @@ func (e *Engine) resolveAIConfig(src config.SourceConfig) *config.AIConfig {
 	return config.ResolveAIConfig(e.cfg.Global.AI, src.AI)
 }
 
-func (e *Engine) Run(ctx context.Context) error {
+func (e *Engine) Run(ctx context.Context) (*EngineResult, error) {
 	parentCtx := ctx
 	g, ctx := errgroup.WithContext(ctx)
 
-	// AI Rate Limiter: Limit total requests per second to avoid hitting bursts
-	limiter := rate.NewLimiter(rate.Every(aiRateLimit), aiBurstLimit)
+	result := &EngineResult{}
+	var mu sync.Mutex
 
-	// AI Semaphore: Limit total concurrent AI requests
-	aiSem := make(chan struct{}, maxAIConcurrency)
+	// AI Rate Limiter: Use config values with defaults
+	rateLimit := defaultAIRateLimit
+	if e.cfg.Global.AITimeBetweenRequests > 0 {
+		rateLimit = time.Duration(e.cfg.Global.AITimeBetweenRequests) * time.Millisecond
+	}
+	burstLimit := defaultAIBurstLimit
+	if e.cfg.Global.AIBurstLimit > 0 {
+		burstLimit = e.cfg.Global.AIBurstLimit
+	}
+	limiter := rate.NewLimiter(rate.Every(rateLimit), burstLimit)
+
+	// AI Semaphore: Use config value with default
+	maxConcurrency := defaultAIMaxConcurrency
+	if e.cfg.Global.AIMaxConcurrency > 0 {
+		maxConcurrency = e.cfg.Global.AIMaxConcurrency
+	}
+	aiSem := make(chan struct{}, maxConcurrency)
 
 	// Process each source in parallel
 	for _, src := range e.cfg.Sources {
@@ -85,8 +114,15 @@ func (e *Engine) Run(ctx context.Context) error {
 			if err != nil {
 				e.report(ProgressEvent{Type: "source_done", Source: src.Name, Message: fmt.Sprintf("Error fetching items: %v", err)})
 				slog.Error("Error fetching items", "source", src.Name, "url", src.URL, "err", err)
+				mu.Lock()
+				result.SourcesFailed = append(result.SourcesFailed, SourceError{Name: src.Name, URL: src.URL, Error: err})
+				mu.Unlock()
 				return nil // continue with other sources
 			}
+
+			mu.Lock()
+			result.SourcesProcessed++
+			mu.Unlock()
 
 			rules := config.BuildRulesString(e.cfg.Global, src)
 
@@ -110,6 +146,14 @@ func (e *Engine) Run(ctx context.Context) error {
 						slog.Error("Error processing item", "source", src.Name, "title", item.Title, "err", err)
 						continue
 					}
+
+					mu.Lock()
+					result.ItemsProcessed++
+					if item.InterestLevel == "high_interest" {
+						result.ItemsHighInterest++
+					}
+					mu.Unlock()
+
 					e.report(ProgressEvent{Type: "item_done", Source: src.Name, Item: item.Title, Level: item.InterestLevel, Count: i + 1, Total: len(items)})
 				}
 			}
@@ -119,16 +163,22 @@ func (e *Engine) Run(ctx context.Context) error {
 	}
 
 	if err := g.Wait(); err != nil {
-		return err
+		return nil, err
+	}
+
+	// Report failed sources
+	if len(result.SourcesFailed) > 0 {
+		slog.Warn("Some sources failed", "count", len(result.SourcesFailed), "failures", result.SourcesFailed)
 	}
 
 	// Generate final output
 	e.report(ProgressEvent{Type: "gen_start", Message: "Generating reports"})
 	if err := e.GenerateJSON(parentCtx, "index.json"); err != nil {
-		return err
+		return nil, err
 	}
 	e.report(ProgressEvent{Type: "gen_done", Message: "Reports generated"})
-	return nil
+
+	return result, nil
 }
 
 func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item *storage.Item, rules string) error {

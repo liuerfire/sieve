@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -72,5 +73,134 @@ func TestLoadConfig_ValidJSON(t *testing.T) {
 	}
 	if cfg.Sources[1].Timeout != 20 {
 		t.Errorf("expected second source timeout 20, got %d", cfg.Sources[1].Timeout)
+	}
+}
+
+func TestConfig_Validate_InvalidProvider(t *testing.T) {
+	cfg := &Config{
+		Global: GlobalConfig{
+			HighInterest:      "test",
+			Interest:          "test",
+			Uninterested:      "test",
+			Exclude:           "test",
+			PreferredLanguage: "en",
+			Timeout:           5,
+			AI: &AIConfig{
+				Provider: "invalid-provider",
+				Model:    "test-model",
+			},
+		},
+		Sources: []SourceConfig{
+			{Name: "test", URL: "https://example.com/feed.xml"},
+		},
+	}
+
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected error for invalid provider, got nil")
+	}
+	if !strings.Contains(err.Error(), "provider") {
+		t.Errorf("expected provider error, got: %v", err)
+	}
+}
+
+func TestConfig_Validate_ValidProviders(t *testing.T) {
+	for _, provider := range []string{"gemini", "qwen"} {
+		t.Run(provider, func(t *testing.T) {
+			cfg := &Config{
+				Global: GlobalConfig{
+					HighInterest:      "test",
+					Interest:          "test",
+					Uninterested:      "test",
+					Exclude:           "test",
+					PreferredLanguage: "en",
+					Timeout:           5,
+					AI:                &AIConfig{Provider: provider},
+				},
+				Sources: []SourceConfig{
+					{Name: "test", URL: "https://example.com/feed.xml"},
+				},
+			}
+			err := cfg.Validate()
+			if err != nil {
+				t.Errorf("expected no error for valid provider %s, got: %v", provider, err)
+			}
+		})
+	}
+}
+
+func TestConfig_Validate_SourceAIProvider(t *testing.T) {
+	cfg := &Config{
+		Global: GlobalConfig{
+			HighInterest:      "test",
+			Interest:          "test",
+			Uninterested:      "test",
+			Exclude:           "test",
+			PreferredLanguage: "en",
+			Timeout:           5,
+		},
+		Sources: []SourceConfig{
+			{
+				Name: "test",
+				URL:  "https://example.com/feed.xml",
+				AI:   &AIConfig{Provider: "invalid"},
+			},
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected error for invalid source AI provider, got nil")
+	}
+	if !strings.Contains(err.Error(), "source[0]") {
+		t.Errorf("expected source index in error, got: %v", err)
+	}
+}
+
+func TestConfig_Validate_GlobalAIProvider(t *testing.T) {
+	cfg := &Config{
+		Global: GlobalConfig{
+			HighInterest:      "test",
+			Interest:          "test",
+			Uninterested:      "test",
+			Exclude:           "test",
+			PreferredLanguage: "en",
+			Timeout:           5,
+			AI:                &AIConfig{Provider: "invalid"},
+		},
+		Sources: []SourceConfig{
+			{Name: "test", URL: "https://example.com/feed.xml"},
+		},
+	}
+	err := cfg.Validate()
+	if err == nil {
+		t.Fatal("expected error for invalid global AI provider, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid AI provider") {
+		t.Errorf("expected provider error in message, got: %v", err)
+	}
+}
+
+func TestConfig_Validate_CaseInsensitiveProviders(t *testing.T) {
+	for _, provider := range []string{"Gemini", "GEMINI", "Qwen", "QWEN"} {
+		t.Run(provider, func(t *testing.T) {
+			cfg := &Config{
+				Global: GlobalConfig{
+					HighInterest:      "test",
+					Interest:          "test",
+					Uninterested:      "test",
+					Exclude:           "test",
+					PreferredLanguage: "en",
+					Timeout:           5,
+					AI:                &AIConfig{Provider: provider},
+				},
+				Sources: []SourceConfig{
+					{Name: "test", URL: "https://example.com/feed.xml"},
+				},
+			}
+			err := cfg.Validate()
+			if err != nil {
+				t.Errorf("expected no error for case-insensitive provider %s, got: %v", provider, err)
+			}
+		})
 	}
 }

@@ -70,16 +70,24 @@ var runCmd = &cobra.Command{
 
 			return ui.RunDashboard(ctx, sourceNames, func(report func(engine.ProgressEvent)) error {
 				eng.OnProgress = report
-				return eng.Run(ctx)
+				_, err := eng.Run(ctx)
+				return err
 			})
 		}
 
 		slog.Info("Starting Sieve aggregator...")
-		if err := eng.Run(ctx); err != nil {
+		result, err := eng.Run(ctx)
+		if err != nil {
 			return fmt.Errorf("aggregator run: %w", err)
 		}
 
-		slog.Info("Sieve run completed successfully.")
+		if result != nil {
+			slog.Info("Sieve run completed",
+				"sources", result.SourcesProcessed,
+				"failed", len(result.SourcesFailed),
+				"items", result.ItemsProcessed,
+				"high_interest", result.ItemsHighInterest)
+		}
 		return nil
 	},
 }

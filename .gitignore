@@ -31,3 +31,6 @@ vendor/
 # Temporary files
 tmp/
 config.json
+
+# Worktrees
+.worktrees/

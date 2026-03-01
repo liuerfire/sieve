@@ -82,8 +82,12 @@ func TestEngine_Run(t *testing.T) {
 	eng := NewEngine(cfg, s, a)
 
 	// Run Engine
-	if err := eng.Run(ctx); err != nil {
+	result, err := eng.Run(ctx)
+	if err != nil {
 		t.Fatalf("Engine.Run failed: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
 	}
 	defer os.Remove("index.json")
 

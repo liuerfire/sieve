@@ -75,6 +75,10 @@ If you only want to generate one of them, use the skip flags:
 ./run.sh report --skip-json
 ```
 
+### Security Notice
+
+**Never commit API keys to version control.** Use environment variables or a `.env` file (added to `.gitignore`).
+
 ## Reference Configuration
 
 ```json

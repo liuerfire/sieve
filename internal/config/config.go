@@ -5,7 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 )
+
+var validProviders = map[string]bool{"gemini": true, "qwen": true}
 
 type Config struct {
 	Schema  string         `json:"$schema"`
@@ -19,13 +22,16 @@ type AIConfig struct {
 }
 
 type GlobalConfig struct {
-	HighInterest      string    `json:"high_interest"`
-	Interest          string    `json:"interest"`
-	Uninterested      string    `json:"uninterested"`
-	Exclude           string    `json:"exclude"`
-	PreferredLanguage string    `json:"preferred_language"`
-	Timeout           int       `json:"timeout"`
-	AI                *AIConfig `json:"ai,omitempty"`
+	HighInterest          string    `json:"high_interest"`
+	Interest              string    `json:"interest"`
+	Uninterested          string    `json:"uninterested"`
+	Exclude               string    `json:"exclude"`
+	PreferredLanguage     string    `json:"preferred_language"`
+	Timeout               int       `json:"timeout"`
+	AI                    *AIConfig `json:"ai,omitempty"`
+	AITimeBetweenRequests int       `json:"ai_time_between_ms,omitempty"`
+	AIBurstLimit          int       `json:"ai_burst_limit,omitempty"`
+	AIMaxConcurrency      int       `json:"ai_max_concurrency,omitempty"`
 }
 
 type SourceConfig struct {
@@ -62,6 +68,13 @@ func (c *Config) Validate() error {
 	if len(c.Sources) == 0 {
 		return fmt.Errorf("at least one source is required")
 	}
+
+	if c.Global.AI != nil && c.Global.AI.Provider != "" {
+		if !validProviders[strings.ToLower(c.Global.AI.Provider)] {
+			return fmt.Errorf("invalid AI provider %q, must be 'gemini' or 'qwen'", c.Global.AI.Provider)
+		}
+	}
+
 	for i, src := range c.Sources {
 		if src.Name == "" {
 			return fmt.Errorf("source[%d]: name is required", i)
@@ -69,6 +82,12 @@ func (c *Config) Validate() error {
 		if src.URL == "" {
 			return fmt.Errorf("source[%d]: URL is required", i)
 		}
+		if src.AI != nil && src.AI.Provider != "" {
+			if !validProviders[strings.ToLower(src.AI.Provider)] {
+				return fmt.Errorf("source[%d]: invalid AI provider %q, must be 'gemini' or 'qwen'", i, src.AI.Provider)
+			}
+		}
 	}
+
 	return nil
 }
