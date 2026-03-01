@@ -36,9 +36,10 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
 	}
 
 	// Optimize SQLite for concurrent access and performance
-	// Set connection limits: 1 for writing (SQLite requirement), multiple for reading if needed
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
+	// With WAL mode: 1 writer + multiple readers allowed
+	// Set to 4 connections: 1 for writes, 3 for concurrent reads
+	db.SetMaxOpenConns(4)
+	db.SetMaxIdleConns(4)
 	db.SetConnMaxLifetime(time.Hour)
 
 	// Enable WAL mode

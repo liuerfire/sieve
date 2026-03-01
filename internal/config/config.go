@@ -4,11 +4,22 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
 	"strings"
 )
 
 var validProviders = map[string]bool{"gemini": true, "qwen": true}
+
+// InterestLevel represents the classification level for an item
+type InterestLevel string
+
+const (
+	HighInterest InterestLevel = "high_interest"
+	Interest     InterestLevel = "interest"
+	Uninterested InterestLevel = "uninterested"
+	Exclude      InterestLevel = "exclude"
+)
 
 type Config struct {
 	Schema  string         `json:"$schema"`
@@ -81,6 +92,10 @@ func (c *Config) Validate() error {
 		}
 		if src.URL == "" {
 			return fmt.Errorf("source[%d]: URL is required", i)
+		}
+		// Validate URL format
+		if _, err := url.Parse(src.URL); err != nil {
+			return fmt.Errorf("source[%d]: invalid URL %q: %w", i, src.URL, err)
 		}
 		if src.AI != nil && src.AI.Provider != "" {
 			if !validProviders[strings.ToLower(src.AI.Provider)] {

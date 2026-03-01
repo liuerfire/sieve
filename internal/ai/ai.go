@@ -259,9 +259,9 @@ func (c *Client) callAI(ctx context.Context, cfg *config.AIConfig, prompt string
 			lastErr = fmt.Errorf("do request: %w", err)
 			continue
 		}
-		defer resp.Body.Close()
 
 		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close() // Close immediately after reading
 		if err != nil {
 			lastErr = fmt.Errorf("read response: %w", err)
 			continue

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -60,6 +61,7 @@ type Model struct {
 	startTime      time.Time
 	totalProcessed int
 	highCount      int
+	mu             sync.Mutex // Protects concurrent access to counters
 }
 
 func NewModel(sourceNames []string) Model {
@@ -128,6 +130,7 @@ func (m *Model) handleProgress(ev engine.ProgressEvent) {
 		}
 
 	case "item_done":
+		m.mu.Lock()
 		if s, ok := m.sources[ev.Source]; ok {
 			s.lastLevel = ev.Level
 			m.totalProcessed++
@@ -135,6 +138,7 @@ func (m *Model) handleProgress(ev engine.ProgressEvent) {
 				m.highCount++
 			}
 		}
+		m.mu.Unlock()
 
 	case "source_done":
 		if s, ok := m.sources[ev.Source]; ok {
