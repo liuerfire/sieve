@@ -8,6 +8,8 @@ import (
 	"html/template"
 	"log/slog"
 	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -319,6 +321,10 @@ func (e *Engine) GenerateJSON(ctx context.Context, outputPath string) error {
 }
 
 func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
+	return e.generateFilteredHTML(ctx, outputPath, nil)
+}
+
+func (e *Engine) generateFilteredHTML(ctx context.Context, outputPath string, filter func(*storage.Item) bool) error {
 	funcMap := template.FuncMap{
 		"stars": func(level string) string {
 			switch level {
@@ -343,13 +349,12 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 	}
 	defer f.Close()
 
-	// Use structure from items-summarized.schema.json
 	type htmlItem struct {
 		GUID          string
 		Title         string
 		Link          string
 		PubDate       string
-		Description   template.HTML // HTML summary
+		Description   template.HTML
 		Source        string
 		InterestLevel string
 		Reason        string
@@ -362,17 +367,22 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 		TotalItems  int
 		GeneratedAt string
 		Items       []htmlItem
+		Archives    []string
 	}{
 		SourceName:  "Sieve",
 		SourceURL:   "https://github.com/liuerfire/sieve",
 		SourceTitle: "Sieve Aggregated Report",
 		GeneratedAt: time.Now().Format("2006-01-02 15:04:05"),
 		Items:       make([]htmlItem, 0),
+		Archives:    e.getArchives(outputPath),
 	}
 
 	for it, err := range e.storage.AllItems(ctx) {
 		if err != nil {
 			return fmt.Errorf("get item: %w", err)
+		}
+		if filter != nil && !filter(it) {
+			continue
 		}
 		desc := it.Description
 		if it.Summary != "" {
@@ -397,5 +407,158 @@ func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
 	}
 
 	slog.Info("Successfully generated HTML report", "path", outputPath, "items", report.TotalItems)
+	return nil
+}
+
+func (e *Engine) getArchives(outputPath string) []string {
+	dir := filepath.Dir(outputPath)
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+
+	var archives []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasPrefix(entry.Name(), "archive-") && strings.HasSuffix(entry.Name(), ".html") {
+			archives = append(archives, entry.Name())
+		}
+	}
+	return archives
+}
+
+// GenerateHTMLWithArchives generates the main HTML file and archives if enabled.
+func (e *Engine) GenerateHTMLWithArchives(ctx context.Context, outputPath string) error {
+	// Generate main index.html with recent items only
+	maxAgeDays := e.cfg.Global.HTMLMaxAgeDays
+	if maxAgeDays <= 0 {
+		maxAgeDays = 7 // Default to 7 days
+	}
+	cutoff := time.Now().AddDate(0, 0, -maxAgeDays)
+
+	if err := e.generateFilteredHTML(ctx, outputPath, func(it *storage.Item) bool {
+		return it.PublishedAt.After(cutoff)
+	}); err != nil {
+		return err
+	}
+
+	// Generate archive files if enabled
+	if e.cfg.Global.EnableArchives {
+		if err := e.GenerateHTMLArchives(ctx); err != nil {
+			return fmt.Errorf("generate archives: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// GenerateHTMLArchives generates monthly archive HTML files for older items.
+func (e *Engine) GenerateHTMLArchives(ctx context.Context) error {
+	// Group items by month
+	itemsByMonth := make(map[string][]*storage.Item)
+	cutoff := time.Now().AddDate(0, 0, -e.cfg.Global.HTMLMaxAgeDays)
+
+	for it, err := range e.storage.AllItems(ctx) {
+		if err != nil {
+			return fmt.Errorf("get item: %w", err)
+		}
+		// Skip items that are in the main index
+		if it.PublishedAt.After(cutoff) {
+			continue
+		}
+		// Group by year-month
+		monthKey := it.PublishedAt.Format("2006-01")
+		itemsByMonth[monthKey] = append(itemsByMonth[monthKey], it)
+	}
+
+	// Generate archive file for each month
+	for month, items := range itemsByMonth {
+		filename := fmt.Sprintf("archive-%s.html", month)
+		if err := e.generateArchiveFile(ctx, filename, month, items); err != nil {
+			return fmt.Errorf("generate archive %s: %w", month, err)
+		}
+		slog.Info("Generated archive", "month", month, "items", len(items))
+	}
+
+	return nil
+}
+
+func (e *Engine) generateArchiveFile(ctx context.Context, filename, month string, items []*storage.Item) error {
+	funcMap := template.FuncMap{
+		"stars": func(level string) string {
+			switch level {
+			case "high_interest":
+				return "⭐⭐"
+			case "interest":
+				return "⭐"
+			default:
+				return ""
+			}
+		},
+	}
+
+	tmpl, err := template.New("html").Funcs(funcMap).Parse(htmlTemplate)
+	if err != nil {
+		return fmt.Errorf("parse template: %w", err)
+	}
+
+	f, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("create file: %w", err)
+	}
+	defer f.Close()
+
+	type htmlItem struct {
+		GUID          string
+		Title         string
+		Link          string
+		PubDate       string
+		Description   template.HTML
+		Source        string
+		InterestLevel string
+		Reason        string
+	}
+
+	report := struct {
+		SourceName   string
+		SourceURL    string
+		SourceTitle  string
+		TotalItems   int
+		GeneratedAt  string
+		Items        []htmlItem
+		ArchiveMonth string
+		IsArchive    bool
+	}{
+		SourceName:   "Sieve",
+		SourceURL:    "https://github.com/liuerfire/sieve",
+		SourceTitle:  fmt.Sprintf("Sieve Archive - %s", month),
+		GeneratedAt:  time.Now().Format("2006-01-02 15:04:05"),
+		Items:        make([]htmlItem, 0),
+		ArchiveMonth: month,
+		IsArchive:    true,
+	}
+
+	for _, it := range items {
+		desc := it.Description
+		if it.Summary != "" {
+			desc = it.Summary
+		}
+
+		report.Items = append(report.Items, htmlItem{
+			GUID:          it.ID,
+			Title:         it.Title,
+			Link:          it.Link,
+			PubDate:       it.PublishedAt.Format(time.RFC1123Z),
+			Description:   template.HTML(desc),
+			Source:        it.Source,
+			InterestLevel: it.InterestLevel,
+			Reason:        it.Reason,
+		})
+	}
+	report.TotalItems = len(report.Items)
+
+	if err := tmpl.Execute(f, report); err != nil {
+		return fmt.Errorf("execute template: %w", err)
+	}
+
 	return nil
 }

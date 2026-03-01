@@ -155,6 +155,17 @@ const htmlTemplate = `
         </div>
     </header>
 
+    {{if .Archives}}
+    <div class="archive-nav">
+        <h3>📁 Archives</h3>
+        <div class="archive-links">
+            {{range .Archives}}
+            <a href="{{.File}}" class="archive-link">{{.Label}}</a>
+            {{end}}
+        </div>
+    </div>
+    {{end}}
+
     <div class="summary-nav">
         <h3>⭐⭐ 深度关注 (Highlights)</h3>
         <ul class="summary-list">

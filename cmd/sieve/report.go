@@ -49,7 +49,7 @@ var reportCmd = &cobra.Command{
 
 		if !skipHTML {
 			slog.Info("Generating HTML report...", "output", htmlOutput)
-			if err := eng.GenerateHTML(ctx, htmlOutput); err != nil {
+			if err := eng.GenerateHTMLWithArchives(ctx, htmlOutput); err != nil {
 				return fmt.Errorf("html generation: %w", err)
 			}
 		}
