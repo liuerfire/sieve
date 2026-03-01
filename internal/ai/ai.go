@@ -221,6 +221,15 @@ func (p *qwenProvider) parseResponse(body []byte) (string, error) {
 }
 
 func (c *Client) callAI(ctx context.Context, cfg *config.AIConfig, prompt string, isJSON bool) (string, error) {
+	p, model, err := c.resolveProvider(cfg)
+	if err != nil {
+		return "", err
+	}
+
+	return c.doRequestWithRetry(ctx, p, model, prompt, isJSON)
+}
+
+func (c *Client) resolveProvider(cfg *config.AIConfig) (Provider, string, error) {
 	providerType := Gemini
 	model := ""
 	if cfg != nil {
@@ -232,64 +241,88 @@ func (c *Client) callAI(ctx context.Context, cfg *config.AIConfig, prompt string
 
 	p, ok := c.providers[providerType]
 	if !ok {
-		return "", fmt.Errorf("provider %s not configured", providerType)
+		return nil, "", fmt.Errorf("provider %s not configured", providerType)
 	}
+	return p, model, nil
+}
 
-	// Retry logic with exponential backoff
-	maxRetries := 3
+func (c *Client) doRequestWithRetry(ctx context.Context, p Provider, model, prompt string, isJSON bool) (string, error) {
+	const maxRetries = 3
 	var lastErr error
+
 	for i := range maxRetries {
 		if i > 0 {
-			// Exponential backoff: 1s, 2s, 4s
-			backoff := time.Duration(1<<uint(i-1)) * time.Second
-			select {
-			case <-ctx.Done():
-				return "", ctx.Err()
-			case <-time.After(backoff):
+			if err := c.backoff(ctx, i); err != nil {
+				return "", err
 			}
 		}
 
-		req, err := p.buildRequest(ctx, model, prompt, isJSON)
-		if err != nil {
-			return "", fmt.Errorf("build request: %w", err)
+		result, err := c.doRequest(ctx, p, model, prompt, isJSON)
+		if err == nil {
+			return result, nil
 		}
 
-		resp, err := c.http.Do(req)
-		if err != nil {
-			lastErr = fmt.Errorf("do request: %w", err)
-			continue
+		lastErr = err
+		if !c.shouldRetry(err) {
+			return "", err
 		}
-
-		body, err := io.ReadAll(resp.Body)
-		resp.Body.Close() // Close immediately after reading
-		if err != nil {
-			lastErr = fmt.Errorf("read response: %w", err)
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			lastErr = fmt.Errorf("AI request failed with status %d: %s", resp.StatusCode, string(body))
-			if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-				continue
-			}
-			return "", lastErr
-		}
-
-		aiText, err := p.parseResponse(body)
-		if err != nil {
-			return "", fmt.Errorf("parse response: %w", err)
-		}
-
-		if isJSON {
-			aiText = cleanJSONResponse(aiText)
-		} else {
-			aiText = strings.TrimSpace(aiText)
-		}
-
-		return aiText, nil
 	}
 
 	return "", fmt.Errorf("all retries failed: %w", lastErr)
+}
+
+func (c *Client) backoff(ctx context.Context, attempt int) error {
+	backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(backoff):
+		return nil
+	}
+}
+
+func (c *Client) shouldRetry(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "429") || strings.Contains(errStr, "status 5")
+}
+
+func (c *Client) doRequest(ctx context.Context, p Provider, model, prompt string, isJSON bool) (string, error) {
+	req, err := p.buildRequest(ctx, model, prompt, isJSON)
+	if err != nil {
+		return "", fmt.Errorf("build request: %w", err)
+	}
+
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("do request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("AI request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	aiText, err := p.parseResponse(body)
+	if err != nil {
+		return "", fmt.Errorf("parse response: %w", err)
+	}
+
+	return c.processResponse(aiText, isJSON), nil
+}
+
+func (c *Client) processResponse(aiText string, isJSON bool) string {
+	if isJSON {
+		return cleanJSONResponse(aiText)
+	}
+	return strings.TrimSpace(aiText)
 }
 
 // cleanJSONResponse removes markdown code blocks and trims whitespace from AI response.
