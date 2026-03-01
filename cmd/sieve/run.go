@@ -20,9 +20,8 @@ import (
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the aggregator",
-	Long:  `Run the RSS aggregator to fetch, filter, and summarize news.`,
+	Long:  `Fetch RSS feeds, classify with AI, and generate reports.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// Create a context that is canceled when the user sends a termination signal
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 		defer stop()
 
@@ -60,7 +59,6 @@ var runCmd = &cobra.Command{
 		eng := engine.NewEngine(cfg, s, a)
 
 		if useUI {
-			// Make slog quiet during TUI operation
 			slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
 
 			sourceNames := make([]string, len(cfg.Sources))

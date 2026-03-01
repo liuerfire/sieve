@@ -10,7 +10,7 @@ func TestRunCmd_Help(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(output, "Run the RSS aggregator") {
+	if !strings.Contains(output, "Fetch RSS feeds") {
 		t.Error("expected run help to contain description")
 	}
 }
