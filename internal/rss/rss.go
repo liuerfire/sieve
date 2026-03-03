@@ -19,7 +19,7 @@ import (
 func fetchWithRetry(ctx context.Context, url string, maxRetries int) (*gofeed.Feed, error) {
 	var lastErr error
 
-	for attempt := range maxRetries+1 {
+	for attempt := range maxRetries + 1 {
 		if attempt > 0 {
 			backoff := time.Duration(1<<uint(attempt-1)) * time.Second
 			select {

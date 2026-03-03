@@ -23,11 +23,11 @@ const (
 )
 
 type Server struct {
-	cfg     *config.Config
-	storage *storage.Storage
-	ai      *ai.Client
-	Events  chan engine.ProgressEvent
-	runCtx  context.Context
+	cfg       *config.Config
+	storage   *storage.Storage
+	ai        *ai.Client
+	Events    chan engine.ProgressEvent
+	runCtx    context.Context
 	runCancel context.CancelFunc
 }
 
