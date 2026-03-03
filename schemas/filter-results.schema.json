@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Filter Results",
+  "description": "RSS item classification results",
+  "type": "object",
+  "required": ["source_name", "source_url", "results"],
+  "additionalProperties": false,
+  "properties": {
+    "source_name": {
+      "type": "string",
+      "description": "RSS source name"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "RSS source URL"
+    },
+    "results": {
+      "type": "object",
+      "description": "Classification results, key is guid",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["title", "type", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Item title"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["high_interest", "interest", "other", "exclude"],
+            "description": "Classification type"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Classification reason"
+          },
+          "description": {
+            "type": "string",
+            "description": "HTML formatted summary"
+          }
+        }
+      }
+    }
+  }
+}

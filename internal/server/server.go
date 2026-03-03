@@ -1,0 +1,171 @@
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"os"
+	"strings"
+
+	"github.com/liuerfire/sieve/internal/ai"
+	"github.com/liuerfire/sieve/internal/config"
+	"github.com/liuerfire/sieve/internal/engine"
+	"github.com/liuerfire/sieve/internal/storage"
+)
+
+type Server struct {
+	cfg     *config.Config
+	storage *storage.Storage
+	ai      *ai.Client
+	Events  chan engine.ProgressEvent
+}
+
+func NewServer(cfg *config.Config, s *storage.Storage, a *ai.Client) *Server {
+	return &Server{
+		cfg:     cfg,
+		storage: s,
+		ai:      a,
+		Events:  make(chan engine.ProgressEvent, 100),
+	}
+}
+
+func (s *Server) ListenAndServe(addr string) error {
+	mux := http.NewServeMux()
+	mux.Handle("/", StaticHandler())
+	mux.HandleFunc("/api/items", s.handleGetItems)
+	mux.HandleFunc("/api/items/", s.handleUpdateItem)
+	mux.HandleFunc("/api/config", s.handleConfig)
+	mux.HandleFunc("/api/events", s.handleEvents)
+	mux.HandleFunc("/api/run", s.handleRun)
+
+	fmt.Printf("Sieve Web UI listening on %s\n", addr)
+	return http.ListenAndServe(addr, mux)
+}
+
+func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	for {
+		select {
+		case ev := <-s.Events:
+			data, _ := json.Marshal(ev)
+			fmt.Fprintf(w, "data: %s\n\n", data)
+			w.(http.Flusher).Flush()
+		case <-r.Context().Done():
+			return
+		}
+	}
+}
+
+func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	go func() {
+		eng := engine.NewEngine(s.cfg, s.storage, s.ai)
+		eng.OnProgress = func(ev engine.ProgressEvent) {
+			s.Events <- ev
+		}
+		// Use Background context for the background run
+		_, _ = eng.Run(context.Background())
+	}()
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/items/")
+	if id == "" {
+		http.Error(w, "Item ID required", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodPatch:
+		var req struct {
+			Level *string `json:"level"`
+			Read  *bool   `json:"read"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if req.Level != nil {
+			if err := s.storage.UpdateLevel(r.Context(), id, *req.Level); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		if req.Read != nil {
+			if err := s.storage.UpdateReadStatus(r.Context(), id, *req.Read); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+
+	case http.MethodDelete:
+		if err := s.storage.DeleteItem(r.Context(), id); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(s.cfg)
+
+	case http.MethodPut:
+		var newCfg config.Config
+		if err := json.NewDecoder(r.Body).Decode(&newCfg); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if err := newCfg.Validate(); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		// Save to file (assuming config.json for now, but should ideally know the path)
+		// For now we'll overwrite config.json in the current dir
+		data, _ := json.MarshalIndent(newCfg, "", "  ")
+		if err := os.WriteFile("config.json", data, 0644); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		s.cfg = &newCfg
+		w.WriteHeader(http.StatusNoContent)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleGetItems(w http.ResponseWriter, r *http.Request) {
+	items, err := s.storage.GetItems(r.Context(), 50, 0)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(items); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
