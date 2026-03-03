@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
@@ -14,11 +15,20 @@ import (
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
+// Default HTTP server timeouts
+const (
+	defaultReadTimeout  = 10 * time.Second
+	defaultWriteTimeout = 30 * time.Second
+	defaultIdleTimeout  = 120 * time.Second
+)
+
 type Server struct {
 	cfg     *config.Config
 	storage *storage.Storage
 	ai      *ai.Client
 	Events  chan engine.ProgressEvent
+	runCtx  context.Context
+	runCancel context.CancelFunc
 }
 
 func NewServer(cfg *config.Config, s *storage.Storage, a *ai.Client) *Server {
@@ -27,6 +37,13 @@ func NewServer(cfg *config.Config, s *storage.Storage, a *ai.Client) *Server {
 		storage: s,
 		ai:      a,
 		Events:  make(chan engine.ProgressEvent, 100),
+	}
+}
+
+// Shutdown cancels any running aggregation
+func (s *Server) Shutdown() {
+	if s.runCancel != nil {
+		s.runCancel()
 	}
 }
 
@@ -39,8 +56,16 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/api/events", s.handleEvents)
 	mux.HandleFunc("/api/run", s.handleRun)
 
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  defaultReadTimeout,
+		WriteTimeout: defaultWriteTimeout,
+		IdleTimeout:  defaultIdleTimeout,
+	}
+
 	fmt.Printf("Sieve Web UI listening on %s\n", addr)
-	return http.ListenAndServe(addr, mux)
+	return server.ListenAndServe()
 }
 
 func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
@@ -66,13 +91,23 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Cancel any previous run
+	if s.runCancel != nil {
+		s.runCancel()
+	}
+
+	// Create cancellable context for this run
+	s.runCtx, s.runCancel = context.WithCancel(context.Background())
+
 	go func() {
 		eng := engine.NewEngine(s.cfg, s.storage, s.ai)
 		eng.OnProgress = func(ev engine.ProgressEvent) {
-			s.Events <- ev
+			select {
+			case s.Events <- ev:
+			case <-s.runCtx.Done():
+			}
 		}
-		// Use Background context for the background run
-		_, _ = eng.Run(context.Background())
+		_, _ = eng.Run(s.runCtx)
 	}()
 
 	w.WriteHeader(http.StatusAccepted)

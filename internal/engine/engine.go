@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/microcosm-cc/bluemonday"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 
@@ -21,6 +22,9 @@ import (
 	"github.com/liuerfire/sieve/internal/rss"
 	"github.com/liuerfire/sieve/internal/storage"
 )
+
+// htmlSanitizer is a thread-safe HTML sanitizer for AI-generated content
+var htmlSanitizer = bluemonday.UGCPolicy()
 
 // Default concurrency and rate limiting configuration.
 const (
@@ -413,7 +417,7 @@ func (e *Engine) generateFilteredHTML(ctx context.Context, outputPath string, fi
 			Title:         it.Title,
 			Link:          it.Link,
 			PubDate:       it.PublishedAt.Format(time.RFC1123Z),
-			Description:   template.HTML(desc),
+			Description:   template.HTML(htmlSanitizer.Sanitize(desc)),
 			Source:        it.Source,
 			InterestLevel: it.InterestLevel,
 			Reason:        it.Reason,
@@ -586,7 +590,7 @@ func (e *Engine) generateArchiveFile(ctx context.Context, filename, month string
 			Title:         it.Title,
 			Link:          it.Link,
 			PubDate:       it.PublishedAt.Format(time.RFC1123Z),
-			Description:   template.HTML(desc),
+			Description:   template.HTML(htmlSanitizer.Sanitize(desc)),
 			Source:        it.Source,
 			InterestLevel: it.InterestLevel,
 			Reason:        it.Reason,

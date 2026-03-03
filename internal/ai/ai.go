@@ -20,6 +20,10 @@ const (
 	geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta"
 	qwenBaseURL   = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
 	httpTimeout   = 30 * time.Second
+
+	// Default models for each provider
+	defaultGeminiModel = "gemini-2.0-flash"
+	defaultQwenModel   = "qwen-turbo"
 )
 
 // ProviderType identifies the AI provider backend.
@@ -251,6 +255,17 @@ func (c *Client) resolveProvider(cfg *config.AIConfig) (Provider, string, error)
 	if !ok {
 		return nil, "", fmt.Errorf("provider %s not configured", providerType)
 	}
+
+	// Apply default model if not specified
+	if model == "" {
+		switch providerType {
+		case Gemini:
+			model = defaultGeminiModel
+		case Qwen:
+			model = defaultQwenModel
+		}
+	}
+
 	return p, model, nil
 }
 
@@ -280,7 +295,19 @@ func (c *Client) doRequestWithRetry(ctx context.Context, p Provider, model, prom
 }
 
 func (c *Client) backoff(ctx context.Context, attempt int) error {
-	backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+	// Exponential backoff with jitter: base * 2^attempt + random(0, base)
+	base := time.Second
+	maxBackoff := 30 * time.Second
+
+	exponential := time.Duration(1<<uint(attempt-1)) * base
+	if exponential > maxBackoff {
+		exponential = maxBackoff
+	}
+
+	// Add jitter: random value between 0 and base
+	jitter := time.Duration(float64(base) * float64(time.Now().UnixNano()%1000) / 1000.0)
+	backoff := exponential + jitter
+
 	select {
 	case <-ctx.Done():
 		return ctx.Err()

@@ -107,18 +107,18 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	// Validate AI concurrency settings
+	// Validate AI concurrency settings (0 means use default)
 	if c.Global.AITimeBetweenRequests < 0 {
 		return fmt.Errorf("ai_time_between_ms must be non-negative")
 	}
-	if c.Global.AIBurstLimit < 1 {
-		return fmt.Errorf("ai_burst_limit must be at least 1")
+	if c.Global.AIBurstLimit < 0 {
+		return fmt.Errorf("ai_burst_limit must be non-negative")
 	}
-	if c.Global.AIMaxConcurrency < 1 {
-		return fmt.Errorf("ai_max_concurrency must be at least 1")
+	if c.Global.AIMaxConcurrency < 0 {
+		return fmt.Errorf("ai_max_concurrency must be non-negative")
 	}
 
-	// Validate HTML archive settings
+	// Validate HTML archive settings (0 means show all/no archives)
 	if c.Global.HTMLMaxAgeDays < 0 {
 		return fmt.Errorf("html_max_age_days must be non-negative")
 	}
