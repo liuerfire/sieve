@@ -11,9 +11,7 @@ sieve.exe
 test_*.db
 
 # Output
-index.json
-index.xml
-index.html
+output/
 
 # Environment variables
 .env
