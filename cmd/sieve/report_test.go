@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -54,5 +55,48 @@ func TestReportCmd_Flags(t *testing.T) {
 	}
 	if !strings.Contains(output, "--output") {
 		t.Error("expected report command to have --output flag")
+	}
+}
+
+func TestOutputPathForFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		output   string
+		format   string
+		expected string
+	}{
+		{
+			name:     "default json output in current directory",
+			output:   "",
+			format:   "json",
+			expected: "index.json",
+		},
+		{
+			name:     "default html output in current directory",
+			output:   "",
+			format:   "html",
+			expected: "index.html",
+		},
+		{
+			name:     "json output path with explicit directory",
+			output:   "dist",
+			format:   "json",
+			expected: filepath.Join("dist", "index.json"),
+		},
+		{
+			name:     "html output path with explicit directory",
+			output:   "dist",
+			format:   "html",
+			expected: filepath.Join("dist", "index.html"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := outputPathForFormat(tt.output, tt.format)
+			if got != tt.expected {
+				t.Fatalf("outputPathForFormat(%q, %q) = %q, want %q", tt.output, tt.format, got, tt.expected)
+			}
+		})
 	}
 }

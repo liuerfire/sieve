@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log/slog"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -39,23 +41,20 @@ var reportCmd = &cobra.Command{
 		eng := engine.NewEngine(cfg, s, a)
 
 		formats := parseFormats(format)
+		if err := ensureOutputDir(output); err != nil {
+			return fmt.Errorf("create output dir: %w", err)
+		}
 
 		for _, f := range formats {
 			switch f {
 			case "json":
-				outputPath := output
-				if outputPath == "" {
-					outputPath = "index.json"
-				}
+				outputPath := outputPathForFormat(output, "json")
 				slog.Info("Generating JSON report...", "output", outputPath)
 				if err := eng.GenerateJSON(ctx, outputPath); err != nil {
 					return fmt.Errorf("json generation: %w", err)
 				}
 			case "html":
-				outputPath := output
-				if outputPath == "" {
-					outputPath = "index.html"
-				}
+				outputPath := outputPathForFormat(output, "html")
 				slog.Info("Generating HTML report...", "output", outputPath)
 				if err := eng.GenerateHTMLWithArchives(ctx, outputPath); err != nil {
 					return fmt.Errorf("html generation: %w", err)
@@ -87,8 +86,27 @@ func parseFormats(format string) []string {
 	return result
 }
 
+func outputPathForFormat(outputDir, format string) string {
+	if strings.TrimSpace(outputDir) == "" {
+		outputDir = "."
+	}
+
+	filename := "index.html"
+	if format == "json" {
+		filename = "index.json"
+	}
+	return filepath.Join(outputDir, filename)
+}
+
+func ensureOutputDir(outputDir string) error {
+	if strings.TrimSpace(outputDir) == "" {
+		outputDir = "."
+	}
+	return os.MkdirAll(outputDir, 0755)
+}
+
 func init() {
 	reportCmd.Flags().StringP("format", "f", "all", "Output format: json, html, or comma-separated (e.g., 'json,html')")
-	reportCmd.Flags().StringP("output", "o", "", "Output file path (defaults: index.json, index.html)")
+	reportCmd.Flags().StringP("output", "o", "", "Output directory path (defaults: current directory)")
 	rootCmd.AddCommand(reportCmd)
 }

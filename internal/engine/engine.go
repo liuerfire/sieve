@@ -466,7 +466,7 @@ func (e *Engine) GenerateHTMLWithArchives(ctx context.Context, outputPath string
 
 	// Generate archive files if enabled
 	if e.cfg.Global.EnableArchives {
-		if err := e.GenerateHTMLArchives(ctx); err != nil {
+		if err := e.GenerateHTMLArchives(ctx, filepath.Dir(outputPath)); err != nil {
 			return fmt.Errorf("generate archives: %w", err)
 		}
 	}
@@ -475,7 +475,14 @@ func (e *Engine) GenerateHTMLWithArchives(ctx context.Context, outputPath string
 }
 
 // GenerateHTMLArchives generates monthly archive HTML files for older items.
-func (e *Engine) GenerateHTMLArchives(ctx context.Context) error {
+func (e *Engine) GenerateHTMLArchives(ctx context.Context, outputDir string) error {
+	if outputDir == "" {
+		outputDir = "."
+	}
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("create archive output dir: %w", err)
+	}
+
 	// Group items by month
 	itemsByMonth := make(map[string][]*storage.Item)
 	cutoff := time.Now().AddDate(0, 0, -e.cfg.Global.HTMLMaxAgeDays)
@@ -507,7 +514,7 @@ func (e *Engine) GenerateHTMLArchives(ctx context.Context) error {
 		default:
 		}
 
-		filename := fmt.Sprintf("archive-%s.html", month)
+		filename := filepath.Join(outputDir, fmt.Sprintf("archive-%s.html", month))
 		if err := e.generateArchiveFile(ctx, filename, month, items); err != nil {
 			return fmt.Errorf("generate archive %s: %w", month, err)
 		}
