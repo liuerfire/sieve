@@ -21,7 +21,7 @@ func TestHandleGetItems(t *testing.T) {
 	defer s.Close()
 
 	cfg := &config.Config{}
-	srv := NewServer(cfg, s, nil)
+	srv := NewServer(cfg, s)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items", nil)
 	w := httptest.NewRecorder()
@@ -44,7 +44,7 @@ func TestHandleConfig_Get(t *testing.T) {
 			PreferredLanguage: "en",
 		},
 	}
-	srv := NewServer(cfg, nil, nil)
+	srv := NewServer(cfg, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
 	w := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestHandleConfig_Get(t *testing.T) {
 }
 
 func TestHandleUpdateItem_MethodNotAllowed(t *testing.T) {
-	srv := NewServer(nil, nil, nil)
+	srv := NewServer(nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items/123", nil)
 	w := httptest.NewRecorder()
@@ -83,7 +83,7 @@ func TestHandleUpdateItem_Patch_Level(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s, nil)
+	srv := NewServer(&config.Config{}, s)
 
 	// Save a test item first
 	item := &storage.Item{
@@ -113,7 +113,7 @@ func TestHandleUpdateItem_Delete(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s, nil)
+	srv := NewServer(&config.Config{}, s)
 
 	// Save a test item first
 	item := &storage.Item{

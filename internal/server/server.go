@@ -1,18 +1,14 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/engine"
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
@@ -24,32 +20,14 @@ const (
 )
 
 type Server struct {
-	cfg       *config.Config
-	storage   *storage.Storage
-	ai        *ai.Client
-	Events    chan engine.ProgressEvent
-	runMu     sync.Mutex
-	runCtx    context.Context
-	runCancel context.CancelFunc
+	cfg     *config.Config
+	storage *storage.Storage
 }
 
-func NewServer(cfg *config.Config, s *storage.Storage, a *ai.Client) *Server {
+func NewServer(cfg *config.Config, s *storage.Storage) *Server {
 	return &Server{
 		cfg:     cfg,
 		storage: s,
-		ai:      a,
-		Events:  make(chan engine.ProgressEvent, 100),
-	}
-}
-
-// Shutdown cancels any running aggregation
-func (s *Server) Shutdown() {
-	s.runMu.Lock()
-	cancel := s.runCancel
-	s.runMu.Unlock()
-
-	if cancel != nil {
-		cancel()
 	}
 }
 
@@ -59,8 +37,6 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/api/items", s.handleGetItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
 	mux.HandleFunc("/api/config", s.handleConfig)
-	mux.HandleFunc("/api/events", s.handleEvents)
-	mux.HandleFunc("/api/run", s.handleRun)
 
 	server := &http.Server{
 		Addr:         addr,
@@ -72,57 +48,6 @@ func (s *Server) ListenAndServe(addr string) error {
 
 	fmt.Printf("Sieve Web UI listening on %s\n", addr)
 	return server.ListenAndServe()
-}
-
-func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	flusher, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
-		return
-	}
-
-	for {
-		select {
-		case ev := <-s.Events:
-			data, _ := json.Marshal(ev)
-			fmt.Fprintf(w, "data: %s\n\n", data)
-			flusher.Flush()
-		case <-r.Context().Done():
-			return
-		}
-	}
-}
-
-func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	s.runMu.Lock()
-	if s.runCancel != nil {
-		s.runCancel()
-	}
-	runCtx, runCancel := context.WithCancel(context.Background())
-	s.runCtx = runCtx
-	s.runCancel = runCancel
-	s.runMu.Unlock()
-
-	go func(runCtx context.Context) {
-		eng := engine.NewEngine(s.cfg, s.storage, s.ai)
-		eng.OnProgress = func(ev engine.ProgressEvent) {
-			select {
-			case s.Events <- ev:
-			case <-runCtx.Done():
-			}
-		}
-		_, _ = eng.Run(runCtx)
-	}(runCtx)
-
-	w.WriteHeader(http.StatusAccepted)
 }
 
 func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {

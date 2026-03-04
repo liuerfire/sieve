@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/liuerfire/sieve/internal/ai"
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/server"
 	"github.com/liuerfire/sieve/internal/storage"
@@ -32,23 +30,7 @@ var serveCmd = &cobra.Command{
 		}
 		defer s.Close()
 
-		a := ai.NewClient()
-
-		hasProvider := false
-		if key := os.Getenv("GEMINI_API_KEY"); key != "" {
-			a.AddProvider(ai.Gemini, key)
-			hasProvider = true
-		}
-		if key := os.Getenv("QWEN_API_KEY"); key != "" {
-			a.AddProvider(ai.Qwen, key)
-			hasProvider = true
-		}
-
-		if !hasProvider {
-			return fmt.Errorf("GEMINI_API_KEY or QWEN_API_KEY must be set")
-		}
-
-		srv := server.NewServer(cfg, s, a)
+		srv := server.NewServer(cfg, s)
 		return srv.ListenAndServe(fmt.Sprintf(":%d", port))
 	},
 }

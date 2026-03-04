@@ -54,16 +54,6 @@ export interface Config {
   sources: Source[]
 }
 
-export interface ProgressEvent {
-  Type: 'source_start' | 'source_done' | 'item_start' | 'item_done' | 'gen_start' | 'gen_done'
-  Source: string
-  Item: string
-  Message: string
-  Level: string
-  Count: number
-  Total: number
-}
-
 export interface ApiError {
   message: string
   status: number

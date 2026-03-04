@@ -23,7 +23,7 @@ const levelEmoji: Record<string, string> = {
 }
 
 const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
-  const [showThought, setShowThought] = useState(false)
+  const [showThought, setShowThought] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
   const [optimisticRead, setOptimisticRead] = useState<boolean | null>(null)
   const [optimisticLevel, setOptimisticLevel] = useState<string | null>(null)
