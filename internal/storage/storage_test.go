@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
@@ -10,7 +9,7 @@ import (
 func TestInitDB(t *testing.T) {
 	dbPath := "test_sieve.db"
 	defer os.Remove(dbPath)
-	db, err := InitDB(context.Background(), dbPath)
+	db, err := InitDB(t.Context(), dbPath)
 	if err != nil {
 		t.Fatalf("failed to init db: %v", err)
 	}
@@ -22,7 +21,7 @@ func TestInitDB(t *testing.T) {
 func TestSaveItemAndGetItems(t *testing.T) {
 	dbPath := "test_items.db"
 	defer os.Remove(dbPath)
-	s, err := InitDB(context.Background(), dbPath)
+	s, err := InitDB(t.Context(), dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +40,7 @@ func TestSaveItemAndGetItems(t *testing.T) {
 		PublishedAt:   now,
 	}
 
-	ctx := context.Background()
+	ctx := t.Context()
 	if err := s.SaveItem(ctx, item); err != nil {
 		t.Fatalf("failed to save item: %v", err)
 	}
@@ -88,13 +87,13 @@ func TestSaveItemAndGetItems(t *testing.T) {
 func TestExists(t *testing.T) {
 	dbPath := "test_exists.db"
 	defer os.Remove(dbPath)
-	s, err := InitDB(context.Background(), dbPath)
+	s, err := InitDB(t.Context(), dbPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer s.Close()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	id := "test-exists-id"
 
 	// Should not exist initially

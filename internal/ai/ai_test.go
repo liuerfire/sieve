@@ -1,7 +1,6 @@
 package ai
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -28,7 +27,7 @@ func TestClassify(t *testing.T) {
 	client.AddProvider(Gemini, "dummy-key")
 	WithBaseURL(Gemini, server.URL)(client)
 
-	thought, level, reason, err := client.Classify(context.Background(), nil, "Test Title", "Test Content", "High Interest Rules", "en")
+	thought, level, reason, err := client.Classify(t.Context(), nil, "Test Title", "Test Content", "High Interest Rules", "en")
 	if err != nil {
 		t.Fatalf("failed to classify: %v", err)
 	}
@@ -64,7 +63,7 @@ func TestSummarize(t *testing.T) {
 	client.AddProvider(Gemini, "dummy-key")
 	WithBaseURL(Gemini, server.URL)(client)
 
-	summary, err := client.Summarize(context.Background(), nil, "Test Title", "Test Content", "zh")
+	summary, err := client.Summarize(t.Context(), nil, "Test Title", "Test Content", "zh")
 	if err != nil {
 		t.Fatalf("failed to summarize: %v", err)
 	}

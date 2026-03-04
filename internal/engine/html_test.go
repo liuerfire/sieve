@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"os"
 	"strings"
 	"testing"
@@ -13,7 +12,7 @@ import (
 )
 
 func TestEngine_GenerateHTML(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dbPath := "test_html.db"
 	defer os.Remove(dbPath)
 

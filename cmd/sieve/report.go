@@ -71,9 +71,8 @@ func parseFormats(format string) []string {
 		return []string{"json", "html"}
 	}
 
-	parts := strings.Split(format, ",")
 	var result []string
-	for _, p := range parts {
+	for p := range strings.SplitSeq(format, ",") {
 		p = strings.TrimSpace(strings.ToLower(p))
 		if p == "json" || p == "html" {
 			result = append(result, p)

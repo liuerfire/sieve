@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestEngine_Run(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	// Mock RSS feed
 	rssServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +114,7 @@ func TestEngine_Run(t *testing.T) {
 }
 
 func TestEngine_ProcessItem_Pipeline(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dbPath := "test_pipeline.db"
 	defer os.Remove(dbPath)
 	s, _ := storage.InitDB(ctx, dbPath)

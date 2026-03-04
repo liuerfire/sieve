@@ -23,7 +23,7 @@ func TestPluginRegistry(t *testing.T) {
 	}
 
 	item := &storage.Item{Title: "Test"}
-	updatedItem, err := p.Execute(context.Background(), item)
+	updatedItem, err := p.Execute(t.Context(), item)
 	if err != nil {
 		t.Fatalf("plugin execution failed: %v", err)
 	}

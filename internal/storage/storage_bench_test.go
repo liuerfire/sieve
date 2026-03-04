@@ -1,14 +1,13 @@
 package storage
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
 )
 
 func BenchmarkSaveItem(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	s, err := InitDB(ctx, ":memory:")
 	if err != nil {
 		b.Fatal(err)
@@ -24,13 +23,13 @@ func BenchmarkSaveItem(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		s.SaveItem(ctx, item)
 	}
 }
 
 func BenchmarkAllItems(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	s, err := InitDB(ctx, ":memory:")
 	if err != nil {
 		b.Fatal(err)
@@ -50,7 +49,7 @@ func BenchmarkAllItems(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		for _, err := range s.AllItems(ctx) {
 			if err != nil {
 				b.Fatal(err)
@@ -60,7 +59,7 @@ func BenchmarkAllItems(b *testing.B) {
 }
 
 func BenchmarkExists(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	s, err := InitDB(ctx, ":memory:")
 	if err != nil {
 		b.Fatal(err)
@@ -77,7 +76,7 @@ func BenchmarkExists(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		s.Exists(ctx, "test-id")
 	}
 }

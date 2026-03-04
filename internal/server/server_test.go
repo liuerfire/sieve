@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -14,7 +13,7 @@ import (
 )
 
 func TestHandleGetItems(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	s, err := storage.InitDB(ctx, ":memory:")
 	if err != nil {
 		t.Fatalf("failed to init storage: %v", err)
@@ -33,7 +32,7 @@ func TestHandleGetItems(t *testing.T) {
 		t.Errorf("expected status 200, got %d", w.Code)
 	}
 
-	var items []interface{}
+	var items []any
 	if err := json.NewDecoder(w.Body).Decode(&items); err != nil {
 		t.Fatalf("failed to decode response: %v", err)
 	}
@@ -80,7 +79,7 @@ func TestHandleUpdateItem_MethodNotAllowed(t *testing.T) {
 }
 
 func TestHandleUpdateItem_Patch_Level(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
@@ -110,7 +109,7 @@ func TestHandleUpdateItem_Patch_Level(t *testing.T) {
 }
 
 func TestHandleUpdateItem_Delete(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 

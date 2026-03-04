@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/liuerfire/sieve/internal/ai"
@@ -27,6 +28,7 @@ type Server struct {
 	storage   *storage.Storage
 	ai        *ai.Client
 	Events    chan engine.ProgressEvent
+	runMu     sync.Mutex
 	runCtx    context.Context
 	runCancel context.CancelFunc
 }
@@ -42,8 +44,12 @@ func NewServer(cfg *config.Config, s *storage.Storage, a *ai.Client) *Server {
 
 // Shutdown cancels any running aggregation
 func (s *Server) Shutdown() {
-	if s.runCancel != nil {
-		s.runCancel()
+	s.runMu.Lock()
+	cancel := s.runCancel
+	s.runMu.Unlock()
+
+	if cancel != nil {
+		cancel()
 	}
 }
 
@@ -72,13 +78,18 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
 
 	for {
 		select {
 		case ev := <-s.Events:
 			data, _ := json.Marshal(ev)
 			fmt.Fprintf(w, "data: %s\n\n", data)
-			w.(http.Flusher).Flush()
+			flusher.Flush()
 		case <-r.Context().Done():
 			return
 		}
@@ -91,24 +102,25 @@ func (s *Server) handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Cancel any previous run
+	s.runMu.Lock()
 	if s.runCancel != nil {
 		s.runCancel()
 	}
+	runCtx, runCancel := context.WithCancel(context.Background())
+	s.runCtx = runCtx
+	s.runCancel = runCancel
+	s.runMu.Unlock()
 
-	// Create cancellable context for this run
-	s.runCtx, s.runCancel = context.WithCancel(context.Background())
-
-	go func() {
+	go func(runCtx context.Context) {
 		eng := engine.NewEngine(s.cfg, s.storage, s.ai)
 		eng.OnProgress = func(ev engine.ProgressEvent) {
 			select {
 			case s.Events <- ev:
-			case <-s.runCtx.Done():
+			case <-runCtx.Done():
 			}
 		}
-		_, _ = eng.Run(s.runCtx)
-	}()
+		_, _ = eng.Run(runCtx)
+	}(runCtx)
 
 	w.WriteHeader(http.StatusAccepted)
 }

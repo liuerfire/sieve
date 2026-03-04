@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -11,7 +10,7 @@ import (
 )
 
 func BenchmarkGenerateJSON(b *testing.B) {
-	ctx := context.Background()
+	ctx := b.Context()
 	db, err := storage.InitDB(ctx, ":memory:")
 	if err != nil {
 		b.Fatal(err)
@@ -36,7 +35,7 @@ func BenchmarkGenerateJSON(b *testing.B) {
 	eng := NewEngine(&config.Config{}, db, nil)
 
 	b.ResetTimer()
-	for range b.N {
+	for b.Loop() {
 		eng.GenerateJSON(ctx, "/dev/null")
 	}
 }
