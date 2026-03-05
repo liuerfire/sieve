@@ -118,6 +118,8 @@ body {
   margin-bottom: 16px;
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .card-summary {
@@ -174,6 +176,12 @@ body {
 .button-outline:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.button-outline.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: #eef2ff;
 }
 
 
@@ -318,6 +326,11 @@ body {
 .card.updating {
   opacity: 0.7;
   pointer-events: none;
+}
+
+.card-meta .form-control {
+  min-width: 160px;
+  max-width: 280px;
 }
 
 .thought-panel {

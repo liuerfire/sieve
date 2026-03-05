@@ -3,18 +3,59 @@ import ItemCard from './ItemCard'
 import { api } from '../api'
 import type { Item, AsyncState } from '../types'
 
+type ReaderMode = 'all' | 'saved' | 'digest'
+
 const Reader: React.FC = () => {
+  const [mode, setMode] = useState<ReaderMode>('all')
+  const [qInput, setQInput] = useState('')
+  const [q, setQ] = useState('')
+  const [source, setSource] = useState('')
+  const [level, setLevel] = useState('')
+  const [digestDays, setDigestDays] = useState(7)
+  const [sources, setSources] = useState<string[]>([])
   const [itemsState, setItemsState] = useState<AsyncState<Item[]>>({
     data: null,
     state: 'idle',
     error: null,
   })
 
+  useEffect(() => {
+    const timer = setTimeout(() => setQ(qInput.trim()), 300)
+    return () => clearTimeout(timer)
+  }, [qInput])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const items = await api.getSources()
+        if (cancelled) return
+        setSources(items)
+      } catch {
+        if (!cancelled) {
+          setSources([])
+        }
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const fetchItems = useCallback(async () => {
     setItemsState(prev => ({ ...prev, state: 'loading', error: null }))
     
     try {
-      const data = await api.getItems()
+      let data: Item[] = []
+      if (mode === 'digest') {
+        data = await api.getDigest(digestDays)
+      } else if (mode === 'saved') {
+        data = await api.searchItems({ q, source, level, saved: true })
+      } else if (q || source || level) {
+        data = await api.searchItems({ q, source, level })
+      } else {
+        data = await api.getItems()
+      }
       setItemsState({ data, state: 'success', error: null })
     } catch (err) {
       setItemsState({
@@ -23,7 +64,7 @@ const Reader: React.FC = () => {
         error: err instanceof Error ? err.message : 'Failed to fetch items',
       })
     }
-  }, [])
+  }, [digestDays, level, mode, q, source])
 
   useEffect(() => {
     fetchItems()
@@ -50,6 +91,64 @@ const Reader: React.FC = () => {
         >
           {itemsState.state === 'loading' ? 'Loading...' : 'Refresh'}
         </button>
+      </div>
+
+      <div className="card">
+        <div className="card-meta">
+          <button className={`button-outline ${mode === 'all' ? 'active' : ''}`} onClick={() => setMode('all')}>
+            All
+          </button>
+          <button className={`button-outline ${mode === 'saved' ? 'active' : ''}`} onClick={() => setMode('saved')}>
+            Saved
+          </button>
+          <button className={`button-outline ${mode === 'digest' ? 'active' : ''}`} onClick={() => setMode('digest')}>
+            Digest
+          </button>
+        </div>
+        {mode !== 'digest' && (
+          <div className="card-meta">
+            <input
+              className="form-control"
+              placeholder="Search keywords"
+              value={qInput}
+              onChange={e => setQInput(e.target.value)}
+            />
+            <select
+              className="form-control"
+              value={source}
+              onChange={e => setSource(e.target.value)}
+            >
+              <option value="">All sources</option>
+              {sources.map(name => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+            <select className="form-control" value={level} onChange={e => setLevel(e.target.value)}>
+              <option value="">All levels</option>
+              <option value="high_interest">High Interest</option>
+              <option value="interest">Interest</option>
+              <option value="uninterested">Uninterested</option>
+              <option value="exclude">Exclude</option>
+            </select>
+          </div>
+        )}
+        {mode === 'digest' && (
+          <div className="card-meta">
+            <label htmlFor="digest-days">Digest range:</label>
+            <select
+              id="digest-days"
+              className="form-control"
+              value={digestDays}
+              onChange={e => setDigestDays(Number(e.target.value))}
+            >
+              <option value={7}>Last 7 days</option>
+              <option value={14}>Last 14 days</option>
+              <option value={30}>Last 30 days</option>
+            </select>
+          </div>
+        )}
       </div>
 
       {itemsState.state === 'error' && (
@@ -79,7 +178,7 @@ const Reader: React.FC = () => {
 
       {itemsState.data && itemsState.data.length > 0 && (
         <div className="items-list" role="feed" aria-label="News items">
-          {itemsState.data.map((item, index) => (
+          {itemsState.data.map((item) => (
             <ItemCard 
               key={item.ID} 
               item={item} 

@@ -11,6 +11,10 @@ export interface Item {
   IsRead: boolean
   Reason: string
   Thought: string
+  Saved?: boolean
+  SavedAt?: string
+  UserInterestOverride?: 'high_interest' | 'interest' | 'uninterested' | 'exclude'
+  DuplicateOf?: string
   PublishedAt?: string
 }
 

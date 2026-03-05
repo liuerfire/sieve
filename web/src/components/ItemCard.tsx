@@ -27,10 +27,15 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
   const [isUpdating, setIsUpdating] = useState(false)
   const [optimisticRead, setOptimisticRead] = useState<boolean | null>(null)
   const [optimisticLevel, setOptimisticLevel] = useState<string | null>(null)
+  const [optimisticSaved, setOptimisticSaved] = useState<boolean | null>(null)
+  const [optimisticOverride, setOptimisticOverride] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const displayRead = optimisticRead !== null ? optimisticRead : item.IsRead
-  const displayLevel = optimisticLevel !== null ? optimisticLevel : item.InterestLevel
+  const displaySaved = optimisticSaved !== null ? optimisticSaved : Boolean(item.Saved)
+  const baseLevel = optimisticLevel !== null ? optimisticLevel : item.InterestLevel
+  const overrideLevel = optimisticOverride !== null ? optimisticOverride : item.UserInterestOverride
+  const displayLevel = overrideLevel || baseLevel
 
   const updateLevel = useCallback(async (level: string) => {
     if (isUpdating) return
@@ -41,18 +46,57 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
     // Optimistic update
     const previousLevel = optimisticLevel || item.InterestLevel
     setOptimisticLevel(level)
+    setOptimisticOverride(level)
     
     try {
-      await api.updateItem(item.ID, { level })
+      await api.updateItem(item.ID, { level, user_interest_override: level })
       onUpdate()
     } catch (err) {
       // Rollback on error
       setOptimisticLevel(previousLevel)
+      setOptimisticOverride(item.UserInterestOverride || '')
       setError(err instanceof Error ? err.message : 'Failed to update level')
     } finally {
       setIsUpdating(false)
     }
-  }, [item.ID, item.InterestLevel, optimisticLevel, isUpdating, onUpdate])
+  }, [item.ID, item.InterestLevel, item.UserInterestOverride, optimisticLevel, isUpdating, onUpdate])
+
+  const toggleSaved = useCallback(async () => {
+    if (isUpdating) return
+
+    setIsUpdating(true)
+    setError(null)
+    const next = !displaySaved
+    setOptimisticSaved(next)
+    try {
+      await api.updateItem(item.ID, { saved: next })
+      onUpdate()
+    } catch (err) {
+      setOptimisticSaved(null)
+      setError(err instanceof Error ? err.message : 'Failed to update saved status')
+    } finally {
+      setIsUpdating(false)
+    }
+  }, [displaySaved, isUpdating, item.ID, onUpdate])
+
+  const setOverride = useCallback(async (value: string) => {
+    if (isUpdating) return
+
+    setIsUpdating(true)
+    setError(null)
+    const next = value || ''
+    const previous = optimisticOverride !== null ? optimisticOverride : item.UserInterestOverride || ''
+    setOptimisticOverride(next)
+    try {
+      await api.updateItem(item.ID, { user_interest_override: next })
+      onUpdate()
+    } catch (err) {
+      setOptimisticOverride(previous)
+      setError(err instanceof Error ? err.message : 'Failed to update interest override')
+    } finally {
+      setIsUpdating(false)
+    }
+  }, [isUpdating, item.ID, item.UserInterestOverride, onUpdate, optimisticOverride])
 
   const toggleRead = useCallback(async () => {
     if (isUpdating) return
@@ -178,6 +222,14 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
         </div>
 
         <div className="action-buttons">
+          <button
+            className="button-outline"
+            onClick={toggleSaved}
+            disabled={isUpdating}
+            aria-label={displaySaved ? 'Unsave item' : 'Save item'}
+          >
+            {displaySaved ? 'Unsave' : 'Save'}
+          </button>
           <button 
             className="button-outline" 
             onClick={toggleRead}
@@ -195,6 +247,23 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
             Delete
           </button>
         </div>
+      </div>
+
+      <div className="card-meta">
+        <label htmlFor={`override-${item.ID}`}>Override:</label>
+        <select
+          id={`override-${item.ID}`}
+          className="form-control"
+          value={overrideLevel || ''}
+          onChange={e => setOverride(e.target.value)}
+          disabled={isUpdating}
+        >
+          <option value="">Use AI result</option>
+          <option value="high_interest">High Interest</option>
+          <option value="interest">Interest</option>
+          <option value="uninterested">Uninterested</option>
+          <option value="exclude">Exclude</option>
+        </select>
       </div>
     </div>
   )

@@ -47,7 +47,19 @@ export const api = {
     return fetchWithErrorHandling<Item[]>(`${API_BASE}/items`)
   },
 
-  async updateItem(id: string, updates: { level?: string; read?: boolean }): Promise<void> {
+  async getSources(): Promise<string[]> {
+    return fetchWithErrorHandling<string[]>(`${API_BASE}/items/sources`)
+  },
+
+  async updateItem(
+    id: string,
+    updates: {
+      level?: string
+      read?: boolean
+      saved?: boolean
+      user_interest_override?: string
+    }
+  ): Promise<void> {
     return fetchWithErrorHandling<void>(`${API_BASE}/items/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(updates),
@@ -58,6 +70,24 @@ export const api = {
     return fetchWithErrorHandling<void>(`${API_BASE}/items/${id}`, {
       method: 'DELETE',
     })
+  },
+
+  async searchItems(params: {
+    q?: string
+    source?: string
+    level?: string
+    saved?: boolean
+  }): Promise<Item[]> {
+    const search = new URLSearchParams()
+    if (params.q) search.set('q', params.q)
+    if (params.source) search.set('source', params.source)
+    if (params.level) search.set('level', params.level)
+    if (typeof params.saved === 'boolean') search.set('saved', String(params.saved))
+    return fetchWithErrorHandling<Item[]>(`${API_BASE}/items/search?${search.toString()}`)
+  },
+
+  async getDigest(days = 7): Promise<Item[]> {
+    return fetchWithErrorHandling<Item[]>(`${API_BASE}/digest?days=${days}`)
   },
 
   // Config
