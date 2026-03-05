@@ -36,6 +36,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", StaticHandler())
 	mux.HandleFunc("/api/items", s.handleGetItems)
+	mux.HandleFunc("/api/items/bulk-read", s.handleBulkRead)
 	mux.HandleFunc("/api/items/stats", s.handleGetStats)
 	mux.HandleFunc("/api/items/source-stats", s.handleSourceStats)
 	mux.HandleFunc("/api/items/source-suggestions", s.handleSourceSuggestions)
@@ -121,6 +122,30 @@ func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *Server) handleBulkRead(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req struct {
+		IDs  []string `json:"ids"`
+		Read bool     `json:"read"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) == 0 {
+		http.Error(w, "ids required", http.StatusBadRequest)
+		return
+	}
+	if err := s.storage.UpdateReadStatusBulk(r.Context(), req.IDs, req.Read); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {

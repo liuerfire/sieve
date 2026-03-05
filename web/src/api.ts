@@ -80,6 +80,13 @@ export const api = {
     })
   },
 
+  async bulkUpdateRead(ids: string[], read: boolean): Promise<void> {
+    return fetchWithErrorHandling<void>(`${API_BASE}/items/bulk-read`, {
+      method: 'POST',
+      body: JSON.stringify({ ids, read }),
+    })
+  },
+
   async deleteItem(id: string): Promise<void> {
     return fetchWithErrorHandling<void>(`${API_BASE}/items/${id}`, {
       method: 'DELETE',

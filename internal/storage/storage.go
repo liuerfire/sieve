@@ -292,6 +292,22 @@ func (s *Storage) UpdateReadStatus(ctx context.Context, id string, read bool) er
 	return err
 }
 
+func (s *Storage) UpdateReadStatusBulk(ctx context.Context, ids []string, read bool) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	placeholders := make([]string, len(ids))
+	args := make([]any, 0, len(ids)+1)
+	args = append(args, read)
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args = append(args, id)
+	}
+	query := fmt.Sprintf("UPDATE items SET is_read = ? WHERE id IN (%s)", strings.Join(placeholders, ","))
+	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
+}
+
 func (s *Storage) UpdateSavedStatus(ctx context.Context, id string, saved bool) error {
 	if saved {
 		_, err := s.db.ExecContext(ctx, "UPDATE items SET saved = 1, saved_at = CURRENT_TIMESTAMP WHERE id = ?", id)

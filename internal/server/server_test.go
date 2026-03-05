@@ -505,3 +505,36 @@ func TestHandleSearchItems_FilterUnread(t *testing.T) {
 		t.Fatalf("unexpected unread results: %#v", got)
 	}
 }
+
+func TestHandleBulkRead(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{ID: "bulk-srv-1", InterestLevel: "interest", IsRead: false, PublishedAt: time.Now()},
+		{ID: "bulk-srv-2", InterestLevel: "interest", IsRead: false, PublishedAt: time.Now()},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodPost, "/api/items/bulk-read", strings.NewReader(`{"ids":["bulk-srv-1","bulk-srv-2"],"read":true}`))
+	w := httptest.NewRecorder()
+	srv.handleBulkRead(w, req)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d", w.Code)
+	}
+
+	items, err := s.GetItems(ctx, 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, it := range items {
+		if !it.IsRead {
+			t.Fatalf("expected all items read, found unread: %s", it.ID)
+		}
+	}
+}

@@ -89,6 +89,18 @@ const Reader: React.FC = () => {
     fetchItems()
   }, [fetchItems])
 
+  const handleBulkRead = useCallback(async (read: boolean) => {
+    if (!itemsState.data || itemsState.data.length === 0) return
+    const ids = itemsState.data.map(item => item.ID)
+    try {
+      await api.bulkUpdateRead(ids, read)
+      fetchItems()
+    } catch {
+      // Reuse existing error presentation by forcing a refresh path.
+      fetchItems()
+    }
+  }, [itemsState.data, fetchItems])
+
   return (
     <div className="reader">
       <div className="reader-header">
@@ -201,6 +213,12 @@ const Reader: React.FC = () => {
               />
               {' '}Unread only
             </label>
+            <button className="button-outline" onClick={() => handleBulkRead(true)}>
+              Mark Visible Read
+            </button>
+            <button className="button-outline" onClick={() => handleBulkRead(false)}>
+              Mark Visible Unread
+            </button>
           </div>
         )}
         {mode === 'digest' && (

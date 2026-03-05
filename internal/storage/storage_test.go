@@ -174,6 +174,43 @@ func TestExists(t *testing.T) {
 	}
 }
 
+func TestUpdateReadStatusBulk(t *testing.T) {
+	dbPath := "test_bulk_read.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for _, it := range []*Item{
+		{ID: "bulk-1", InterestLevel: "interest", IsRead: false, PublishedAt: now},
+		{ID: "bulk-2", InterestLevel: "interest", IsRead: false, PublishedAt: now},
+		{ID: "bulk-3", InterestLevel: "interest", IsRead: false, PublishedAt: now},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := s.UpdateReadStatusBulk(t.Context(), []string{"bulk-1", "bulk-2"}, true); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.SearchItems(t.Context(), "", 10, SearchFilters{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	readByID := map[string]bool{}
+	for _, it := range got {
+		readByID[it.ID] = it.IsRead
+	}
+	if !readByID["bulk-1"] || !readByID["bulk-2"] || readByID["bulk-3"] {
+		t.Fatalf("unexpected read state: %#v", readByID)
+	}
+}
+
 func TestSaveItem_PersistsSavedAndOverride(t *testing.T) {
 	dbPath := "test_saved_override.db"
 	defer os.Remove(dbPath)
