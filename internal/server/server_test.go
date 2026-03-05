@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -412,5 +413,49 @@ func TestHandleSourceStats(t *testing.T) {
 	}
 	if len(got) != 2 {
 		t.Fatalf("expected 2 source stats rows, got %d", len(got))
+	}
+}
+
+func TestHandleSourceSuggestions(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for i := 0; i < 3; i++ {
+		if err := s.SaveItem(ctx, &storage.Item{
+			ID:            fmt.Sprintf("sug-low-%d", i),
+			Source:        "low-source",
+			InterestLevel: "uninterested",
+			PublishedAt:   time.Now(),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i := 0; i < 3; i++ {
+		if err := s.SaveItem(ctx, &storage.Item{
+			ID:            fmt.Sprintf("sug-good-%d", i),
+			Source:        "good-source",
+			InterestLevel: "high_interest",
+			PublishedAt:   time.Now(),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions?min_visible=2&limit=5", nil)
+	w := httptest.NewRecorder()
+	srv.handleSourceSuggestions(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var got []storage.SourceSuggestion
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].Source != "low-source" {
+		t.Fatalf("unexpected suggestions: %#v", got)
 	}
 }

@@ -54,6 +54,12 @@ type SourceStats struct {
 	HighInterest int    `json:"high_interest"`
 }
 
+type SourceSuggestion struct {
+	Source  string `json:"source"`
+	Visible int    `json:"visible"`
+	Reason  string `json:"reason"`
+}
+
 type Storage struct {
 	db *sql.DB
 }
@@ -498,6 +504,42 @@ func (s *Storage) SourceStats(ctx context.Context, limit int) ([]SourceStats, er
 		stats = append(stats, st)
 	}
 	return stats, nil
+}
+
+func (s *Storage) LowValueSourceSuggestions(ctx context.Context, minVisible int, limit int) ([]SourceSuggestion, error) {
+	if minVisible <= 0 {
+		minVisible = 10
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+    SELECT source,
+           SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' THEN 1 ELSE 0 END) AS visible
+    FROM items
+    WHERE TRIM(COALESCE(source, '')) != ''
+    GROUP BY source
+    HAVING visible >= ?
+       AND SUM(CASE WHEN saved = 1 THEN 1 ELSE 0 END) = 0
+       AND SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'high_interest' THEN 1 ELSE 0 END) = 0
+    ORDER BY visible DESC, source ASC
+    LIMIT ?`, minVisible, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var suggestions []SourceSuggestion
+	for rows.Next() {
+		var sgg SourceSuggestion
+		if err := rows.Scan(&sgg.Source, &sgg.Visible); err != nil {
+			return nil, err
+		}
+		sgg.Reason = "No saved/high-interest items"
+		suggestions = append(suggestions, sgg)
+	}
+	return suggestions, nil
 }
 
 func (s *Storage) upsertFTS(ctx context.Context, item *Item) error {

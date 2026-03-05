@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -511,5 +512,48 @@ func TestSourceStats(t *testing.T) {
 	}
 	if got[0].Source != "alpha" || got[0].Visible != 2 || got[0].Saved != 1 || got[0].HighInterest != 1 {
 		t.Fatalf("unexpected alpha stats: %#v", got[0])
+	}
+}
+
+func TestLowValueSourceSuggestions(t *testing.T) {
+	dbPath := "test_source_suggestions.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for i := 0; i < 5; i++ {
+		if err := s.SaveItem(t.Context(), &Item{
+			ID:            fmt.Sprintf("lv-%d", i),
+			Source:        "low-value",
+			InterestLevel: "uninterested",
+			PublishedAt:   now,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for i := 0; i < 5; i++ {
+		if err := s.SaveItem(t.Context(), &Item{
+			ID:            fmt.Sprintf("hi-%d", i),
+			Source:        "good-source",
+			InterestLevel: "high_interest",
+			PublishedAt:   now,
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.LowValueSourceSuggestions(t.Context(), 3, 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 suggestion, got %d", len(got))
+	}
+	if got[0].Source != "low-value" {
+		t.Fatalf("expected low-value source, got %#v", got[0])
 	}
 }

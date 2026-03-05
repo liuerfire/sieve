@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
-import type { Item, AsyncState, ItemStats, SourceStats } from '../types'
+import type { Item, AsyncState, ItemStats, SourceStats, SourceSuggestion } from '../types'
 
 type ReaderMode = 'all' | 'saved' | 'digest'
 
@@ -15,6 +15,7 @@ const Reader: React.FC = () => {
   const [sources, setSources] = useState<string[]>([])
   const [stats, setStats] = useState<ItemStats | null>(null)
   const [sourceStats, setSourceStats] = useState<SourceStats[]>([])
+  const [sourceSuggestions, setSourceSuggestions] = useState<SourceSuggestion[]>([])
   const [itemsState, setItemsState] = useState<AsyncState<Item[]>>({
     data: null,
     state: 'idle',
@@ -63,6 +64,8 @@ const Reader: React.FC = () => {
       setStats(metrics)
       const sourceMetrics = await api.getSourceStats(5)
       setSourceStats(sourceMetrics)
+      const suggestions = await api.getSourceSuggestions(5, 3)
+      setSourceSuggestions(suggestions)
     } catch (err) {
       setItemsState({
         data: null,
@@ -130,6 +133,20 @@ const Reader: React.FC = () => {
                 <span className="source-metrics">
                   {st.high_interest} high / {st.saved} saved / {st.visible} visible
                 </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sourceSuggestions.length > 0 && (
+        <div className="card">
+          <h3>Prune Candidates</h3>
+          <div className="source-stats-list">
+            {sourceSuggestions.map((sg) => (
+              <div key={sg.source} className="source-stats-row">
+                <span className="source-name">{sg.source}</span>
+                <span className="source-metrics">{sg.visible} visible: {sg.reason}</span>
               </div>
             ))}
           </div>

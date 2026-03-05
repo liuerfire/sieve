@@ -1,4 +1,4 @@
-import type { Item, Config, ItemStats, SourceStats } from './types'
+import type { Item, Config, ItemStats, SourceStats, SourceSuggestion } from './types'
 
 const API_BASE = '/api'
 
@@ -57,6 +57,12 @@ export const api = {
 
   async getSourceStats(limit = 10): Promise<SourceStats[]> {
     return fetchWithErrorHandling<SourceStats[]>(`${API_BASE}/items/source-stats?limit=${limit}`)
+  },
+
+  async getSourceSuggestions(minVisible = 10, limit = 10): Promise<SourceSuggestion[]> {
+    return fetchWithErrorHandling<SourceSuggestion[]>(
+      `${API_BASE}/items/source-suggestions?min_visible=${minVisible}&limit=${limit}`
+    )
   },
 
   async updateItem(

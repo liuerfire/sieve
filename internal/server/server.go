@@ -38,6 +38,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/api/items", s.handleGetItems)
 	mux.HandleFunc("/api/items/stats", s.handleGetStats)
 	mux.HandleFunc("/api/items/source-stats", s.handleSourceStats)
+	mux.HandleFunc("/api/items/source-suggestions", s.handleSourceSuggestions)
 	mux.HandleFunc("/api/items/sources", s.handleGetSources)
 	mux.HandleFunc("/api/items/search", s.handleSearchItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
@@ -232,6 +233,38 @@ func (s *Server) handleSourceStats(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleSourceSuggestions(w http.ResponseWriter, r *http.Request) {
+	minVisible := 10
+	if raw := strings.TrimSpace(r.URL.Query().Get("min_visible")); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v <= 0 || v > 1000 {
+			http.Error(w, "invalid min_visible", http.StatusBadRequest)
+			return
+		}
+		minVisible = v
+	}
+
+	limit := 10
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v <= 0 || v > 100 {
+			http.Error(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
+		limit = v
+	}
+
+	suggestions, err := s.storage.LowValueSourceSuggestions(r.Context(), minVisible, limit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(suggestions); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

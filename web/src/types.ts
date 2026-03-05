@@ -86,3 +86,9 @@ export interface SourceStats {
   saved: number
   high_interest: number
 }
+
+export interface SourceSuggestion {
+  source: string
+  visible: number
+  reason: string
+}
