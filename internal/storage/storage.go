@@ -223,7 +223,14 @@ func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, err
            COALESCE(user_interest_override, interest_level) AS interest_level,
            is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
-    ORDER BY published_at DESC
+    WHERE COALESCE(user_interest_override, interest_level) != 'exclude'
+    ORDER BY CASE COALESCE(user_interest_override, interest_level)
+        WHEN 'high_interest' THEN 1
+        WHEN 'interest' THEN 2
+        WHEN 'uninterested' THEN 3
+        ELSE 4
+      END,
+      published_at DESC
     LIMIT ? OFFSET ?`
 
 	rows, err := s.db.QueryContext(ctx, query, limit, offset)

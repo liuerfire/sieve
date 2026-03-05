@@ -84,6 +84,59 @@ func TestSaveItemAndGetItems(t *testing.T) {
 	}
 }
 
+func TestGetItems_PrioritizesInterestAndSkipsExclude(t *testing.T) {
+	dbPath := "test_triage_order.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for _, it := range []*Item{
+		{
+			ID:            "u1",
+			Title:         "Uninterested",
+			InterestLevel: "uninterested",
+			PublishedAt:   now,
+		},
+		{
+			ID:            "i1",
+			Title:         "Interest",
+			InterestLevel: "interest",
+			PublishedAt:   now.Add(-time.Minute),
+		},
+		{
+			ID:            "h1",
+			Title:         "High",
+			InterestLevel: "high_interest",
+			PublishedAt:   now.Add(-2 * time.Minute),
+		},
+		{
+			ID:            "x1",
+			Title:         "Excluded",
+			InterestLevel: "exclude",
+			PublishedAt:   now.Add(-3 * time.Minute),
+		},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	items, err := s.GetItems(t.Context(), 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 3 {
+		t.Fatalf("expected 3 non-excluded items, got %d", len(items))
+	}
+	if items[0].ID != "h1" || items[1].ID != "i1" || items[2].ID != "u1" {
+		t.Fatalf("unexpected order: %s, %s, %s", items[0].ID, items[1].ID, items[2].ID)
+	}
+}
+
 func TestExists(t *testing.T) {
 	dbPath := "test_exists.db"
 	defer os.Remove(dbPath)
