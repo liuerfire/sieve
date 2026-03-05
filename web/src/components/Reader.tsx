@@ -1,21 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
-import type { Item, AsyncState, ItemStats, SourceStats, SourceSuggestion } from '../types'
+import type { Item, AsyncState, ItemStats, SourceSuggestion } from '../types'
 
 type ReaderMode = 'all' | 'saved' | 'digest'
 
-const Reader: React.FC = () => {
+interface ReaderProps {
+  sourceFilter: string
+  onDataRefresh?: () => void
+}
+
+const Reader: React.FC<ReaderProps> = ({ sourceFilter, onDataRefresh }) => {
   const [mode, setMode] = useState<ReaderMode>('all')
   const [qInput, setQInput] = useState('')
   const [q, setQ] = useState('')
-  const [source, setSource] = useState('')
   const [level, setLevel] = useState('')
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [digestDays, setDigestDays] = useState(7)
-  const [sources, setSources] = useState<string[]>([])
   const [stats, setStats] = useState<ItemStats | null>(null)
-  const [sourceStats, setSourceStats] = useState<SourceStats[]>([])
   const [sourceSuggestions, setSourceSuggestions] = useState<SourceSuggestion[]>([])
   const [itemsState, setItemsState] = useState<AsyncState<Item[]>>({
     data: null,
@@ -28,24 +30,6 @@ const Reader: React.FC = () => {
     return () => clearTimeout(timer)
   }, [qInput])
 
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const items = await api.getSources()
-        if (cancelled) return
-        setSources(items)
-      } catch {
-        if (!cancelled) {
-          setSources([])
-        }
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
   const fetchItems = useCallback(async () => {
     setItemsState(prev => ({ ...prev, state: 'loading', error: null }))
     
@@ -54,19 +38,18 @@ const Reader: React.FC = () => {
       if (mode === 'digest') {
         data = await api.getDigest(digestDays)
       } else if (mode === 'saved') {
-        data = await api.searchItems({ q, source, level, saved: true, unread: unreadOnly })
-      } else if (q || source || level || unreadOnly) {
-        data = await api.searchItems({ q, source, level, unread: unreadOnly })
+        data = await api.searchItems({ q, source: sourceFilter, level, saved: true, unread: unreadOnly })
+      } else if (q || sourceFilter || level || unreadOnly) {
+        data = await api.searchItems({ q, source: sourceFilter, level, unread: unreadOnly })
       } else {
         data = await api.getItems()
       }
       setItemsState({ data, state: 'success', error: null })
       const metrics = await api.getStats()
       setStats(metrics)
-      const sourceMetrics = await api.getSourceStats(5)
-      setSourceStats(sourceMetrics)
       const suggestions = await api.getSourceSuggestions(5, 3)
       setSourceSuggestions(suggestions)
+      onDataRefresh?.()
     } catch (err) {
       setItemsState({
         data: null,
@@ -74,7 +57,7 @@ const Reader: React.FC = () => {
         error: err instanceof Error ? err.message : 'Failed to fetch items',
       })
     }
-  }, [digestDays, level, mode, q, source, unreadOnly])
+  }, [digestDays, level, mode, q, sourceFilter, unreadOnly, onDataRefresh])
 
   useEffect(() => {
     fetchItems()
@@ -136,22 +119,6 @@ const Reader: React.FC = () => {
         </div>
       )}
 
-      {sourceStats.length > 0 && (
-        <div className="card">
-          <h3>Top Sources</h3>
-          <div className="source-stats-list">
-            {sourceStats.map((st) => (
-              <div key={st.source} className="source-stats-row">
-                <span className="source-name">{st.source}</span>
-                <span className="source-metrics">
-                  {st.high_interest} high / {st.saved} saved / {st.visible} visible
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {sourceSuggestions.length > 0 && (
         <div className="card">
           <h3>Prune Candidates</h3>
@@ -186,18 +153,6 @@ const Reader: React.FC = () => {
               value={qInput}
               onChange={e => setQInput(e.target.value)}
             />
-            <select
-              className="form-control"
-              value={source}
-              onChange={e => setSource(e.target.value)}
-            >
-              <option value="">All sources</option>
-              {sources.map(name => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
             <select className="form-control" value={level} onChange={e => setLevel(e.target.value)}>
               <option value="">All levels</option>
               <option value="high_interest">High Interest</option>
