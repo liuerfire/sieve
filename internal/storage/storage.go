@@ -38,6 +38,15 @@ type SearchFilters struct {
 	Saved  *bool
 }
 
+type ItemStats struct {
+	TotalVisible  int `json:"total_visible"`
+	Saved         int `json:"saved"`
+	HighInterest  int `json:"high_interest"`
+	UnreadVisible int `json:"unread_visible"`
+	Interest      int `json:"interest"`
+	Uninterested  int `json:"uninterested"`
+}
+
 type Storage struct {
 	db *sql.DB
 }
@@ -419,6 +428,31 @@ func (s *Storage) ListSources(ctx context.Context) ([]string, error) {
 		sources = append(sources, source)
 	}
 	return sources, nil
+}
+
+func (s *Storage) ItemStats(ctx context.Context) (*ItemStats, error) {
+	const q = `
+    SELECT
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' THEN 1 ELSE 0 END) AS total_visible,
+      SUM(CASE WHEN saved = 1 THEN 1 ELSE 0 END) AS saved,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'high_interest' THEN 1 ELSE 0 END) AS high_interest,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' AND is_read = 0 THEN 1 ELSE 0 END) AS unread_visible,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'interest' THEN 1 ELSE 0 END) AS interest,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'uninterested' THEN 1 ELSE 0 END) AS uninterested
+    FROM items`
+
+	var st ItemStats
+	if err := s.db.QueryRowContext(ctx, q).Scan(
+		&st.TotalVisible,
+		&st.Saved,
+		&st.HighInterest,
+		&st.UnreadVisible,
+		&st.Interest,
+		&st.Uninterested,
+	); err != nil {
+		return nil, err
+	}
+	return &st, nil
 }
 
 func (s *Storage) upsertFTS(ctx context.Context, item *Item) error {

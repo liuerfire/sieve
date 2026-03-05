@@ -348,3 +348,36 @@ func TestHandleGetSources(t *testing.T) {
 		t.Fatalf("unexpected sources: %#v", got)
 	}
 }
+
+func TestHandleGetStats(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{ID: "stat-1", InterestLevel: "high_interest", PublishedAt: time.Now()},
+		{ID: "stat-2", InterestLevel: "interest", Saved: true, PublishedAt: time.Now()},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/stats", nil)
+	w := httptest.NewRecorder()
+
+	srv.handleGetStats(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var got storage.ItemStats
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if got.TotalVisible != 2 || got.Saved != 1 || got.HighInterest != 1 {
+		t.Fatalf("unexpected stats: %#v", got)
+	}
+}

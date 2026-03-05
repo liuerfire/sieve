@@ -36,6 +36,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", StaticHandler())
 	mux.HandleFunc("/api/items", s.handleGetItems)
+	mux.HandleFunc("/api/items/stats", s.handleGetStats)
 	mux.HandleFunc("/api/items/sources", s.handleGetSources)
 	mux.HandleFunc("/api/items/search", s.handleSearchItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
@@ -197,6 +198,18 @@ func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(items); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (s *Server) handleGetStats(w http.ResponseWriter, r *http.Request) {
+	stats, err := s.storage.ItemStats(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 

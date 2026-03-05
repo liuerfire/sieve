@@ -387,3 +387,43 @@ func TestListSources(t *testing.T) {
 		t.Fatalf("unexpected sources: %#v", got)
 	}
 }
+
+func TestItemStats(t *testing.T) {
+	dbPath := "test_stats.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	ex := "exclude"
+	for _, it := range []*Item{
+		{ID: "st-1", InterestLevel: "high_interest", IsRead: false, Saved: true, PublishedAt: now},
+		{ID: "st-2", InterestLevel: "interest", IsRead: true, PublishedAt: now},
+		{ID: "st-3", InterestLevel: "uninterested", IsRead: false, PublishedAt: now},
+		{ID: "st-4", InterestLevel: "high_interest", UserInterestOverride: &ex, IsRead: false, PublishedAt: now},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.ItemStats(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got.TotalVisible != 3 {
+		t.Fatalf("expected total_visible=3, got %d", got.TotalVisible)
+	}
+	if got.Saved != 1 {
+		t.Fatalf("expected saved=1, got %d", got.Saved)
+	}
+	if got.HighInterest != 1 {
+		t.Fatalf("expected high_interest=1, got %d", got.HighInterest)
+	}
+	if got.UnreadVisible != 2 {
+		t.Fatalf("expected unread_visible=2, got %d", got.UnreadVisible)
+	}
+}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
-import type { Item, AsyncState } from '../types'
+import type { Item, AsyncState, ItemStats } from '../types'
 
 type ReaderMode = 'all' | 'saved' | 'digest'
 
@@ -13,6 +13,7 @@ const Reader: React.FC = () => {
   const [level, setLevel] = useState('')
   const [digestDays, setDigestDays] = useState(7)
   const [sources, setSources] = useState<string[]>([])
+  const [stats, setStats] = useState<ItemStats | null>(null)
   const [itemsState, setItemsState] = useState<AsyncState<Item[]>>({
     data: null,
     state: 'idle',
@@ -57,6 +58,8 @@ const Reader: React.FC = () => {
         data = await api.getItems()
       }
       setItemsState({ data, state: 'success', error: null })
+      const metrics = await api.getStats()
+      setStats(metrics)
     } catch (err) {
       setItemsState({
         data: null,
@@ -92,6 +95,27 @@ const Reader: React.FC = () => {
           {itemsState.state === 'loading' ? 'Loading...' : 'Refresh'}
         </button>
       </div>
+
+      {stats && (
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-label">Visible</div>
+            <div className="stat-value">{stats.total_visible}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Saved</div>
+            <div className="stat-value">{stats.saved}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">High Interest</div>
+            <div className="stat-value">{stats.high_interest}</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Unread</div>
+            <div className="stat-value">{stats.unread_visible}</div>
+          </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-meta">

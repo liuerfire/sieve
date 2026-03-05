@@ -70,3 +70,12 @@ export interface AsyncState<T> {
   state: LoadingState
   error: string | null
 }
+
+export interface ItemStats {
+  total_visible: number
+  saved: number
+  high_interest: number
+  unread_visible: number
+  interest: number
+  uninterested: number
+}
