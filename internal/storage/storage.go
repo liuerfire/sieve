@@ -253,7 +253,7 @@ func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, err
 	}
 	defer rows.Close()
 
-	var items []*Item
+	items := make([]*Item, 0)
 	for rows.Next() {
 		var it Item
 		err := rows.Scan(
@@ -373,7 +373,7 @@ func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters 
 	}
 	defer rows.Close()
 
-	var items []*Item
+	items := make([]*Item, 0)
 	for rows.Next() {
 		var it Item
 		if err := rows.Scan(
@@ -421,7 +421,7 @@ func (s *Storage) DigestItems(ctx context.Context, since time.Time, limit int) (
 	}
 	defer rows.Close()
 
-	var items []*Item
+	items := make([]*Item, 0)
 	for rows.Next() {
 		var it Item
 		if err := rows.Scan(
@@ -461,7 +461,7 @@ func (s *Storage) ListSources(ctx context.Context) ([]string, error) {
 	}
 	defer rows.Close()
 
-	var sources []string
+	sources := make([]string, 0)
 	for rows.Next() {
 		var source string
 		if err := rows.Scan(&source); err != nil {
@@ -475,12 +475,12 @@ func (s *Storage) ListSources(ctx context.Context) ([]string, error) {
 func (s *Storage) ItemStats(ctx context.Context) (*ItemStats, error) {
 	const q = `
     SELECT
-      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' THEN 1 ELSE 0 END) AS total_visible,
-      SUM(CASE WHEN saved = 1 THEN 1 ELSE 0 END) AS saved,
-      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'high_interest' THEN 1 ELSE 0 END) AS high_interest,
-      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' AND is_read = 0 THEN 1 ELSE 0 END) AS unread_visible,
-      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'interest' THEN 1 ELSE 0 END) AS interest,
-      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'uninterested' THEN 1 ELSE 0 END) AS uninterested
+      COALESCE(SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' THEN 1 ELSE 0 END), 0) AS total_visible,
+      COALESCE(SUM(CASE WHEN saved = 1 THEN 1 ELSE 0 END), 0) AS saved,
+      COALESCE(SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'high_interest' THEN 1 ELSE 0 END), 0) AS high_interest,
+      COALESCE(SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' AND is_read = 0 THEN 1 ELSE 0 END), 0) AS unread_visible,
+      COALESCE(SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'interest' THEN 1 ELSE 0 END), 0) AS interest,
+      COALESCE(SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'uninterested' THEN 1 ELSE 0 END), 0) AS uninterested
     FROM items`
 
 	var st ItemStats
@@ -517,7 +517,7 @@ func (s *Storage) SourceStats(ctx context.Context, limit int) ([]SourceStats, er
 	}
 	defer rows.Close()
 
-	var stats []SourceStats
+	stats := make([]SourceStats, 0)
 	for rows.Next() {
 		var st SourceStats
 		if err := rows.Scan(&st.Source, &st.Visible, &st.Saved, &st.HighInterest); err != nil {
@@ -552,7 +552,7 @@ func (s *Storage) LowValueSourceSuggestions(ctx context.Context, minVisible int,
 	}
 	defer rows.Close()
 
-	var suggestions []SourceSuggestion
+	suggestions := make([]SourceSuggestion, 0)
 	for rows.Next() {
 		var sgg SourceSuggestion
 		if err := rows.Scan(&sgg.Source, &sgg.Visible); err != nil {

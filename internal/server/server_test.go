@@ -39,6 +39,63 @@ func TestHandleGetItems(t *testing.T) {
 	}
 }
 
+func TestHandleGetSources_EmptyArrayNotNull(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
+	w := httptest.NewRecorder()
+	srv.handleGetSources(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	body := strings.TrimSpace(w.Body.String())
+	if body != "[]" {
+		t.Fatalf("expected empty array body, got %q", body)
+	}
+}
+
+func TestHandleSourceStats_EmptyArrayNotNull(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats", nil)
+	w := httptest.NewRecorder()
+	srv.handleSourceStats(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	body := strings.TrimSpace(w.Body.String())
+	if body != "[]" {
+		t.Fatalf("expected empty array body, got %q", body)
+	}
+}
+
+func TestHandleSourceSuggestions_EmptyArrayNotNull(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions", nil)
+	w := httptest.NewRecorder()
+	srv.handleSourceSuggestions(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	body := strings.TrimSpace(w.Body.String())
+	if body != "[]" {
+		t.Fatalf("expected empty array body, got %q", body)
+	}
+}
+
 func TestHandleConfig_Get(t *testing.T) {
 	cfg := &config.Config{
 		Global: config.GlobalConfig{
