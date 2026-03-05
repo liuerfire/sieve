@@ -4,6 +4,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"iter"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 type Item struct {
 	ID            string
+	FeedID        string
 	Source        string
 	Title         string
 	Link          string
@@ -33,10 +35,29 @@ type Item struct {
 }
 
 type SearchFilters struct {
+	FeedID string
 	Source string
 	Level  string
 	Saved  *bool
 	Unread *bool
+}
+
+type Feed struct {
+	ID           string
+	Name         string
+	URL          string
+	Enabled      bool
+	HighInterest string
+	Interest     string
+	Uninterested string
+	Exclude      string
+	Plugins      []string
+	Summarize    bool
+	Timeout      int
+	AIProvider   string
+	AIModel      string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type ItemStats struct {
@@ -85,8 +106,33 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
 	}
 
 	schema := `
+    CREATE TABLE IF NOT EXISTS feeds (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL,
+        enabled BOOLEAN DEFAULT 1,
+        high_interest TEXT DEFAULT '',
+        interest TEXT DEFAULT '',
+        uninterested TEXT DEFAULT '',
+        exclude TEXT DEFAULT '',
+        plugins TEXT DEFAULT '[]',
+        summarize BOOLEAN DEFAULT 0,
+        timeout INTEGER DEFAULT 0,
+        ai_provider TEXT DEFAULT '',
+        ai_model TEXT DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS items (
         id TEXT PRIMARY KEY,
+        feed_id TEXT,
         source TEXT,
         title TEXT,
         link TEXT,
@@ -102,7 +148,8 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
         user_interest_override TEXT,
         duplicate_of TEXT,
         published_at DATETIME,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(feed_id) REFERENCES feeds(id)
     );`
 
 	if _, err := db.ExecContext(ctx, schema); err != nil {
@@ -112,6 +159,7 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
 
 	indexSchema := `
     CREATE INDEX IF NOT EXISTS idx_interest_level ON items(interest_level);
+    CREATE INDEX IF NOT EXISTS idx_feed_id ON items(feed_id);
     CREATE INDEX IF NOT EXISTS idx_published_at ON items(published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_source ON items(source);
     CREATE INDEX IF NOT EXISTS idx_saved ON items(saved, saved_at DESC);
@@ -146,12 +194,13 @@ func (s *Storage) Close() error {
 func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 	query := `
     INSERT OR REPLACE INTO items (
-        id, source, title, link, description, content, summary, thought, reason,
+        id, feed_id, source, title, link, description, content, summary, thought, reason,
         interest_level, is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	if _, err := s.db.ExecContext(ctx, query,
 		item.ID,
+		item.FeedID,
 		item.Source,
 		item.Title,
 		item.Link,
@@ -184,7 +233,7 @@ func (s *Storage) Exists(ctx context.Context, id string) (bool, error) {
 func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 	return func(yield func(*Item, error) bool) {
 		query := `
-    SELECT id, source, title, link, description, content, summary, thought, reason,
+    SELECT id, feed_id, source, title, link, description, content, summary, thought, reason,
            COALESCE(user_interest_override, interest_level) AS interest_level,
            is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
@@ -202,6 +251,7 @@ func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 			var item Item
 			err := rows.Scan(
 				&item.ID,
+				&item.FeedID,
 				&item.Source,
 				&item.Title,
 				&item.Link,
@@ -233,7 +283,7 @@ func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 
 func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, error) {
 	query := `
-    SELECT id, source, title, link, description, content, summary, thought, reason,
+    SELECT id, feed_id, source, title, link, description, content, summary, thought, reason,
            COALESCE(user_interest_override, interest_level) AS interest_level,
            is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
@@ -258,6 +308,7 @@ func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, err
 		var it Item
 		err := rows.Scan(
 			&it.ID,
+			&it.FeedID,
 			&it.Source,
 			&it.Title,
 			&it.Link,
@@ -335,7 +386,7 @@ func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters 
 		limit = 50
 	}
 	base := `
-    SELECT i.id, i.source, i.title, i.link, i.description, i.content, i.summary, i.thought, i.reason,
+    SELECT i.id, i.feed_id, i.source, i.title, i.link, i.description, i.content, i.summary, i.thought, i.reason,
            COALESCE(i.user_interest_override, i.interest_level) AS interest_level,
            i.is_read, i.saved, i.saved_at, i.user_interest_override, i.duplicate_of, i.published_at
     FROM items i
@@ -346,6 +397,10 @@ func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters 
 	if strings.TrimSpace(q) != "" {
 		base += " AND items_fts MATCH ?"
 		args = append(args, q)
+	}
+	if filters.FeedID != "" {
+		base += " AND i.feed_id = ?"
+		args = append(args, filters.FeedID)
 	}
 	if filters.Source != "" {
 		base += " AND i.source = ?"
@@ -378,6 +433,7 @@ func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters 
 		var it Item
 		if err := rows.Scan(
 			&it.ID,
+			&it.FeedID,
 			&it.Source,
 			&it.Title,
 			&it.Link,
@@ -407,7 +463,7 @@ func (s *Storage) DigestItems(ctx context.Context, since time.Time, limit int) (
 		limit = 100
 	}
 	query := `
-    SELECT id, source, title, link, description, content, summary, thought, reason,
+    SELECT id, feed_id, source, title, link, description, content, summary, thought, reason,
            COALESCE(user_interest_override, interest_level) AS interest_level,
            is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
@@ -426,6 +482,7 @@ func (s *Storage) DigestItems(ctx context.Context, since time.Time, limit int) (
 		var it Item
 		if err := rows.Scan(
 			&it.ID,
+			&it.FeedID,
 			&it.Source,
 			&it.Title,
 			&it.Link,
@@ -578,4 +635,153 @@ func (s *Storage) upsertFTS(ctx context.Context, item *Item) error {
 		item.Source,
 	)
 	return err
+}
+
+func (s *Storage) CreateFeed(ctx context.Context, feed *Feed) error {
+	pluginsJSON, err := json.Marshal(feed.Plugins)
+	if err != nil {
+		return err
+	}
+	query := `
+    INSERT INTO feeds (
+        id, name, url, enabled, high_interest, interest, uninterested, exclude,
+        plugins, summarize, timeout, ai_provider, ai_model
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = s.db.ExecContext(ctx, query,
+		feed.ID,
+		feed.Name,
+		feed.URL,
+		feed.Enabled,
+		feed.HighInterest,
+		feed.Interest,
+		feed.Uninterested,
+		feed.Exclude,
+		string(pluginsJSON),
+		feed.Summarize,
+		feed.Timeout,
+		feed.AIProvider,
+		feed.AIModel,
+	)
+	return err
+}
+
+func (s *Storage) ListFeeds(ctx context.Context, enabledOnly bool) ([]*Feed, error) {
+	query := `
+    SELECT id, name, url, enabled, high_interest, interest, uninterested, exclude,
+           plugins, summarize, timeout, ai_provider, ai_model, created_at, updated_at
+    FROM feeds`
+	if enabledOnly {
+		query += " WHERE enabled = 1"
+	}
+	query += " ORDER BY name ASC"
+
+	rows, err := s.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	feeds := make([]*Feed, 0)
+	for rows.Next() {
+		var f Feed
+		var pluginsJSON string
+		if err := rows.Scan(
+			&f.ID,
+			&f.Name,
+			&f.URL,
+			&f.Enabled,
+			&f.HighInterest,
+			&f.Interest,
+			&f.Uninterested,
+			&f.Exclude,
+			&pluginsJSON,
+			&f.Summarize,
+			&f.Timeout,
+			&f.AIProvider,
+			&f.AIModel,
+			&f.CreatedAt,
+			&f.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		if pluginsJSON != "" {
+			if err := json.Unmarshal([]byte(pluginsJSON), &f.Plugins); err != nil {
+				return nil, err
+			}
+		}
+		feeds = append(feeds, &f)
+	}
+	return feeds, nil
+}
+
+func (s *Storage) UpdateFeed(ctx context.Context, feed *Feed) error {
+	pluginsJSON, err := json.Marshal(feed.Plugins)
+	if err != nil {
+		return err
+	}
+	query := `
+    UPDATE feeds SET
+        name = ?, url = ?, enabled = ?, high_interest = ?, interest = ?, uninterested = ?, exclude = ?,
+        plugins = ?, summarize = ?, timeout = ?, ai_provider = ?, ai_model = ?, updated_at = CURRENT_TIMESTAMP
+    WHERE id = ?`
+	_, err = s.db.ExecContext(ctx, query,
+		feed.Name,
+		feed.URL,
+		feed.Enabled,
+		feed.HighInterest,
+		feed.Interest,
+		feed.Uninterested,
+		feed.Exclude,
+		string(pluginsJSON),
+		feed.Summarize,
+		feed.Timeout,
+		feed.AIProvider,
+		feed.AIModel,
+		feed.ID,
+	)
+	return err
+}
+
+func (s *Storage) DeleteFeed(ctx context.Context, id string) error {
+	_, err := s.db.ExecContext(ctx, "DELETE FROM feeds WHERE id = ?", id)
+	return err
+}
+
+func (s *Storage) GetSettings(ctx context.Context) (map[string]string, error) {
+	rows, err := s.db.QueryContext(ctx, "SELECT key, value FROM settings")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	settings := make(map[string]string)
+	for rows.Next() {
+		var key, value string
+		if err := rows.Scan(&key, &value); err != nil {
+			return nil, err
+		}
+		settings[key] = value
+	}
+	return settings, nil
+}
+
+func (s *Storage) UpdateSettings(ctx context.Context, values map[string]string) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	for key, value := range values {
+		if _, err := tx.ExecContext(ctx, `
+        INSERT INTO settings (key, value, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+        `, key, value); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
 }

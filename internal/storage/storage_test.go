@@ -17,6 +17,28 @@ func TestInitDB(t *testing.T) {
 	if db == nil {
 		t.Fatal("expected db instance")
 	}
+
+	// Verify DB-first schema objects exist.
+	for _, name := range []string{"feeds", "settings", "items"} {
+		var got string
+		err = db.db.QueryRowContext(t.Context(),
+			"SELECT name FROM sqlite_master WHERE type='table' AND name = ?", name).
+			Scan(&got)
+		if err != nil {
+			t.Fatalf("expected table %q to exist: %v", name, err)
+		}
+	}
+
+	var col string
+	err = db.db.QueryRowContext(t.Context(),
+		"SELECT name FROM pragma_table_info('items') WHERE name='feed_id'").
+		Scan(&col)
+	if err != nil {
+		t.Fatalf("expected items.feed_id column to exist: %v", err)
+	}
+	if col != "feed_id" {
+		t.Fatalf("expected column feed_id, got %q", col)
+	}
 }
 
 func TestSaveItemAndGetItems(t *testing.T) {
@@ -635,5 +657,105 @@ func TestLowValueSourceSuggestions(t *testing.T) {
 	}
 	if got[0].Source != "low-value" {
 		t.Fatalf("expected low-value source, got %#v", got[0])
+	}
+}
+
+func TestFeedCRUD(t *testing.T) {
+	dbPath := "test_feed_crud.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	feed := &Feed{
+		ID:           "feed-1",
+		Name:         "Feed One",
+		URL:          "https://example.com/rss",
+		Enabled:      true,
+		HighInterest: "ai",
+		Plugins:      []string{"fetch_content"},
+		Summarize:    true,
+		Timeout:      15,
+		AIProvider:   "gemini",
+		AIModel:      "gemini-pro",
+	}
+	if err := s.CreateFeed(t.Context(), feed); err != nil {
+		t.Fatal(err)
+	}
+
+	feeds, err := s.ListFeeds(t.Context(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(feeds) != 1 {
+		t.Fatalf("expected 1 feed, got %d", len(feeds))
+	}
+	if feeds[0].ID != "feed-1" || feeds[0].Name != "Feed One" {
+		t.Fatalf("unexpected feed: %#v", feeds[0])
+	}
+
+	feed.Name = "Feed One Updated"
+	feed.Enabled = false
+	if err := s.UpdateFeed(t.Context(), feed); err != nil {
+		t.Fatal(err)
+	}
+
+	enabledOnly, err := s.ListFeeds(t.Context(), true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(enabledOnly) != 0 {
+		t.Fatalf("expected no enabled feeds, got %d", len(enabledOnly))
+	}
+
+	if err := s.DeleteFeed(t.Context(), "feed-1"); err != nil {
+		t.Fatal(err)
+	}
+	feeds, err = s.ListFeeds(t.Context(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(feeds) != 0 {
+		t.Fatalf("expected 0 feeds after delete, got %d", len(feeds))
+	}
+}
+
+func TestSettingsCRUD(t *testing.T) {
+	dbPath := "test_settings_crud.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.UpdateSettings(t.Context(), map[string]string{
+		"preferred_language": "en",
+		"ai_provider":        "gemini",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.GetSettings(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["preferred_language"] != "en" || got["ai_provider"] != "gemini" {
+		t.Fatalf("unexpected settings map: %#v", got)
+	}
+
+	if err := s.UpdateSettings(t.Context(), map[string]string{
+		"preferred_language": "zh",
+	}); err != nil {
+		t.Fatal(err)
+	}
+	got, err = s.GetSettings(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got["preferred_language"] != "zh" {
+		t.Fatalf("expected updated preferred_language=zh, got %#v", got)
 	}
 }

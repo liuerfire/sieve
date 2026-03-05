@@ -6,11 +6,11 @@ import type { Item, AsyncState, ItemStats, SourceSuggestion } from '../types'
 type ReaderMode = 'all' | 'saved' | 'digest'
 
 interface ReaderProps {
-  sourceFilter: string
+  feedIDFilter: string
   onDataRefresh?: () => void
 }
 
-const Reader: React.FC<ReaderProps> = ({ sourceFilter, onDataRefresh }) => {
+const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
   const [mode, setMode] = useState<ReaderMode>('all')
   const [qInput, setQInput] = useState('')
   const [q, setQ] = useState('')
@@ -38,9 +38,9 @@ const Reader: React.FC<ReaderProps> = ({ sourceFilter, onDataRefresh }) => {
       if (mode === 'digest') {
         data = await api.getDigest(digestDays)
       } else if (mode === 'saved') {
-        data = await api.searchItems({ q, source: sourceFilter, level, saved: true, unread: unreadOnly })
-      } else if (q || sourceFilter || level || unreadOnly) {
-        data = await api.searchItems({ q, source: sourceFilter, level, unread: unreadOnly })
+        data = await api.searchItems({ q, feed_id: feedIDFilter, level, saved: true, unread: unreadOnly })
+      } else if (q || feedIDFilter || level || unreadOnly) {
+        data = await api.searchItems({ q, feed_id: feedIDFilter, level, unread: unreadOnly })
       } else {
         data = await api.getItems()
       }
@@ -57,7 +57,7 @@ const Reader: React.FC<ReaderProps> = ({ sourceFilter, onDataRefresh }) => {
         error: err instanceof Error ? err.message : 'Failed to fetch items',
       })
     }
-  }, [digestDays, level, mode, q, sourceFilter, unreadOnly, onDataRefresh])
+  }, [digestDays, level, mode, q, feedIDFilter, unreadOnly, onDataRefresh])
 
   useEffect(() => {
     fetchItems()

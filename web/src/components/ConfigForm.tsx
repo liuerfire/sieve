@@ -1,406 +1,291 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
-import type { Config, Source, AsyncState } from '../types'
+import type { Feed, Settings } from '../types'
 
-interface ValidationError {
-  field: string
-  message: string
+type SettingsDraft = Settings
+
+const defaultFeed: Feed = {
+  id: '',
+  name: '',
+  url: '',
+  enabled: true,
+  summarize: false,
 }
 
 const ConfigForm: React.FC = () => {
-  const [config, setConfig] = useState<Config | null>(null)
-  const [originalConfig, setOriginalConfig] = useState<Config | null>(null)
-  const [loadState, setLoadState] = useState<AsyncState<void>>({
-    data: null,
-    state: 'loading',
-    error: null,
-  })
-  const [saveState, setSaveState] = useState<AsyncState<void>>({
-    data: null,
-    state: 'idle',
-    error: null,
-  })
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
-  const [hasChanges, setHasChanges] = useState(false)
+  const [feeds, setFeeds] = useState<Feed[]>([])
+  const [settings, setSettings] = useState<SettingsDraft>({})
+  const [newFeed, setNewFeed] = useState<Feed>(defaultFeed)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
+
+  const loadData = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [feedData, settingsData] = await Promise.all([
+        api.getFeeds(false),
+        api.getSettings(),
+      ])
+      setFeeds(feedData)
+      setSettings(settingsData)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load data')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    loadConfig()
+    loadData()
   }, [])
 
-  useEffect(() => {
-    if (config && originalConfig) {
-      setHasChanges(JSON.stringify(config) !== JSON.stringify(originalConfig))
-    }
-  }, [config, originalConfig])
+  const canCreateFeed = useMemo(() => {
+    return newFeed.id.trim() !== '' && newFeed.name.trim() !== '' && newFeed.url.trim() !== ''
+  }, [newFeed])
 
-  const loadConfig = async () => {
-    setLoadState({ data: null, state: 'loading', error: null })
+  const handleCreateFeed = async () => {
+    if (!canCreateFeed) return
+    setSaving(true)
+    setError(null)
     try {
-      const data = await api.getConfig()
-      setConfig(data)
-      setOriginalConfig(JSON.parse(JSON.stringify(data)))
-      setLoadState({ data: null, state: 'success', error: null })
-    } catch (err) {
-      setLoadState({
-        data: null,
-        state: 'error',
-        error: err instanceof Error ? err.message : 'Failed to load config',
+      await api.createFeed({
+        ...newFeed,
+        id: newFeed.id.trim(),
+        name: newFeed.name.trim(),
+        url: newFeed.url.trim(),
       })
+      setNewFeed(defaultFeed)
+      await loadData()
+      setMessage('Feed created')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create feed')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const validate = useCallback((): boolean => {
-    if (!config) return false
-    
-    const errors: ValidationError[] = []
-
-    // Validate sources
-    config.sources.forEach((src, idx) => {
-      if (!src.name.trim()) {
-        errors.push({ field: `source-${idx}-name`, message: 'Source name is required' })
-      }
-      if (!src.url.trim()) {
-        errors.push({ field: `source-${idx}-url`, message: 'Source URL is required' })
-      } else {
-        try {
-          new URL(src.url)
-        } catch {
-          errors.push({ field: `source-${idx}-url`, message: 'Invalid URL format' })
-        }
-      }
-    })
-
-    // Validate AI settings
-    if (config.global.ai?.provider && !['gemini', 'qwen'].includes(config.global.ai.provider)) {
-      errors.push({ field: 'ai-provider', message: 'Invalid AI provider' })
-    }
-
-    setValidationErrors(errors)
-    return errors.length === 0
-  }, [config])
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    if (!validate() || !config) return
-
-    setSaveState({ data: null, state: 'loading', error: null })
-    
+  const handleUpdateFeed = async (feed: Feed) => {
+    setSaving(true)
+    setError(null)
     try {
-      await api.saveConfig(config)
-      setOriginalConfig(JSON.parse(JSON.stringify(config)))
-      setSaveState({ data: null, state: 'success', error: null })
-      setTimeout(() => setSaveState(prev => ({ ...prev, state: 'idle' })), 3000)
+      await api.updateFeed(feed.id, feed)
+      setMessage('Feed updated')
     } catch (err) {
-      setSaveState({
-        data: null,
-        state: 'error',
-        error: err instanceof Error ? err.message : 'Failed to save config',
-      })
+      setError(err instanceof Error ? err.message : 'Failed to update feed')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const addSource = () => {
-    if (!config) return
-    
-    const newSource: Source = { 
-      name: '', 
-      title: '', 
-      url: '' 
+  const handleDeleteFeed = async (id: string) => {
+    setSaving(true)
+    setError(null)
+    try {
+      await api.deleteFeed(id)
+      setFeeds(prev => prev.filter(feed => feed.id !== id))
+      setMessage('Feed deleted')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete feed')
+    } finally {
+      setSaving(false)
     }
-    
-    setConfig({
-      ...config,
-      sources: [...config.sources, newSource]
-    })
   }
 
-  const removeSource = (index: number) => {
-    if (!config) return
-    
-    const sources = [...config.sources]
-    sources.splice(index, 1)
-    setConfig({ ...config, sources })
+  const handleSaveSettings = async () => {
+    setSaving(true)
+    setError(null)
+    try {
+      await api.patchSettings(settings)
+      setMessage('Settings saved')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const updateSource = (index: number, field: keyof Source, value: string) => {
-    if (!config) return
-    
-    const sources = [...config.sources]
-    sources[index] = { ...sources[index], [field]: value }
-    setConfig({ ...config, sources })
-  }
-
-  const getFieldError = (field: string): string | undefined => {
-    return validationErrors.find(e => e.field === field)?.message
-  }
-
-  if (loadState.state === 'loading') {
+  if (loading) {
     return (
       <div className="config-form loading">
-        <div className="spinner" aria-label="Loading configuration" />
-        <p>Loading configuration...</p>
+        <div className="spinner" aria-label="Loading settings" />
+        <p>Loading settings...</p>
       </div>
     )
   }
-
-  if (loadState.state === 'error') {
-    return (
-      <div className="config-form error">
-        <div className="error-message" role="alert">
-          <p>Error loading configuration: {loadState.error}</p>
-          <button onClick={loadConfig} className="button button-primary">
-            Try Again
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  if (!config) return null
 
   return (
     <div className="config-form">
       <div className="form-header">
-        <h2>Configuration</h2>
-        <div className="form-actions">
-          {hasChanges && (
-            <span className="unsaved-indicator" aria-live="polite">
-              Unsaved changes
-            </span>
-          )}
-          <button 
-            className="button button-primary" 
-            onClick={handleSave}
-            disabled={saveState.state === 'loading' || !hasChanges}
-            aria-label="Save configuration changes"
-          >
-            {saveState.state === 'loading' ? 'Saving...' : 'Save Changes'}
-          </button>
-        </div>
+        <h2>Settings</h2>
+        <button className="button button-primary" onClick={handleSaveSettings} disabled={saving}>
+          {saving ? 'Saving...' : 'Save Settings'}
+        </button>
       </div>
 
-      {saveState.state === 'success' && (
-        <div className="success-message" role="status">
-          Configuration saved successfully!
+      {message && <div className="success-message">{message}</div>}
+      {error && <div className="error-message">{error}</div>}
+
+      <section className="card">
+        <h3>Global Rules</h3>
+        <div className="form-group">
+          <label htmlFor="high-interest">High Interest</label>
+          <textarea
+            id="high-interest"
+            className="form-control"
+            rows={2}
+            value={settings.high_interest || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, high_interest: e.target.value }))}
+          />
         </div>
-      )}
-
-      {saveState.state === 'error' && (
-        <div className="error-message" role="alert">
-          Failed to save: {saveState.error}
+        <div className="form-group">
+          <label htmlFor="interest">Interest</label>
+          <textarea
+            id="interest"
+            className="form-control"
+            rows={2}
+            value={settings.interest || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, interest: e.target.value }))}
+          />
         </div>
-      )}
+        <div className="form-group">
+          <label htmlFor="uninterested">Uninterested</label>
+          <textarea
+            id="uninterested"
+            className="form-control"
+            rows={2}
+            value={settings.uninterested || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, uninterested: e.target.value }))}
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="exclude">Exclude</label>
+          <textarea
+            id="exclude"
+            className="form-control"
+            rows={2}
+            value={settings.exclude || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, exclude: e.target.value }))}
+          />
+        </div>
+      </section>
 
-      <form onSubmit={handleSave}>
-        <section className="card">
-          <h3>Global Interest Rules</h3>
-          
-          <div className="form-group">
-            <label htmlFor="high-interest">
-              High Interest Keywords <span aria-label="two stars">⭐⭐</span>
-            </label>
-            <textarea
-              id="high-interest"
-              className="form-control"
-              value={config.global.high_interest}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { ...config.global, high_interest: e.target.value } 
-              })}
-              rows={3}
-              aria-describedby="high-interest-help"
-            />
-            <span id="high-interest-help" className="help-text">
-              Comma-separated keywords for high-interest items
-            </span>
-          </div>
+      <section className="card">
+        <h3>AI</h3>
+        <div className="form-group">
+          <label htmlFor="preferred-language">Preferred Language</label>
+          <input
+            id="preferred-language"
+            className="form-control"
+            value={settings.preferred_language || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, preferred_language: e.target.value }))}
+          />
+        </div>
+        <div className="form-group">
+          <label htmlFor="ai-provider">Provider</label>
+          <select
+            id="ai-provider"
+            className="form-control"
+            value={settings.ai_provider || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, ai_provider: e.target.value }))}
+          >
+            <option value="">Default</option>
+            <option value="gemini">Gemini</option>
+            <option value="qwen">Qwen</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label htmlFor="ai-model">Model</label>
+          <input
+            id="ai-model"
+            className="form-control"
+            value={settings.ai_model || ''}
+            onChange={(e) => setSettings(prev => ({ ...prev, ai_model: e.target.value }))}
+          />
+        </div>
+      </section>
 
-          <div className="form-group">
-            <label htmlFor="interest">
-              Interest Keywords <span aria-label="one star">⭐</span>
-            </label>
-            <textarea
-              id="interest"
-              className="form-control"
-              value={config.global.interest}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { ...config.global, interest: e.target.value } 
-              })}
-              rows={3}
-              aria-describedby="interest-help"
-            />
-            <span id="interest-help" className="help-text">
-              Comma-separated keywords for general interest items
-            </span>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="uninterested">Uninterested Keywords</label>
-            <textarea
-              id="uninterested"
-              className="form-control"
-              value={config.global.uninterested}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { ...config.global, uninterested: e.target.value } 
-              })}
-              rows={2}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="exclude">Exclude Keywords</label>
-            <textarea
-              id="exclude"
-              className="form-control"
-              value={config.global.exclude}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { ...config.global, exclude: e.target.value } 
-              })}
-              rows={2}
-            />
-          </div>
-        </section>
-
-        <section className="card">
-          <div className="section-header">
-            <h3>RSS Sources</h3>
-            <button 
-              type="button" 
-              className="button button-outline" 
-              onClick={addSource}
-              aria-label="Add new RSS source"
-            >
-              + Add Source
-            </button>
-          </div>
-          
-          {config.sources.length === 0 && (
-            <p className="empty-sources">No sources configured. Add one to get started.</p>
-          )}
-          
-          {config.sources.map((src, idx) => (
-            <div 
-              key={`${src.name}-${idx}`} 
-              className={`source-item ${getFieldError(`source-${idx}-name`) || getFieldError(`source-${idx}-url`) ? 'has-error' : ''}`}
-            >
-              <div className="source-field">
-                <label htmlFor={`source-${idx}-name`} className="sr-only">Source Name</label>
-                <input
-                  id={`source-${idx}-name`}
-                  className={`form-control ${getFieldError(`source-${idx}-name`) ? 'error' : ''}`}
-                  value={src.name}
-                  placeholder="Source name"
-                  onChange={e => updateSource(idx, 'name', e.target.value)}
-                  aria-invalid={!!getFieldError(`source-${idx}-name`)}
-                  aria-describedby={getFieldError(`source-${idx}-name`) ? `error-${idx}-name` : undefined}
-                />
-                {getFieldError(`source-${idx}-name`) && (
-                  <span id={`error-${idx}-name`} className="field-error" role="alert">
-                    {getFieldError(`source-${idx}-name`)}
-                  </span>
-                )}
+      <section className="card">
+        <h3>Feeds</h3>
+        <div className="source-list">
+          {feeds.map((feed) => (
+            <div className="source-item" key={feed.id}>
+              <div className="source-header">
+                <strong>{feed.name}</strong>
+                <button className="button button-danger" onClick={() => handleDeleteFeed(feed.id)} disabled={saving}>
+                  Delete
+                </button>
               </div>
-              
-              <div className="source-field source-url">
-                <label htmlFor={`source-${idx}-url`} className="sr-only">Source URL</label>
-                <input
-                  id={`source-${idx}-url`}
-                  className={`form-control ${getFieldError(`source-${idx}-url`) ? 'error' : ''}`}
-                  value={src.url}
-                  placeholder="RSS Feed URL"
-                  onChange={e => updateSource(idx, 'url', e.target.value)}
-                  type="url"
-                  aria-invalid={!!getFieldError(`source-${idx}-url`)}
-                  aria-describedby={getFieldError(`source-${idx}-url`) ? `error-${idx}-url` : undefined}
-                />
-                {getFieldError(`source-${idx}-url`) && (
-                  <span id={`error-${idx}-url`} className="field-error" role="alert">
-                    {getFieldError(`source-${idx}-url`)}
-                  </span>
-                )}
+              <div className="form-group">
+                <label>ID</label>
+                <input className="form-control" value={feed.id} disabled />
               </div>
-              
-              <button 
-                type="button" 
-                className="button delete-source"
-                onClick={() => removeSource(idx)}
-                aria-label={`Remove source ${src.name || 'unnamed'}`}
-              >
-                Remove
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  className="form-control"
+                  value={feed.name}
+                  onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, name: e.target.value } : f))}
+                />
+              </div>
+              <div className="form-group">
+                <label>URL</label>
+                <input
+                  className="form-control"
+                  value={feed.url}
+                  onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, url: e.target.value } : f))}
+                />
+              </div>
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={feed.enabled}
+                    onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, enabled: e.target.checked } : f))}
+                  />{' '}
+                  Enabled
+                </label>
+              </div>
+              <button className="button button-outline" onClick={() => handleUpdateFeed(feed)} disabled={saving}>
+                Update Feed
               </button>
             </div>
           ))}
-        </section>
+        </div>
 
-        <section className="card">
-          <h3>AI Settings</h3>
-          
+        <div className="source-item" style={{ marginTop: 16 }}>
+          <h4>Add Feed</h4>
           <div className="form-group">
-            <label htmlFor="preferred-language">Preferred Language</label>
+            <label>ID</label>
             <input
-              id="preferred-language"
               className="form-control"
-              value={config.global.preferred_language}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { ...config.global, preferred_language: e.target.value } 
-              })}
-              placeholder="e.g., en, zh, ja"
+              value={newFeed.id}
+              onChange={(e) => setNewFeed(prev => ({ ...prev, id: e.target.value }))}
             />
           </div>
-
           <div className="form-group">
-            <label htmlFor="ai-provider">AI Provider</label>
-            <select
-              id="ai-provider"
-              className="form-control"
-              value={config.global.ai?.provider || ''}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { 
-                  ...config.global, 
-                  ai: { 
-                    ...config.global.ai, 
-                    provider: e.target.value as 'gemini' | 'qwen' 
-                  } 
-                } 
-              })}
-            >
-              <option value="">Auto (first available)</option>
-              <option value="gemini">Gemini</option>
-              <option value="qwen">Qwen</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="ai-model">Model (optional)</label>
+            <label>Name</label>
             <input
-              id="ai-model"
               className="form-control"
-              value={config.global.ai?.model || ''}
-              onChange={e => setConfig({ 
-                ...config, 
-                global: { 
-                  ...config.global, 
-                  ai: { 
-                    ...config.global.ai!, 
-                    model: e.target.value 
-                  } 
-                } 
-              })}
-              placeholder="e.g., gemini-2.0-flash or qwen-turbo"
-              aria-describedby="ai-model-help"
+              value={newFeed.name}
+              onChange={(e) => setNewFeed(prev => ({ ...prev, name: e.target.value }))}
             />
-            <span id="ai-model-help" className="help-text">
-              Leave empty to use the default model for the selected provider
-            </span>
           </div>
-        </section>
-      </form>
+          <div className="form-group">
+            <label>URL</label>
+            <input
+              className="form-control"
+              value={newFeed.url}
+              onChange={(e) => setNewFeed(prev => ({ ...prev, url: e.target.value }))}
+            />
+          </div>
+          <button className="button button-primary" onClick={handleCreateFeed} disabled={!canCreateFeed || saving}>
+            Add Feed
+          </button>
+        </div>
+      </section>
     </div>
   )
 }

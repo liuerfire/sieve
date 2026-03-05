@@ -195,6 +195,8 @@ func (e *Engine) Run(ctx context.Context) (*EngineResult, error) {
 }
 
 func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item *storage.Item, rules string) error {
+	item.FeedID = src.ID
+
 	// 1. Early Exit check
 	exists, err := e.storage.Exists(ctx, item.ID)
 	if err != nil {

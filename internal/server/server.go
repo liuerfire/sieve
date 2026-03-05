@@ -4,12 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
@@ -21,13 +19,11 @@ const (
 )
 
 type Server struct {
-	cfg     *config.Config
 	storage *storage.Storage
 }
 
-func NewServer(cfg *config.Config, s *storage.Storage) *Server {
+func NewServer(s *storage.Storage) *Server {
 	return &Server{
-		cfg:     cfg,
 		storage: s,
 	}
 }
@@ -44,7 +40,9 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/api/items/search", s.handleSearchItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
 	mux.HandleFunc("/api/digest", s.handleDigest)
-	mux.HandleFunc("/api/config", s.handleConfig)
+	mux.HandleFunc("/api/feeds", s.handleFeeds)
+	mux.HandleFunc("/api/feeds/", s.handleFeedByID)
+	mux.HandleFunc("/api/settings", s.handleSettings)
 
 	server := &http.Server{
 		Addr:         addr,
@@ -148,43 +146,6 @@ func (s *Server) handleBulkRead(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(s.cfg); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-	case http.MethodPut:
-		var newCfg config.Config
-		if err := json.NewDecoder(r.Body).Decode(&newCfg); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if err := newCfg.Validate(); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		// Save to file (assuming config.json for now, but should ideally know the path)
-		// For now we'll overwrite config.json in the current dir
-		data, _ := json.MarshalIndent(newCfg, "", "  ")
-		if err := os.WriteFile("config.json", data, 0644); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		s.cfg = &newCfg
-		w.WriteHeader(http.StatusNoContent)
-
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
 func (s *Server) handleGetItems(w http.ResponseWriter, r *http.Request) {
 	items, err := s.storage.GetItems(r.Context(), 50, 0)
 	if err != nil {
@@ -201,6 +162,7 @@ func (s *Server) handleGetItems(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
 	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	feedID := strings.TrimSpace(r.URL.Query().Get("feed_id"))
 	source := strings.TrimSpace(r.URL.Query().Get("source"))
 	level := strings.TrimSpace(r.URL.Query().Get("level"))
 
@@ -224,6 +186,7 @@ func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	items, err := s.storage.SearchItems(r.Context(), q, 100, storage.SearchFilters{
+		FeedID: feedID,
 		Source: source,
 		Level:  level,
 		Saved:  saved,
@@ -338,5 +301,96 @@ func (s *Server) handleDigest(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(items); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleFeeds(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		enabledOnly := strings.TrimSpace(r.URL.Query().Get("enabled")) == "true"
+		feeds, err := s.storage.ListFeeds(r.Context(), enabledOnly)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(feeds); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	case http.MethodPost:
+		var feed storage.Feed
+		if err := json.NewDecoder(r.Body).Decode(&feed); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if strings.TrimSpace(feed.ID) == "" || strings.TrimSpace(feed.Name) == "" || strings.TrimSpace(feed.URL) == "" {
+			http.Error(w, "id, name and url are required", http.StatusBadRequest)
+			return
+		}
+		if err := s.storage.CreateFeed(r.Context(), &feed); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleFeedByID(w http.ResponseWriter, r *http.Request) {
+	id := strings.TrimPrefix(r.URL.Path, "/api/feeds/")
+	if id == "" {
+		http.Error(w, "Feed ID required", http.StatusBadRequest)
+		return
+	}
+	switch r.Method {
+	case http.MethodPatch:
+		var feed storage.Feed
+		if err := json.NewDecoder(r.Body).Decode(&feed); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		feed.ID = id
+		if err := s.storage.UpdateFeed(r.Context(), &feed); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	case http.MethodDelete:
+		if err := s.storage.DeleteFeed(r.Context(), id); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (s *Server) handleSettings(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		settings, err := s.storage.GetSettings(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(settings); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	case http.MethodPatch:
+		var values map[string]string
+		if err := json.NewDecoder(r.Body).Decode(&values); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if err := s.storage.UpdateSettings(r.Context(), values); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }

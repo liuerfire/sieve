@@ -49,6 +49,7 @@ type GlobalConfig struct {
 }
 
 type SourceConfig struct {
+	ID           string    `json:"id,omitempty"`
 	Name         string    `json:"name"`
 	Title        string    `json:"title"`
 	URL          string    `json:"url"`

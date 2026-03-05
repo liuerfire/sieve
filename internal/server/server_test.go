@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
@@ -21,8 +20,7 @@ func TestHandleGetItems(t *testing.T) {
 	}
 	defer s.Close()
 
-	cfg := &config.Config{}
-	srv := NewServer(cfg, s)
+	srv := NewServer(s)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items", nil)
 	w := httptest.NewRecorder()
@@ -44,7 +42,7 @@ func TestHandleGetSources_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
 	w := httptest.NewRecorder()
 	srv.handleGetSources(w, req)
@@ -63,7 +61,7 @@ func TestHandleSourceStats_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceStats(w, req)
@@ -82,7 +80,7 @@ func TestHandleSourceSuggestions_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceSuggestions(w, req)
@@ -96,35 +94,8 @@ func TestHandleSourceSuggestions_EmptyArrayNotNull(t *testing.T) {
 	}
 }
 
-func TestHandleConfig_Get(t *testing.T) {
-	cfg := &config.Config{
-		Global: config.GlobalConfig{
-			PreferredLanguage: "en",
-		},
-	}
-	srv := NewServer(cfg, nil)
-
-	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
-	w := httptest.NewRecorder()
-
-	srv.handleConfig(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("expected status 200, got %d", w.Code)
-	}
-
-	var returnedCfg config.Config
-	if err := json.NewDecoder(w.Body).Decode(&returnedCfg); err != nil {
-		t.Fatalf("failed to decode response: %v", err)
-	}
-
-	if returnedCfg.Global.PreferredLanguage != "en" {
-		t.Errorf("expected preferred language 'en', got '%s'", returnedCfg.Global.PreferredLanguage)
-	}
-}
-
 func TestHandleUpdateItem_MethodNotAllowed(t *testing.T) {
-	srv := NewServer(nil, nil)
+	srv := NewServer(nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items/123", nil)
 	w := httptest.NewRecorder()
@@ -141,7 +112,7 @@ func TestHandleUpdateItem_Patch_Level(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	// Save a test item first
 	item := &storage.Item{
@@ -171,7 +142,7 @@ func TestHandleUpdateItem_Delete(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	// Save a test item first
 	item := &storage.Item{
@@ -199,7 +170,7 @@ func TestHandleUpdateItem_Patch_Saved(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	item := &storage.Item{
 		ID:          "saved-123",
@@ -232,7 +203,7 @@ func TestHandleUpdateItem_Patch_UserInterestOverride(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	item := &storage.Item{
 		ID:            "override-123",
@@ -266,7 +237,7 @@ func TestHandleSearchItems_FilterBySavedAndLevel(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	for _, it := range []*storage.Item{
 		{
@@ -312,7 +283,7 @@ func TestHandleDigest_ReturnsSavedAndHighInterest(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 
 	for _, it := range []*storage.Item{
 		{
@@ -362,7 +333,7 @@ func TestHandleDigest_InvalidDays(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/digest?days=0", nil)
 	w := httptest.NewRecorder()
 
@@ -388,7 +359,7 @@ func TestHandleGetSources(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
 	w := httptest.NewRecorder()
 
@@ -421,7 +392,7 @@ func TestHandleGetStats(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/stats", nil)
 	w := httptest.NewRecorder()
 
@@ -454,7 +425,7 @@ func TestHandleSourceStats(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats?limit=5", nil)
 	w := httptest.NewRecorder()
 
@@ -499,7 +470,7 @@ func TestHandleSourceSuggestions(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions?min_visible=2&limit=5", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceSuggestions(w, req)
@@ -545,7 +516,7 @@ func TestHandleSearchItems_FilterUnread(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/search?q=AI&unread=true", nil)
 	w := httptest.NewRecorder()
 	srv.handleSearchItems(w, req)
@@ -577,7 +548,7 @@ func TestHandleBulkRead(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(&config.Config{}, s)
+	srv := NewServer(s)
 	req := httptest.NewRequest(http.MethodPost, "/api/items/bulk-read", strings.NewReader(`{"ids":["bulk-srv-1","bulk-srv-2"],"read":true}`))
 	w := httptest.NewRecorder()
 	srv.handleBulkRead(w, req)
@@ -593,5 +564,118 @@ func TestHandleBulkRead(t *testing.T) {
 		if !it.IsRead {
 			t.Fatalf("expected all items read, found unread: %s", it.ID)
 		}
+	}
+}
+
+func TestHandleFeedsCRUD(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+	srv := NewServer(s)
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/feeds", strings.NewReader(`{"id":"feed-1","name":"Feed 1","url":"https://example.com/rss","enabled":true}`))
+	createW := httptest.NewRecorder()
+	srv.handleFeeds(createW, createReq)
+	if createW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 on create, got %d", createW.Code)
+	}
+
+	listReq := httptest.NewRequest(http.MethodGet, "/api/feeds", nil)
+	listW := httptest.NewRecorder()
+	srv.handleFeeds(listW, listReq)
+	if listW.Code != http.StatusOK {
+		t.Fatalf("expected 200 on list, got %d", listW.Code)
+	}
+	var feeds []storage.Feed
+	if err := json.NewDecoder(listW.Body).Decode(&feeds); err != nil {
+		t.Fatal(err)
+	}
+	if len(feeds) != 1 || feeds[0].ID != "feed-1" {
+		t.Fatalf("unexpected feed list: %#v", feeds)
+	}
+
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/feeds/feed-1", strings.NewReader(`{"name":"Updated Feed","url":"https://example.com/rss","enabled":false}`))
+	patchW := httptest.NewRecorder()
+	srv.handleFeedByID(patchW, patchReq)
+	if patchW.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 on patch, got %d", patchW.Code)
+	}
+
+	delReq := httptest.NewRequest(http.MethodDelete, "/api/feeds/feed-1", nil)
+	delW := httptest.NewRecorder()
+	srv.handleFeedByID(delW, delReq)
+	if delW.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 on delete, got %d", delW.Code)
+	}
+}
+
+func TestHandleSettings_GetPatch(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+	srv := NewServer(s)
+
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/settings", strings.NewReader(`{"preferred_language":"en","ai_provider":"gemini"}`))
+	patchW := httptest.NewRecorder()
+	srv.handleSettings(patchW, patchReq)
+	if patchW.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 on settings patch, got %d", patchW.Code)
+	}
+
+	getReq := httptest.NewRequest(http.MethodGet, "/api/settings", nil)
+	getW := httptest.NewRecorder()
+	srv.handleSettings(getW, getReq)
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 on settings get, got %d", getW.Code)
+	}
+	var settings map[string]string
+	if err := json.NewDecoder(getW.Body).Decode(&settings); err != nil {
+		t.Fatal(err)
+	}
+	if settings["preferred_language"] != "en" || settings["ai_provider"] != "gemini" {
+		t.Fatalf("unexpected settings map: %#v", settings)
+	}
+}
+
+func TestHandleSearchItems_FilterByFeedID(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{
+			ID:            "feed-item-1",
+			FeedID:        "feed-a",
+			Title:         "Feed A item",
+			InterestLevel: "interest",
+			PublishedAt:   time.Now(),
+		},
+		{
+			ID:            "feed-item-2",
+			FeedID:        "feed-b",
+			Title:         "Feed B item",
+			InterestLevel: "interest",
+			PublishedAt:   time.Now(),
+		},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/search?feed_id=feed-a", nil)
+	w := httptest.NewRecorder()
+	srv.handleSearchItems(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+	var got []storage.Item
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != "feed-item-1" {
+		t.Fatalf("unexpected feed_id results: %#v", got)
 	}
 }

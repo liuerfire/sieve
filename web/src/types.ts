@@ -92,3 +92,34 @@ export interface SourceSuggestion {
   visible: number
   reason: string
 }
+
+export interface Feed {
+  id: string
+  name: string
+  url: string
+  enabled: boolean
+  high_interest?: string
+  interest?: string
+  uninterested?: string
+  exclude?: string
+  plugins?: string[]
+  summarize?: boolean
+  timeout?: number
+  ai_provider?: string
+  ai_model?: string
+}
+
+export interface Settings {
+  high_interest?: string
+  interest?: string
+  uninterested?: string
+  exclude?: string
+  preferred_language?: string
+  ai_provider?: string
+  ai_model?: string
+  ai_time_between_ms?: string
+  ai_burst_limit?: string
+  ai_max_concurrency?: string
+  html_max_age_days?: string
+  enable_archives?: string
+}

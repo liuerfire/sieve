@@ -1,4 +1,4 @@
-import type { Item, Config, ItemStats, SourceStats, SourceSuggestion } from './types'
+import type { Item, Feed, Settings, ItemStats, SourceStats, SourceSuggestion } from './types'
 
 const API_BASE = '/api'
 
@@ -51,6 +51,42 @@ export const api = {
     return fetchWithErrorHandling<string[]>(`${API_BASE}/items/sources`)
   },
 
+  async getFeeds(enabledOnly = false): Promise<Feed[]> {
+    const qs = enabledOnly ? '?enabled=true' : ''
+    return fetchWithErrorHandling<Feed[]>(`${API_BASE}/feeds${qs}`)
+  },
+
+  async createFeed(feed: Feed): Promise<void> {
+    return fetchWithErrorHandling<void>(`${API_BASE}/feeds`, {
+      method: 'POST',
+      body: JSON.stringify(feed),
+    })
+  },
+
+  async updateFeed(id: string, feed: Partial<Feed>): Promise<void> {
+    return fetchWithErrorHandling<void>(`${API_BASE}/feeds/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(feed),
+    })
+  },
+
+  async deleteFeed(id: string): Promise<void> {
+    return fetchWithErrorHandling<void>(`${API_BASE}/feeds/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+  },
+
+  async getSettings(): Promise<Settings> {
+    return fetchWithErrorHandling<Settings>(`${API_BASE}/settings`)
+  },
+
+  async patchSettings(settings: Settings): Promise<void> {
+    return fetchWithErrorHandling<void>(`${API_BASE}/settings`, {
+      method: 'PATCH',
+      body: JSON.stringify(settings),
+    })
+  },
+
   async getStats(): Promise<ItemStats> {
     return fetchWithErrorHandling<ItemStats>(`${API_BASE}/items/stats`)
   },
@@ -95,6 +131,7 @@ export const api = {
 
   async searchItems(params: {
     q?: string
+    feed_id?: string
     source?: string
     level?: string
     saved?: boolean
@@ -102,6 +139,7 @@ export const api = {
   }): Promise<Item[]> {
     const search = new URLSearchParams()
     if (params.q) search.set('q', params.q)
+    if (params.feed_id) search.set('feed_id', params.feed_id)
     if (params.source) search.set('source', params.source)
     if (params.level) search.set('level', params.level)
     if (typeof params.saved === 'boolean') search.set('saved', String(params.saved))
@@ -111,18 +149,6 @@ export const api = {
 
   async getDigest(days = 7): Promise<Item[]> {
     return fetchWithErrorHandling<Item[]>(`${API_BASE}/digest?days=${days}`)
-  },
-
-  // Config
-  async getConfig(): Promise<Config> {
-    return fetchWithErrorHandling<Config>(`${API_BASE}/config`)
-  },
-
-  async saveConfig(config: Config): Promise<void> {
-    return fetchWithErrorHandling<void>(`${API_BASE}/config`, {
-      method: 'PUT',
-      body: JSON.stringify(config),
-    })
   },
 }
 
