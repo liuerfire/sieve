@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"iter"
+	"strings"
 	"time"
 
 	_ "modernc.org/sqlite"
@@ -24,6 +25,17 @@ type Item struct {
 	InterestLevel string
 	IsRead        bool
 	PublishedAt   time.Time
+	Saved         bool
+	SavedAt       *time.Time
+	// UserInterestOverride records explicit user choice over AI classification.
+	UserInterestOverride *string
+	DuplicateOf          *string
+}
+
+type SearchFilters struct {
+	Source string
+	Level  string
+	Saved  *bool
 }
 
 type Storage struct {
@@ -62,6 +74,10 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
         reason TEXT,
         interest_level TEXT,
         is_read BOOLEAN DEFAULT 0,
+        saved BOOLEAN DEFAULT 0,
+        saved_at DATETIME,
+        user_interest_override TEXT,
+        duplicate_of TEXT,
         published_at DATETIME,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );`
@@ -75,10 +91,26 @@ func InitDB(ctx context.Context, path string) (*Storage, error) {
     CREATE INDEX IF NOT EXISTS idx_interest_level ON items(interest_level);
     CREATE INDEX IF NOT EXISTS idx_published_at ON items(published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_source ON items(source);
+    CREATE INDEX IF NOT EXISTS idx_saved ON items(saved, saved_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_user_interest_override ON items(user_interest_override);
 `
 	if _, err := db.ExecContext(ctx, indexSchema); err != nil {
 		db.Close()
 		return nil, fmt.Errorf("create indexes: %w", err)
+	}
+
+	ftsSchema := `
+    CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
+        id UNINDEXED,
+        title,
+        description,
+        content,
+        summary,
+        source
+    );`
+	if _, err := db.ExecContext(ctx, ftsSchema); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("create fts table: %w", err)
 	}
 
 	return &Storage{db: db}, nil
@@ -91,10 +123,11 @@ func (s *Storage) Close() error {
 func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 	query := `
     INSERT OR REPLACE INTO items (
-        id, source, title, link, description, content, summary, thought, reason, interest_level, is_read, published_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        id, source, title, link, description, content, summary, thought, reason,
+        interest_level, is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
-	_, err := s.db.ExecContext(ctx, query,
+	if _, err := s.db.ExecContext(ctx, query,
 		item.ID,
 		item.Source,
 		item.Title,
@@ -106,9 +139,16 @@ func (s *Storage) SaveItem(ctx context.Context, item *Item) error {
 		item.Reason,
 		item.InterestLevel,
 		item.IsRead,
+		item.Saved,
+		item.SavedAt,
+		item.UserInterestOverride,
+		item.DuplicateOf,
 		item.PublishedAt,
-	)
-	return err
+	); err != nil {
+		return err
+	}
+
+	return s.upsertFTS(ctx, item)
 }
 
 func (s *Storage) Exists(ctx context.Context, id string) (bool, error) {
@@ -121,9 +161,11 @@ func (s *Storage) Exists(ctx context.Context, id string) (bool, error) {
 func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 	return func(yield func(*Item, error) bool) {
 		query := `
-    SELECT id, source, title, link, description, content, summary, thought, reason, interest_level, is_read, published_at
+    SELECT id, source, title, link, description, content, summary, thought, reason,
+           COALESCE(user_interest_override, interest_level) AS interest_level,
+           is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
-    WHERE interest_level != 'exclude'
+    WHERE COALESCE(user_interest_override, interest_level) != 'exclude'
     ORDER BY published_at DESC`
 
 		rows, err := s.db.QueryContext(ctx, query)
@@ -147,6 +189,10 @@ func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 				&item.Reason,
 				&item.InterestLevel,
 				&item.IsRead,
+				&item.Saved,
+				&item.SavedAt,
+				&item.UserInterestOverride,
+				&item.DuplicateOf,
 				&item.PublishedAt,
 			)
 			if err != nil {
@@ -164,7 +210,9 @@ func (s *Storage) AllItems(ctx context.Context) iter.Seq2[*Item, error] {
 
 func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, error) {
 	query := `
-    SELECT id, source, title, link, description, content, summary, thought, reason, interest_level, is_read, published_at
+    SELECT id, source, title, link, description, content, summary, thought, reason,
+           COALESCE(user_interest_override, interest_level) AS interest_level,
+           is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
     FROM items
     ORDER BY published_at DESC
     LIMIT ? OFFSET ?`
@@ -190,6 +238,10 @@ func (s *Storage) GetItems(ctx context.Context, limit, offset int) ([]*Item, err
 			&it.Reason,
 			&it.InterestLevel,
 			&it.IsRead,
+			&it.Saved,
+			&it.SavedAt,
+			&it.UserInterestOverride,
+			&it.DuplicateOf,
 			&it.PublishedAt,
 		)
 		if err != nil {
@@ -210,7 +262,177 @@ func (s *Storage) UpdateReadStatus(ctx context.Context, id string, read bool) er
 	return err
 }
 
+func (s *Storage) UpdateSavedStatus(ctx context.Context, id string, saved bool) error {
+	if saved {
+		_, err := s.db.ExecContext(ctx, "UPDATE items SET saved = 1, saved_at = CURRENT_TIMESTAMP WHERE id = ?", id)
+		return err
+	}
+	_, err := s.db.ExecContext(ctx, "UPDATE items SET saved = 0, saved_at = NULL WHERE id = ?", id)
+	return err
+}
+
+func (s *Storage) UpdateUserInterestOverride(ctx context.Context, id string, level *string) error {
+	_, err := s.db.ExecContext(ctx, "UPDATE items SET user_interest_override = ? WHERE id = ?", level, id)
+	return err
+}
+
 func (s *Storage) DeleteItem(ctx context.Context, id string) error {
-	_, err := s.db.ExecContext(ctx, "DELETE FROM items WHERE id = ?", id)
+	if _, err := s.db.ExecContext(ctx, "DELETE FROM items WHERE id = ?", id); err != nil {
+		return err
+	}
+	_, err := s.db.ExecContext(ctx, "DELETE FROM items_fts WHERE id = ?", id)
+	return err
+}
+
+func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters SearchFilters) ([]*Item, error) {
+	if limit <= 0 {
+		limit = 50
+	}
+	base := `
+    SELECT i.id, i.source, i.title, i.link, i.description, i.content, i.summary, i.thought, i.reason,
+           COALESCE(i.user_interest_override, i.interest_level) AS interest_level,
+           i.is_read, i.saved, i.saved_at, i.user_interest_override, i.duplicate_of, i.published_at
+    FROM items i
+    JOIN items_fts f ON f.id = i.id
+    WHERE COALESCE(i.user_interest_override, i.interest_level) != 'exclude'`
+	args := make([]any, 0, 5)
+
+	if strings.TrimSpace(q) != "" {
+		base += " AND items_fts MATCH ?"
+		args = append(args, q)
+	}
+	if filters.Source != "" {
+		base += " AND i.source = ?"
+		args = append(args, filters.Source)
+	}
+	if filters.Level != "" {
+		base += " AND COALESCE(i.user_interest_override, i.interest_level) = ?"
+		args = append(args, filters.Level)
+	}
+	if filters.Saved != nil {
+		base += " AND i.saved = ?"
+		args = append(args, *filters.Saved)
+	}
+	base += " ORDER BY i.published_at DESC LIMIT ?"
+	args = append(args, limit)
+
+	rows, err := s.db.QueryContext(ctx, base, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*Item
+	for rows.Next() {
+		var it Item
+		if err := rows.Scan(
+			&it.ID,
+			&it.Source,
+			&it.Title,
+			&it.Link,
+			&it.Description,
+			&it.Content,
+			&it.Summary,
+			&it.Thought,
+			&it.Reason,
+			&it.InterestLevel,
+			&it.IsRead,
+			&it.Saved,
+			&it.SavedAt,
+			&it.UserInterestOverride,
+			&it.DuplicateOf,
+			&it.PublishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &it)
+	}
+
+	return items, nil
+}
+
+func (s *Storage) DigestItems(ctx context.Context, since time.Time, limit int) ([]*Item, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+	query := `
+    SELECT id, source, title, link, description, content, summary, thought, reason,
+           COALESCE(user_interest_override, interest_level) AS interest_level,
+           is_read, saved, saved_at, user_interest_override, duplicate_of, published_at
+    FROM items
+    WHERE saved = 1 OR (COALESCE(user_interest_override, interest_level) = 'high_interest' AND published_at >= ?)
+    ORDER BY COALESCE(saved_at, published_at) DESC
+    LIMIT ?`
+
+	rows, err := s.db.QueryContext(ctx, query, since, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []*Item
+	for rows.Next() {
+		var it Item
+		if err := rows.Scan(
+			&it.ID,
+			&it.Source,
+			&it.Title,
+			&it.Link,
+			&it.Description,
+			&it.Content,
+			&it.Summary,
+			&it.Thought,
+			&it.Reason,
+			&it.InterestLevel,
+			&it.IsRead,
+			&it.Saved,
+			&it.SavedAt,
+			&it.UserInterestOverride,
+			&it.DuplicateOf,
+			&it.PublishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &it)
+	}
+
+	return items, nil
+}
+
+func (s *Storage) ListSources(ctx context.Context) ([]string, error) {
+	rows, err := s.db.QueryContext(ctx, `
+    SELECT DISTINCT source
+    FROM items
+    WHERE TRIM(COALESCE(source, '')) != ''
+    ORDER BY source ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var sources []string
+	for rows.Next() {
+		var source string
+		if err := rows.Scan(&source); err != nil {
+			return nil, err
+		}
+		sources = append(sources, source)
+	}
+	return sources, nil
+}
+
+func (s *Storage) upsertFTS(ctx context.Context, item *Item) error {
+	if _, err := s.db.ExecContext(ctx, "DELETE FROM items_fts WHERE id = ?", item.ID); err != nil {
+		return err
+	}
+	_, err := s.db.ExecContext(ctx,
+		"INSERT INTO items_fts (id, title, description, content, summary, source) VALUES (?, ?, ?, ?, ?, ?)",
+		item.ID,
+		item.Title,
+		item.Description,
+		item.Content,
+		item.Summary,
+		item.Source,
+	)
 	return err
 }

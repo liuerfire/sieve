@@ -119,3 +119,271 @@ func TestExists(t *testing.T) {
 		t.Fatal("expected true for existing item")
 	}
 }
+
+func TestSaveItem_PersistsSavedAndOverride(t *testing.T) {
+	dbPath := "test_saved_override.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	override := "interest"
+	savedAt := now
+	item := &Item{
+		ID:                   "saved-1",
+		Source:               "test",
+		Title:                "Saved item",
+		InterestLevel:        "uninterested",
+		UserInterestOverride: &override,
+		Saved:                true,
+		SavedAt:              &savedAt,
+		PublishedAt:          now,
+	}
+	if err := s.SaveItem(t.Context(), item); err != nil {
+		t.Fatal(err)
+	}
+
+	items, err := s.GetItems(t.Context(), 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if !items[0].Saved {
+		t.Fatal("expected saved=true")
+	}
+	if items[0].UserInterestOverride == nil || *items[0].UserInterestOverride != override {
+		t.Fatalf("expected override=%q, got %#v", override, items[0].UserInterestOverride)
+	}
+}
+
+func TestSaveItem_DuplicateOfRoundTrip(t *testing.T) {
+	dbPath := "test_duplicate_of.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	dup := "base-item"
+	item := &Item{
+		ID:          "dup-item",
+		Source:      "test",
+		Title:       "Duplicate item",
+		DuplicateOf: &dup,
+		PublishedAt: now,
+	}
+	if err := s.SaveItem(t.Context(), item); err != nil {
+		t.Fatal(err)
+	}
+
+	items, err := s.GetItems(t.Context(), 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(items))
+	}
+	if items[0].DuplicateOf == nil || *items[0].DuplicateOf != dup {
+		t.Fatalf("expected duplicate_of=%q, got %#v", dup, items[0].DuplicateOf)
+	}
+}
+
+func TestSearchItems_FTS5(t *testing.T) {
+	dbPath := "test_search.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	items := []*Item{
+		{
+			ID:            "item-ai",
+			Source:        "hn",
+			Title:         "AI chips trend",
+			Description:   "about AI accelerators",
+			InterestLevel: "high_interest",
+			PublishedAt:   now,
+		},
+		{
+			ID:            "item-db",
+			Source:        "db",
+			Title:         "SQLite release",
+			Description:   "database update",
+			InterestLevel: "interest",
+			PublishedAt:   now.Add(-time.Minute),
+		},
+	}
+	for _, it := range items {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	results, err := s.SearchItems(t.Context(), "AI", 10, SearchFilters{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result, got %d", len(results))
+	}
+	if results[0].ID != "item-ai" {
+		t.Fatalf("expected item-ai, got %s", results[0].ID)
+	}
+}
+
+func TestDigestItems_ReturnsSavedAndHighInterest(t *testing.T) {
+	dbPath := "test_digest.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	savedAt := now
+	for _, it := range []*Item{
+		{
+			ID:            "saved-old",
+			Title:         "Saved old",
+			InterestLevel: "uninterested",
+			Saved:         true,
+			SavedAt:       &savedAt,
+			PublishedAt:   now.AddDate(0, 0, -30),
+		},
+		{
+			ID:            "hi-recent",
+			Title:         "High recent",
+			InterestLevel: "high_interest",
+			PublishedAt:   now.AddDate(0, 0, -1),
+		},
+		{
+			ID:            "normal",
+			Title:         "Normal",
+			InterestLevel: "interest",
+			PublishedAt:   now,
+		},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.DigestItems(t.Context(), now.AddDate(0, 0, -7), 20)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 digest items, got %d", len(got))
+	}
+}
+
+func TestAllItems_UsesUserOverrideForExclude(t *testing.T) {
+	dbPath := "test_all_items_override.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	override := "exclude"
+	if err := s.SaveItem(t.Context(), &Item{
+		ID:                   "ovr-exclude",
+		Title:                "Should hide",
+		InterestLevel:        "high_interest",
+		UserInterestOverride: &override,
+		PublishedAt:          now,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	count := 0
+	for it, err := range s.AllItems(t.Context()) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		if it != nil {
+			count++
+		}
+	}
+	if count != 0 {
+		t.Fatalf("expected 0 visible items, got %d", count)
+	}
+}
+
+func TestDigestItems_UsesUserOverrideForHighInterest(t *testing.T) {
+	dbPath := "test_digest_override.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	override := "high_interest"
+	if err := s.SaveItem(t.Context(), &Item{
+		ID:                   "digest-override",
+		Title:                "Should appear via override",
+		InterestLevel:        "uninterested",
+		UserInterestOverride: &override,
+		PublishedAt:          now,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := s.DigestItems(t.Context(), now.Add(-24*time.Hour), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected 1 digest item, got %d", len(got))
+	}
+	if got[0].InterestLevel != "high_interest" {
+		t.Fatalf("expected effective level high_interest, got %s", got[0].InterestLevel)
+	}
+}
+
+func TestListSources(t *testing.T) {
+	dbPath := "test_sources.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for _, it := range []*Item{
+		{ID: "s1", Source: "alpha", PublishedAt: now},
+		{ID: "s2", Source: "beta", PublishedAt: now},
+		{ID: "s3", Source: "alpha", PublishedAt: now},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.ListSources(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 unique sources, got %d", len(got))
+	}
+	if got[0] != "alpha" || got[1] != "beta" {
+		t.Fatalf("unexpected sources: %#v", got)
+	}
+}

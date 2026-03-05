@@ -135,3 +135,216 @@ func TestHandleUpdateItem_Delete(t *testing.T) {
 		t.Errorf("expected status 204, got %d", w.Code)
 	}
 }
+
+func TestHandleUpdateItem_Patch_Saved(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+
+	item := &storage.Item{
+		ID:          "saved-123",
+		Title:       "Save target",
+		PublishedAt: time.Now(),
+	}
+	if err := s.SaveItem(ctx, item); err != nil {
+		t.Fatalf("failed to save test item: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/items/saved-123", strings.NewReader(`{"saved": true}`))
+	w := httptest.NewRecorder()
+	srv.handleUpdateItem(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d", w.Code)
+	}
+
+	items, err := s.GetItems(ctx, 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || !items[0].Saved {
+		t.Fatalf("expected item saved=true, got %#v", items)
+	}
+}
+
+func TestHandleUpdateItem_Patch_UserInterestOverride(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+
+	item := &storage.Item{
+		ID:            "override-123",
+		Title:         "Override target",
+		InterestLevel: "uninterested",
+		PublishedAt:   time.Now(),
+	}
+	if err := s.SaveItem(ctx, item); err != nil {
+		t.Fatalf("failed to save test item: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodPatch, "/api/items/override-123", strings.NewReader(`{"user_interest_override": "high_interest"}`))
+	w := httptest.NewRecorder()
+	srv.handleUpdateItem(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204, got %d", w.Code)
+	}
+
+	items, err := s.GetItems(ctx, 10, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if items[0].UserInterestOverride == nil || *items[0].UserInterestOverride != "high_interest" {
+		t.Fatalf("expected override high_interest, got %#v", items[0].UserInterestOverride)
+	}
+}
+
+func TestHandleSearchItems_FilterBySavedAndLevel(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+
+	for _, it := range []*storage.Item{
+		{
+			ID:            "search-1",
+			Title:         "AI launch",
+			Description:   "AI innovation",
+			InterestLevel: "high_interest",
+			Saved:         true,
+			PublishedAt:   time.Now(),
+		},
+		{
+			ID:            "search-2",
+			Title:         "Other topic",
+			Description:   "random",
+			InterestLevel: "interest",
+			PublishedAt:   time.Now(),
+		},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/items/search?q=AI&saved=true&level=high_interest", nil)
+	w := httptest.NewRecorder()
+	srv.handleSearchItems(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var items []storage.Item
+	if err := json.NewDecoder(w.Body).Decode(&items); err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 1 || items[0].ID != "search-1" {
+		t.Fatalf("expected search-1 only, got %#v", items)
+	}
+}
+
+func TestHandleDigest_ReturnsSavedAndHighInterest(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+
+	for _, it := range []*storage.Item{
+		{
+			ID:            "d-saved",
+			Title:         "Saved item",
+			InterestLevel: "uninterested",
+			Saved:         true,
+			PublishedAt:   time.Now().AddDate(0, 0, -20),
+		},
+		{
+			ID:            "d-hi",
+			Title:         "High item",
+			InterestLevel: "high_interest",
+			PublishedAt:   time.Now().AddDate(0, 0, -1),
+		},
+		{
+			ID:            "d-low",
+			Title:         "Low item",
+			InterestLevel: "interest",
+			PublishedAt:   time.Now(),
+		},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/digest", nil)
+	w := httptest.NewRecorder()
+	srv.handleDigest(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var items []storage.Item
+	if err := json.NewDecoder(w.Body).Decode(&items); err != nil {
+		t.Fatal(err)
+	}
+	if len(items) != 2 {
+		t.Fatalf("expected 2 digest items, got %d", len(items))
+	}
+}
+
+func TestHandleDigest_InvalidDays(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/digest?days=0", nil)
+	w := httptest.NewRecorder()
+
+	srv.handleDigest(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected status 400, got %d", w.Code)
+	}
+}
+
+func TestHandleGetSources(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{ID: "src-1", Source: "alpha", PublishedAt: time.Now()},
+		{ID: "src-2", Source: "beta", PublishedAt: time.Now()},
+		{ID: "src-3", Source: "alpha", PublishedAt: time.Now()},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
+	w := httptest.NewRecorder()
+
+	srv.handleGetSources(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var got []string
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got[0] != "alpha" || got[1] != "beta" {
+		t.Fatalf("unexpected sources: %#v", got)
+	}
+}

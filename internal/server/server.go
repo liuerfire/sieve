@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,7 +36,10 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", StaticHandler())
 	mux.HandleFunc("/api/items", s.handleGetItems)
+	mux.HandleFunc("/api/items/sources", s.handleGetSources)
+	mux.HandleFunc("/api/items/search", s.handleSearchItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
+	mux.HandleFunc("/api/digest", s.handleDigest)
 	mux.HandleFunc("/api/config", s.handleConfig)
 
 	server := &http.Server{
@@ -60,8 +64,10 @@ func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPatch:
 		var req struct {
-			Level *string `json:"level"`
-			Read  *bool   `json:"read"`
+			Level                *string `json:"level"`
+			Read                 *bool   `json:"read"`
+			Saved                *bool   `json:"saved"`
+			UserInterestOverride *string `json:"user_interest_override"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -78,6 +84,26 @@ func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
 			if err := s.storage.UpdateReadStatus(r.Context(), id, *req.Read); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
+			}
+		}
+		if req.Saved != nil {
+			if err := s.storage.UpdateSavedStatus(r.Context(), id, *req.Saved); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
+		if req.UserInterestOverride != nil {
+			level := strings.TrimSpace(*req.UserInterestOverride)
+			if level == "" {
+				if err := s.storage.UpdateUserInterestOverride(r.Context(), id, nil); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+			} else {
+				if err := s.storage.UpdateUserInterestOverride(r.Context(), id, &level); err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 			}
 		}
 		w.WriteHeader(http.StatusNoContent)
@@ -139,5 +165,71 @@ func (s *Server) handleGetItems(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(items); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+}
+
+func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	source := strings.TrimSpace(r.URL.Query().Get("source"))
+	level := strings.TrimSpace(r.URL.Query().Get("level"))
+
+	var saved *bool
+	if raw := strings.TrimSpace(r.URL.Query().Get("saved")); raw != "" {
+		v, err := strconv.ParseBool(raw)
+		if err != nil {
+			http.Error(w, "invalid saved flag", http.StatusBadRequest)
+			return
+		}
+		saved = &v
+	}
+
+	items, err := s.storage.SearchItems(r.Context(), q, 100, storage.SearchFilters{
+		Source: source,
+		Level:  level,
+		Saved:  saved,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(items); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
+
+func (s *Server) handleGetSources(w http.ResponseWriter, r *http.Request) {
+	sources, err := s.storage.ListSources(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(sources); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleDigest(w http.ResponseWriter, r *http.Request) {
+	days := 7
+	if raw := strings.TrimSpace(r.URL.Query().Get("days")); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v <= 0 || v > 365 {
+			http.Error(w, "invalid days", http.StatusBadRequest)
+			return
+		}
+		days = v
+	}
+	since := time.Now().AddDate(0, 0, -days)
+	items, err := s.storage.DigestItems(r.Context(), since, 100)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(items); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
