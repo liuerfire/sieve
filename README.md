@@ -60,6 +60,12 @@ To browse your news items and manage configuration in the browser:
 
 Navigate to `http://localhost:8080`.
 
+Reader supports:
+- `All`, `Saved`, and `Digest` views.
+- Search by keyword plus source/level filters.
+- Save/unsave items for your second-brain list.
+- Manual interest override (`high_interest`, `interest`, `uninterested`, `exclude`).
+
 ### 5. Generate Reports
 
 You can manually generate JSON and HTML reports from the local database:
@@ -83,6 +89,14 @@ If you only want to generate one of them, use the skip flags:
 ### Security Notice
 
 **Never commit API keys to version control.** Use environment variables or a `.env` file (added to `.gitignore`).
+
+## API Endpoints (Web UI)
+
+- `GET /api/items`: fetch latest items.
+- `PATCH /api/items/:id`: update `level`, `read`, `saved`, `user_interest_override`.
+- `DELETE /api/items/:id`: delete an item.
+- `GET /api/items/search?q=&source=&level=&saved=`: full-text search + filters.
+- `GET /api/digest`: weekly digest feed (saved + recent high-interest).
 
 ## Reference Configuration
 
