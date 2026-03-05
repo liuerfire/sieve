@@ -381,3 +381,36 @@ func TestHandleGetStats(t *testing.T) {
 		t.Fatalf("unexpected stats: %#v", got)
 	}
 }
+
+func TestHandleSourceStats(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{ID: "src-stat-1", Source: "alpha", InterestLevel: "high_interest", PublishedAt: time.Now()},
+		{ID: "src-stat-2", Source: "beta", InterestLevel: "interest", PublishedAt: time.Now()},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats?limit=5", nil)
+	w := httptest.NewRecorder()
+
+	srv.handleSourceStats(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var got []storage.SourceStats
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 source stats rows, got %d", len(got))
+	}
+}

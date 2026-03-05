@@ -79,3 +79,10 @@ export interface ItemStats {
   interest: number
   uninterested: number
 }
+
+export interface SourceStats {
+  source: string
+  visible: number
+  saved: number
+  high_interest: number
+}

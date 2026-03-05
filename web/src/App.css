@@ -347,6 +347,34 @@ body {
   color: var(--text-primary);
 }
 
+.source-stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.source-stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+
+.source-stats-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.source-name {
+  font-weight: 600;
+}
+
+.source-metrics {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
 /* Item Card Improvements */
 .card.updating {
   opacity: 0.7;

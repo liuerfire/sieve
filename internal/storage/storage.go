@@ -47,6 +47,13 @@ type ItemStats struct {
 	Uninterested  int `json:"uninterested"`
 }
 
+type SourceStats struct {
+	Source       string `json:"source"`
+	Visible      int    `json:"visible"`
+	Saved        int    `json:"saved"`
+	HighInterest int    `json:"high_interest"`
+}
+
 type Storage struct {
 	db *sql.DB
 }
@@ -460,6 +467,37 @@ func (s *Storage) ItemStats(ctx context.Context) (*ItemStats, error) {
 		return nil, err
 	}
 	return &st, nil
+}
+
+func (s *Storage) SourceStats(ctx context.Context, limit int) ([]SourceStats, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	rows, err := s.db.QueryContext(ctx, `
+    SELECT
+      source,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) != 'exclude' THEN 1 ELSE 0 END) AS visible,
+      SUM(CASE WHEN saved = 1 THEN 1 ELSE 0 END) AS saved,
+      SUM(CASE WHEN COALESCE(user_interest_override, interest_level) = 'high_interest' THEN 1 ELSE 0 END) AS high_interest
+    FROM items
+    WHERE TRIM(COALESCE(source, '')) != ''
+    GROUP BY source
+    ORDER BY high_interest DESC, saved DESC, visible DESC, source ASC
+    LIMIT ?`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stats []SourceStats
+	for rows.Next() {
+		var st SourceStats
+		if err := rows.Scan(&st.Source, &st.Visible, &st.Saved, &st.HighInterest); err != nil {
+			return nil, err
+		}
+		stats = append(stats, st)
+	}
+	return stats, nil
 }
 
 func (s *Storage) upsertFTS(ctx context.Context, item *Item) error {

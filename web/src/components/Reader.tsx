@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
-import type { Item, AsyncState, ItemStats } from '../types'
+import type { Item, AsyncState, ItemStats, SourceStats } from '../types'
 
 type ReaderMode = 'all' | 'saved' | 'digest'
 
@@ -14,6 +14,7 @@ const Reader: React.FC = () => {
   const [digestDays, setDigestDays] = useState(7)
   const [sources, setSources] = useState<string[]>([])
   const [stats, setStats] = useState<ItemStats | null>(null)
+  const [sourceStats, setSourceStats] = useState<SourceStats[]>([])
   const [itemsState, setItemsState] = useState<AsyncState<Item[]>>({
     data: null,
     state: 'idle',
@@ -60,6 +61,8 @@ const Reader: React.FC = () => {
       setItemsState({ data, state: 'success', error: null })
       const metrics = await api.getStats()
       setStats(metrics)
+      const sourceMetrics = await api.getSourceStats(5)
+      setSourceStats(sourceMetrics)
     } catch (err) {
       setItemsState({
         data: null,
@@ -113,6 +116,22 @@ const Reader: React.FC = () => {
           <div className="stat-card">
             <div className="stat-label">Unread</div>
             <div className="stat-value">{stats.unread_visible}</div>
+          </div>
+        </div>
+      )}
+
+      {sourceStats.length > 0 && (
+        <div className="card">
+          <h3>Top Sources</h3>
+          <div className="source-stats-list">
+            {sourceStats.map((st) => (
+              <div key={st.source} className="source-stats-row">
+                <span className="source-name">{st.source}</span>
+                <span className="source-metrics">
+                  {st.high_interest} high / {st.saved} saved / {st.visible} visible
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       )}

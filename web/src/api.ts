@@ -1,4 +1,4 @@
-import type { Item, Config, ItemStats } from './types'
+import type { Item, Config, ItemStats, SourceStats } from './types'
 
 const API_BASE = '/api'
 
@@ -53,6 +53,10 @@ export const api = {
 
   async getStats(): Promise<ItemStats> {
     return fetchWithErrorHandling<ItemStats>(`${API_BASE}/items/stats`)
+  },
+
+  async getSourceStats(limit = 10): Promise<SourceStats[]> {
+    return fetchWithErrorHandling<SourceStats[]>(`${API_BASE}/items/source-stats?limit=${limit}`)
   },
 
   async updateItem(

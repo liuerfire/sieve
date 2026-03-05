@@ -480,3 +480,36 @@ func TestItemStats(t *testing.T) {
 		t.Fatalf("expected unread_visible=2, got %d", got.UnreadVisible)
 	}
 }
+
+func TestSourceStats(t *testing.T) {
+	dbPath := "test_source_stats.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for _, it := range []*Item{
+		{ID: "ss-1", Source: "alpha", InterestLevel: "high_interest", Saved: true, PublishedAt: now},
+		{ID: "ss-2", Source: "alpha", InterestLevel: "interest", PublishedAt: now},
+		{ID: "ss-3", Source: "beta", InterestLevel: "high_interest", PublishedAt: now},
+		{ID: "ss-4", Source: "beta", InterestLevel: "exclude", PublishedAt: now},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	got, err := s.SourceStats(t.Context(), 10)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected 2 sources, got %d", len(got))
+	}
+	if got[0].Source != "alpha" || got[0].Visible != 2 || got[0].Saved != 1 || got[0].HighInterest != 1 {
+		t.Fatalf("unexpected alpha stats: %#v", got[0])
+	}
+}

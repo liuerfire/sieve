@@ -37,6 +37,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.Handle("/", StaticHandler())
 	mux.HandleFunc("/api/items", s.handleGetItems)
 	mux.HandleFunc("/api/items/stats", s.handleGetStats)
+	mux.HandleFunc("/api/items/source-stats", s.handleSourceStats)
 	mux.HandleFunc("/api/items/sources", s.handleGetSources)
 	mux.HandleFunc("/api/items/search", s.handleSearchItems)
 	mux.HandleFunc("/api/items/", s.handleUpdateItem)
@@ -203,6 +204,28 @@ func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetStats(w http.ResponseWriter, r *http.Request) {
 	stats, err := s.storage.ItemStats(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(stats); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (s *Server) handleSourceStats(w http.ResponseWriter, r *http.Request) {
+	limit := 10
+	if raw := strings.TrimSpace(r.URL.Query().Get("limit")); raw != "" {
+		v, err := strconv.Atoi(raw)
+		if err != nil || v <= 0 || v > 100 {
+			http.Error(w, "invalid limit", http.StatusBadRequest)
+			return
+		}
+		limit = v
+	}
+
+	stats, err := s.storage.SourceStats(r.Context(), limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
