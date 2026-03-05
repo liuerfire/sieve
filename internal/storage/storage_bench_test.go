@@ -24,7 +24,9 @@ func BenchmarkSaveItem(b *testing.B) {
 
 	b.ResetTimer()
 	for b.Loop() {
-		s.SaveItem(ctx, item)
+		if err := s.SaveItem(ctx, item); err != nil {
+			b.Fatal(err)
+		}
 	}
 }
 
@@ -77,6 +79,8 @@ func BenchmarkExists(b *testing.B) {
 
 	b.ResetTimer()
 	for b.Loop() {
-		s.Exists(ctx, "test-id")
+		if _, err := s.Exists(ctx, "test-id"); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

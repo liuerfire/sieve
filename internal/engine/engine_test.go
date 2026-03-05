@@ -36,7 +36,7 @@ func TestEngine_Run(t *testing.T) {
 	aiServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		// Simulate classification response
-		w.Write([]byte(`{
+		if _, err := w.Write([]byte(`{
 			"candidates": [{
 				"content": {
 					"parts": [{
@@ -44,7 +44,9 @@ func TestEngine_Run(t *testing.T) {
 					}]
 				}
 			}]
-		}`))
+		}`)); err != nil {
+			t.Fatalf("write mock classify response: %v", err)
+		}
 	}))
 	defer aiServer.Close()
 
@@ -141,7 +143,9 @@ func TestEngine_ProcessItem_Pipeline(t *testing.T) {
 		}
 
 		resp := fmt.Sprintf(`{"candidates": [{"content": {"parts": [{"text": "%s"}]}}]}`, strings.ReplaceAll(text, `"`, `\"`))
-		w.Write([]byte(resp))
+		if _, err := w.Write([]byte(resp)); err != nil {
+			t.Fatalf("write mock pipeline response: %v", err)
+		}
 	}))
 	defer aiServer.Close()
 

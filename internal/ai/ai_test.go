@@ -11,7 +11,7 @@ func TestClassify(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Mock Gemini response format
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		if _, err := w.Write([]byte(`{
 			"candidates": [{
 				"content": {
 					"parts": [{
@@ -19,7 +19,9 @@ func TestClassify(t *testing.T) {
 					}]
 				}
 			}]
-		}`))
+		}`)); err != nil {
+			t.Fatalf("write mock classify response: %v", err)
+		}
 	}))
 	defer server.Close()
 
@@ -47,7 +49,7 @@ func TestSummarize(t *testing.T) {
 	// Mock Gemini response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{
+		if _, err := w.Write([]byte(`{
 			"candidates": [{
 				"content": {
 					"parts": [{
@@ -55,7 +57,9 @@ func TestSummarize(t *testing.T) {
 					}]
 				}
 			}]
-		}`))
+		}`)); err != nil {
+			t.Fatalf("write mock summarize response: %v", err)
+		}
 	}))
 	defer server.Close()
 

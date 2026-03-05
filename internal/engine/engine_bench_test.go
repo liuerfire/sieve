@@ -36,6 +36,8 @@ func BenchmarkGenerateJSON(b *testing.B) {
 
 	b.ResetTimer()
 	for b.Loop() {
-		eng.GenerateJSON(ctx, "/dev/null")
+		if err := eng.GenerateJSON(ctx, "/dev/null"); err != nil {
+			b.Fatal(err)
+		}
 	}
 }

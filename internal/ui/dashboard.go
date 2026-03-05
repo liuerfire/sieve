@@ -35,7 +35,6 @@ var (
 			Height(8)
 
 	highInterestStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFD700"))
-	interestStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#00BFFF"))
 
 	doneStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00")).Bold(true)
 	errStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000")).Bold(true)

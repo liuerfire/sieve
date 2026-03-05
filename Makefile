@@ -4,6 +4,10 @@ CMD_DIR=github.com/liuerfire/sieve/cmd/sieve
 GOIMPORTS=$(HOME)/go/bin/goimports
 GOLANGCI_LINT=$(HOME)/go/bin/golangci-lint
 MODULE_NAME=github.com/liuerfire/sieve
+CACHE_DIR=$(abspath .cache)
+GO_BUILD_CACHE=$(CACHE_DIR)/go-build
+GO_MOD_CACHE=$(CACHE_DIR)/go-mod
+GOLANGCI_CACHE=$(CACHE_DIR)/golangci-lint
 
 .PHONY: all build run report test clean fmt
 
@@ -41,10 +45,12 @@ lint-install:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 lint:
-	$(GOLANGCI_LINT) run ./...
+	mkdir -p $(GO_BUILD_CACHE) $(GO_MOD_CACHE) $(GOLANGCI_CACHE)
+	GOCACHE=$(GO_BUILD_CACHE) GOMODCACHE=$(GO_MOD_CACHE) GOLANGCI_LINT_CACHE=$(GOLANGCI_CACHE) $(GOLANGCI_LINT) run ./...
 
 lint-fast:
-	$(GOLANGCI_LINT) run --fast ./...
+	mkdir -p $(GO_BUILD_CACHE) $(GO_MOD_CACHE) $(GOLANGCI_CACHE)
+	GOCACHE=$(GO_BUILD_CACHE) GOMODCACHE=$(GO_MOD_CACHE) GOLANGCI_LINT_CACHE=$(GOLANGCI_CACHE) $(GOLANGCI_LINT) run --fast ./...
 
 pgo:
 	go test -cpuprofile=default.pgo ./internal/engine -run TestEngine_Run
