@@ -33,6 +33,7 @@ body {
   display: flex;
   flex-direction: column;
   padding: 20px 0;
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -69,6 +70,70 @@ body {
   flex: 1;
   overflow-y: auto;
   padding: 40px;
+}
+
+.sidebar-section {
+  margin-top: 16px;
+  padding: 0 12px;
+}
+
+.sidebar-section h2 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 0 8px;
+  margin: 0 0 8px;
+}
+
+.feed-search {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.feed-search::placeholder {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.feed-item {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  color: #e2e8f0;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.feed-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.feed-item.active {
+  background: rgba(79, 70, 229, 0.35);
+  border-color: rgba(129, 140, 248, 0.8);
+}
+
+.feed-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.feed-counts {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.75rem;
 }
 
 .card {
