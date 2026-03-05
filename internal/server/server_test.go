@@ -459,3 +459,49 @@ func TestHandleSourceSuggestions(t *testing.T) {
 		t.Fatalf("unexpected suggestions: %#v", got)
 	}
 }
+
+func TestHandleSearchItems_FilterUnread(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+
+	for _, it := range []*storage.Item{
+		{
+			ID:            "u-search",
+			Title:         "Unread AI",
+			Description:   "ai",
+			InterestLevel: "interest",
+			IsRead:        false,
+			PublishedAt:   time.Now(),
+		},
+		{
+			ID:            "r-search",
+			Title:         "Read AI",
+			Description:   "ai",
+			InterestLevel: "interest",
+			IsRead:        true,
+			PublishedAt:   time.Now(),
+		},
+	} {
+		if err := s.SaveItem(ctx, it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	srv := NewServer(&config.Config{}, s)
+	req := httptest.NewRequest(http.MethodGet, "/api/items/search?q=AI&unread=true", nil)
+	w := httptest.NewRecorder()
+	srv.handleSearchItems(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var got []storage.Item
+	if err := json.NewDecoder(w.Body).Decode(&got); err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != "u-search" {
+		t.Fatalf("unexpected unread results: %#v", got)
+	}
+}

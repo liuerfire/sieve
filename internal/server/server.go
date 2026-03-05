@@ -185,11 +185,21 @@ func (s *Server) handleSearchItems(w http.ResponseWriter, r *http.Request) {
 		}
 		saved = &v
 	}
+	var unread *bool
+	if raw := strings.TrimSpace(r.URL.Query().Get("unread")); raw != "" {
+		v, err := strconv.ParseBool(raw)
+		if err != nil {
+			http.Error(w, "invalid unread flag", http.StatusBadRequest)
+			return
+		}
+		unread = &v
+	}
 
 	items, err := s.storage.SearchItems(r.Context(), q, 100, storage.SearchFilters{
 		Source: source,
 		Level:  level,
 		Saved:  saved,
+		Unread: unread,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -91,12 +91,14 @@ export const api = {
     source?: string
     level?: string
     saved?: boolean
+    unread?: boolean
   }): Promise<Item[]> {
     const search = new URLSearchParams()
     if (params.q) search.set('q', params.q)
     if (params.source) search.set('source', params.source)
     if (params.level) search.set('level', params.level)
     if (typeof params.saved === 'boolean') search.set('saved', String(params.saved))
+    if (typeof params.unread === 'boolean') search.set('unread', String(params.unread))
     return fetchWithErrorHandling<Item[]>(`${API_BASE}/items/search?${search.toString()}`)
   },
 

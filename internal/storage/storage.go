@@ -36,6 +36,7 @@ type SearchFilters struct {
 	Source string
 	Level  string
 	Saved  *bool
+	Unread *bool
 }
 
 type ItemStats struct {
@@ -341,6 +342,11 @@ func (s *Storage) SearchItems(ctx context.Context, q string, limit int, filters 
 	if filters.Saved != nil {
 		base += " AND i.saved = ?"
 		args = append(args, *filters.Saved)
+	}
+	if filters.Unread != nil {
+		base += " AND i.is_read = ?"
+		// unread=true means is_read=0; unread=false means is_read=1
+		args = append(args, !*filters.Unread)
 	}
 	base += " ORDER BY i.published_at DESC LIMIT ?"
 	args = append(args, limit)

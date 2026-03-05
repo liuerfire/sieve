@@ -295,6 +295,49 @@ func TestSearchItems_FTS5(t *testing.T) {
 	}
 }
 
+func TestSearchItems_FilterUnread(t *testing.T) {
+	dbPath := "test_search_unread.db"
+	defer os.Remove(dbPath)
+	s, err := InitDB(t.Context(), dbPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	now := time.Now().Truncate(time.Second)
+	for _, it := range []*Item{
+		{
+			ID:            "unread-item",
+			Title:         "Unread AI item",
+			Description:   "ai",
+			InterestLevel: "interest",
+			IsRead:        false,
+			PublishedAt:   now,
+		},
+		{
+			ID:            "read-item",
+			Title:         "Read AI item",
+			Description:   "ai",
+			InterestLevel: "interest",
+			IsRead:        true,
+			PublishedAt:   now,
+		},
+	} {
+		if err := s.SaveItem(t.Context(), it); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	unread := true
+	got, err := s.SearchItems(t.Context(), "AI", 10, SearchFilters{Unread: &unread})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].ID != "unread-item" {
+		t.Fatalf("expected unread-item only, got %#v", got)
+	}
+}
+
 func TestDigestItems_ReturnsSavedAndHighInterest(t *testing.T) {
 	dbPath := "test_digest.db"
 	defer os.Remove(dbPath)

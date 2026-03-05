@@ -11,6 +11,7 @@ const Reader: React.FC = () => {
   const [q, setQ] = useState('')
   const [source, setSource] = useState('')
   const [level, setLevel] = useState('')
+  const [unreadOnly, setUnreadOnly] = useState(false)
   const [digestDays, setDigestDays] = useState(7)
   const [sources, setSources] = useState<string[]>([])
   const [stats, setStats] = useState<ItemStats | null>(null)
@@ -53,9 +54,9 @@ const Reader: React.FC = () => {
       if (mode === 'digest') {
         data = await api.getDigest(digestDays)
       } else if (mode === 'saved') {
-        data = await api.searchItems({ q, source, level, saved: true })
-      } else if (q || source || level) {
-        data = await api.searchItems({ q, source, level })
+        data = await api.searchItems({ q, source, level, saved: true, unread: unreadOnly })
+      } else if (q || source || level || unreadOnly) {
+        data = await api.searchItems({ q, source, level, unread: unreadOnly })
       } else {
         data = await api.getItems()
       }
@@ -73,7 +74,7 @@ const Reader: React.FC = () => {
         error: err instanceof Error ? err.message : 'Failed to fetch items',
       })
     }
-  }, [digestDays, level, mode, q, source])
+  }, [digestDays, level, mode, q, source, unreadOnly])
 
   useEffect(() => {
     fetchItems()
@@ -192,6 +193,14 @@ const Reader: React.FC = () => {
               <option value="uninterested">Uninterested</option>
               <option value="exclude">Exclude</option>
             </select>
+            <label>
+              <input
+                type="checkbox"
+                checked={unreadOnly}
+                onChange={e => setUnreadOnly(e.target.checked)}
+              />
+              {' '}Unread only
+            </label>
           </div>
         )}
         {mode === 'digest' && (
