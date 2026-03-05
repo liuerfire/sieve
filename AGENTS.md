@@ -104,3 +104,4 @@ Before modifying files, you must read the existing content and strictly adhere t
 * Do not proactively run `git commit` or `git push`.
 * The user may need to review changes or perform other operations first.
 * All commit messages must be written in English.
+* Changes under `docs/plans/` are optional by default and do not need to be committed unless explicitly requested.

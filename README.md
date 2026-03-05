@@ -98,6 +98,11 @@ If you only want to generate one of them, use the skip flags:
 - `GET /api/items/search?q=&source=&level=&saved=`: full-text search + filters.
 - `GET /api/digest`: weekly digest feed (saved + recent high-interest).
 
+## Contributor Note
+
+- Files under `docs/plans/` are working notes and are optional to commit.
+- Do not commit `docs/plans/` changes unless explicitly requested.
+
 ## Reference Configuration
 
 ```json
