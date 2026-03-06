@@ -5,8 +5,10 @@ import { api } from './api'
 import type { Feed } from './types'
 import './App.css'
 
+type View = 'reader' | 'config'
+
 function App() {
-  const [view, setView] = useState('reader')
+  const [view, setView] = useState<View>('reader')
   const [feedFilter, setFeedFilter] = useState('')
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedQuery, setFeedQuery] = useState('')
@@ -33,55 +35,70 @@ function App() {
   }, [feedQuery, feeds])
 
   return (
-    <div className="app-container">
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <h1>Sieve</h1>
-        </div>
-        <nav className="nav">
-          <div 
-            className={`nav-item ${view === 'reader' ? 'active' : ''}`}
-            onClick={() => setView('reader')}
-          >
-            Reader
+    <div className="app-shell">
+      <header className="app-header">
+        <div className="app-header-main">
+          <div className="brand-block">
+            <span className="brand-mark">S</span>
+            <div>
+              <div className="brand-name">Sieve</div>
+              <div className="brand-tagline">AI news briefings for your feeds</div>
+            </div>
           </div>
-          <div 
-            className={`nav-item ${view === 'config' ? 'active' : ''}`}
-            onClick={() => setView('config')}
-          >
-            Settings
-          </div>
-        </nav>
-        {view === 'reader' && (
-          <section className="sidebar-section">
-            <h2>Feeds</h2>
-            <input
-              className="feed-search"
-              type="text"
-              placeholder="Search feeds"
-              value={feedQuery}
-              onChange={(e) => setFeedQuery(e.target.value)}
-            />
+
+          <nav className="top-nav" aria-label="Primary">
             <button
-              className={`feed-item ${feedFilter === '' ? 'active' : ''}`}
+              className={`top-nav-item ${view === 'reader' ? 'active' : ''}`}
+              onClick={() => setView('reader')}
+            >
+              Reader
+            </button>
+            <button
+              className={`top-nav-item ${view === 'config' ? 'active' : ''}`}
+              onClick={() => setView('config')}
+            >
+              Settings
+            </button>
+          </nav>
+
+          {view === 'reader' ? (
+            <label className="header-search" aria-label="Search feeds">
+              <span className="sr-only">Search feeds</span>
+              <input
+                type="search"
+                placeholder="Search feeds"
+                value={feedQuery}
+                onChange={(e) => setFeedQuery(e.target.value)}
+              />
+            </label>
+          ) : (
+            <div className="header-summary">Tune rules, AI preferences, and feed coverage.</div>
+          )}
+        </div>
+
+        {view === 'reader' && (
+          <div className="feed-chip-row" aria-label="Feed filters">
+            <button
+              className={`feed-chip ${feedFilter === '' ? 'active' : ''}`}
               onClick={() => setFeedFilter('')}
             >
-              <span className="feed-name">All Feeds</span>
+              All feeds
             </button>
             {filteredFeeds.map((feed) => (
               <button
                 key={feed.id}
-                className={`feed-item ${feedFilter === feed.id ? 'active' : ''}`}
+                className={`feed-chip ${feedFilter === feed.id ? 'active' : ''}`}
                 onClick={() => setFeedFilter(feed.id)}
+                title={feed.name}
               >
-                <span className="feed-name">{feed.name}</span>
+                {feed.name}
               </button>
             ))}
-          </section>
+          </div>
         )}
-      </aside>
+      </header>
 
-      <main className="main-content">
+      <main className="page-shell">
         {view === 'reader' && <Reader feedIDFilter={feedFilter} onDataRefresh={loadFeeds} />}
         {view === 'config' && <ConfigForm />}
       </main>

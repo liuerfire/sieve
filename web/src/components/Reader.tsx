@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
 import type { Item, AsyncState, ItemStats, SourceSuggestion } from '../types'
@@ -8,6 +8,25 @@ type ReaderMode = 'all' | 'saved' | 'digest'
 interface ReaderProps {
   feedIDFilter: string
   onDataRefresh?: () => void
+}
+
+const levelOptions = [
+  { value: '', label: 'All levels' },
+  { value: 'high_interest', label: 'High interest' },
+  { value: 'interest', label: 'Interest' },
+  { value: 'uninterested', label: 'Uninterested' },
+  { value: 'exclude', label: 'Exclude' },
+]
+
+const formatDigestLabel = (days: number) => {
+  switch (days) {
+    case 14:
+      return '14 days'
+    case 30:
+      return '30 days'
+    default:
+      return '7 days'
+  }
 }
 
 const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
@@ -32,7 +51,7 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
 
   const fetchItems = useCallback(async () => {
     setItemsState(prev => ({ ...prev, state: 'loading', error: null }))
-    
+
     try {
       let data: Item[] = []
       if (mode === 'digest') {
@@ -68,7 +87,6 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
   }, [fetchItems])
 
   const handleUpdate = useCallback(() => {
-    // Refresh items after an update
     fetchItems()
   }, [fetchItems])
 
@@ -79,27 +97,35 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
       await api.bulkUpdateRead(ids, read)
       fetchItems()
     } catch {
-      // Reuse existing error presentation by forcing a refresh path.
       fetchItems()
     }
   }, [itemsState.data, fetchItems])
 
+  const featuredItem = itemsState.data?.[0] ?? null
+  const remainingItems = useMemo(() => itemsState.data?.slice(1) ?? [], [itemsState.data])
+
   return (
-    <div className="reader">
-      <div className="reader-header">
-        <h2>Recent News</h2>
-        <button 
-          className="button button-outline" 
+    <div className="reader-page">
+      <section className="news-hero">
+        <div>
+          <p className="eyebrow">Daily briefing</p>
+          <h1>Top stories from your reading graph</h1>
+          <p className="hero-copy">
+            Scan the strongest items first, narrow by signal, and keep tuning the stream without leaving the surface.
+          </p>
+        </div>
+        <button
+          className="button button-primary"
           onClick={handleRefresh}
           disabled={itemsState.state === 'loading'}
           aria-label="Refresh news items"
         >
-          {itemsState.state === 'loading' ? 'Loading...' : 'Refresh'}
+          {itemsState.state === 'loading' ? 'Refreshing...' : 'Refresh'}
         </button>
-      </div>
+      </section>
 
       {stats && (
-        <div className="stats-grid">
+        <section className="stats-strip" aria-label="Reader stats">
           <div className="stat-card">
             <div className="stat-label">Visible</div>
             <div className="stat-value">{stats.total_visible}</div>
@@ -116,88 +142,103 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
             <div className="stat-label">Unread</div>
             <div className="stat-value">{stats.unread_visible}</div>
           </div>
-        </div>
+        </section>
       )}
 
+      <section className="reader-toolbar card">
+        <div className="chip-row" role="tablist" aria-label="Reader modes">
+          <button className={`chip ${mode === 'all' ? 'active' : ''}`} onClick={() => setMode('all')}>
+            All
+          </button>
+          <button className={`chip ${mode === 'saved' ? 'active' : ''}`} onClick={() => setMode('saved')}>
+            Saved
+          </button>
+          <button className={`chip ${mode === 'digest' ? 'active' : ''}`} onClick={() => setMode('digest')}>
+            Digest
+          </button>
+        </div>
+
+        {mode !== 'digest' ? (
+          <div className="toolbar-grid">
+            <label className="search-field toolbar-search">
+              <span className="sr-only">Search items</span>
+              <input
+                className="form-control"
+                placeholder="Search keywords"
+                value={qInput}
+                onChange={e => setQInput(e.target.value)}
+              />
+            </label>
+
+            <div className="chip-row compact" aria-label="Interest level filter">
+              {levelOptions.map((option) => (
+                <button
+                  key={option.value || 'all'}
+                  className={`chip ${level === option.value ? 'active' : ''}`}
+                  onClick={() => setLevel(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="utility-row">
+              <label className={`chip toggle-chip ${unreadOnly ? 'active' : ''}`}>
+                <input
+                  type="checkbox"
+                  checked={unreadOnly}
+                  onChange={e => setUnreadOnly(e.target.checked)}
+                />
+                Unread only
+              </label>
+              <button className="button button-outline" onClick={() => handleBulkRead(true)}>
+                Mark visible read
+              </button>
+              <button className="button button-outline" onClick={() => handleBulkRead(false)}>
+                Mark visible unread
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="utility-row">
+            <span className="toolbar-label">Digest range</span>
+            {[7, 14, 30].map((days) => (
+              <button
+                key={days}
+                className={`chip ${digestDays === days ? 'active' : ''}`}
+                onClick={() => setDigestDays(days)}
+              >
+                {formatDigestLabel(days)}
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+
       {sourceSuggestions.length > 0 && (
-        <div className="card">
-          <h3>Prune Candidates</h3>
+        <section className="briefing-card card">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Source analysis</p>
+              <h2>Prune candidates</h2>
+            </div>
+          </div>
           <div className="source-stats-list">
             {sourceSuggestions.map((sg) => (
               <div key={sg.source} className="source-stats-row">
                 <span className="source-name">{sg.source}</span>
-                <span className="source-metrics">{sg.visible} visible: {sg.reason}</span>
+                <span className="source-metrics">{sg.visible} visible · {sg.reason}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
-
-      <div className="card">
-        <div className="card-meta">
-          <button className={`button-outline ${mode === 'all' ? 'active' : ''}`} onClick={() => setMode('all')}>
-            All
-          </button>
-          <button className={`button-outline ${mode === 'saved' ? 'active' : ''}`} onClick={() => setMode('saved')}>
-            Saved
-          </button>
-          <button className={`button-outline ${mode === 'digest' ? 'active' : ''}`} onClick={() => setMode('digest')}>
-            Digest
-          </button>
-        </div>
-        {mode !== 'digest' && (
-          <div className="card-meta">
-            <input
-              className="form-control"
-              placeholder="Search keywords"
-              value={qInput}
-              onChange={e => setQInput(e.target.value)}
-            />
-            <select className="form-control" value={level} onChange={e => setLevel(e.target.value)}>
-              <option value="">All levels</option>
-              <option value="high_interest">High Interest</option>
-              <option value="interest">Interest</option>
-              <option value="uninterested">Uninterested</option>
-              <option value="exclude">Exclude</option>
-            </select>
-            <label>
-              <input
-                type="checkbox"
-                checked={unreadOnly}
-                onChange={e => setUnreadOnly(e.target.checked)}
-              />
-              {' '}Unread only
-            </label>
-            <button className="button-outline" onClick={() => handleBulkRead(true)}>
-              Mark Visible Read
-            </button>
-            <button className="button-outline" onClick={() => handleBulkRead(false)}>
-              Mark Visible Unread
-            </button>
-          </div>
-        )}
-        {mode === 'digest' && (
-          <div className="card-meta">
-            <label htmlFor="digest-days">Digest range:</label>
-            <select
-              id="digest-days"
-              className="form-control"
-              value={digestDays}
-              onChange={e => setDigestDays(Number(e.target.value))}
-            >
-              <option value={7}>Last 7 days</option>
-              <option value={14}>Last 14 days</option>
-              <option value={30}>Last 30 days</option>
-            </select>
-          </div>
-        )}
-      </div>
 
       {itemsState.state === 'error' && (
         <div className="error-message" role="alert">
           <p>Error loading items: {itemsState.error}</p>
           <button onClick={handleRefresh} className="button button-primary">
-            Try Again
+            Try again
           </button>
         </div>
       )}
@@ -210,24 +251,26 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
       )}
 
       {itemsState.state === 'success' && itemsState.data?.length === 0 && (
-        <div className="empty-state">
-          <p>No items found. Run the aggregator to fetch news!</p>
+        <div className="empty-state card">
+          <p>No items found. Run the aggregator to fetch news.</p>
           <button onClick={handleRefresh} className="button button-primary">
-            Check Again
+            Check again
           </button>
         </div>
       )}
 
-      {itemsState.data && itemsState.data.length > 0 && (
-        <div className="items-list" role="feed" aria-label="News items">
-          {itemsState.data.map((item) => (
-            <ItemCard 
-              key={item.ID} 
-              item={item} 
-              onUpdate={handleUpdate}
-            />
+      {featuredItem && (
+        <section className="featured-story">
+          <ItemCard item={featuredItem} onUpdate={handleUpdate} variant="featured" />
+        </section>
+      )}
+
+      {remainingItems.length > 0 && (
+        <section className="story-grid" role="feed" aria-label="News items">
+          {remainingItems.map((item) => (
+            <ItemCard key={item.ID} item={item} onUpdate={handleUpdate} variant="standard" />
           ))}
-        </div>
+        </section>
       )}
     </div>
   )
