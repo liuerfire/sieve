@@ -18,7 +18,7 @@ import (
 // AI provider endpoints and configuration constants.
 const (
 	geminiBaseURL = "https://generativelanguage.googleapis.com/v1beta"
-	qwenBaseURL   = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+	qwenBaseURL   = "https://dashscope.aliyuncs.com/compatible-mode/v1"
 	httpTimeout   = 30 * time.Second
 
 	// Default models for each provider
@@ -181,22 +181,23 @@ type qwenProvider struct {
 }
 
 func (p *qwenProvider) buildRequest(ctx context.Context, model, prompt string, isJSON bool) (*http.Request, error) {
+	url := strings.TrimRight(p.baseURL, "/") + "/chat/completions"
 	reqBody := map[string]any{
 		"model": model,
-		"input": map[string]any{
-			"messages": []map[string]any{
-				{"role": "user", "content": prompt},
-			},
+		"messages": []map[string]any{
+			{"role": "user", "content": prompt},
 		},
-		"parameters": map[string]any{
-			"result_format": "message",
-		},
+	}
+	if isJSON {
+		reqBody["response_format"] = map[string]any{
+			"type": "json_object",
+		}
 	}
 	data, err := json.Marshal(reqBody)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequestWithContext(ctx, "POST", p.baseURL, bytes.NewBuffer(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(data))
 	if err != nil {
 		return nil, err
 	}
@@ -207,19 +208,17 @@ func (p *qwenProvider) buildRequest(ctx context.Context, model, prompt string, i
 
 func (p *qwenProvider) parseResponse(body []byte) (string, error) {
 	var resp struct {
-		Output struct {
-			Choices []struct {
-				Message struct {
-					Content string `json:"content"`
-				} `json:"message"`
-			} `json:"choices"`
-		} `json:"output"`
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
 	}
 	if err := json.Unmarshal(body, &resp); err != nil {
 		return "", err
 	}
-	if len(resp.Output.Choices) > 0 {
-		return resp.Output.Choices[0].Message.Content, nil
+	if len(resp.Choices) > 0 {
+		return resp.Choices[0].Message.Content, nil
 	}
 	return "", fmt.Errorf("empty response from Qwen")
 }
