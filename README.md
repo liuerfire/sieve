@@ -41,15 +41,7 @@ export GEMINI_API_KEY=your_gemini_api_key
 export QWEN_API_KEY=your_qwen_api_key
 ```
 
-### 3. Refresh News Once
-
-To fetch news and process them with AI without starting the HTTP server:
-
-```bash
-./bin/sieve serve --refresh-now
-```
-
-### 4. Start Web UI
+### 3. Start Web UI
 
 To browse your news items, manage configuration, and trigger manual refreshes in the browser:
 

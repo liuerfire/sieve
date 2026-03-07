@@ -47,7 +47,6 @@ export GEMINI_API_KEY=your_key
 # OR
 export QWEN_API_KEY=your_key
 
-./bin/sieve serve --refresh-now  # Run one refresh cycle against the database
 ./bin/sieve serve                # Start the Web UI dashboard (default: localhost:8080)
 ```
 

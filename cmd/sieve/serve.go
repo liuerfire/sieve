@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os/signal"
 	"syscall"
@@ -21,7 +20,6 @@ var serveCmd = &cobra.Command{
 
 		dbFile, _ := cmd.Flags().GetString("db")
 		port, _ := cmd.Flags().GetInt("port")
-		refreshNow, _ := cmd.Flags().GetBool("refresh-now")
 		scheduleInterval, _ := cmd.Flags().GetDuration("schedule-interval")
 
 		s, err := storage.InitDB(ctx, dbFile)
@@ -31,11 +29,6 @@ var serveCmd = &cobra.Command{
 		defer s.Close()
 
 		coordinator := newRefreshCoordinator(s)
-
-		if refreshNow {
-			_, err := coordinator.Trigger(context.WithoutCancel(ctx), "cli")
-			return err
-		}
 
 		if scheduleInterval > 0 {
 			go runScheduledRefresh(ctx, coordinator, scheduleInterval)
@@ -48,7 +41,6 @@ var serveCmd = &cobra.Command{
 
 func init() {
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
-	serveCmd.Flags().Bool("refresh-now", false, "Run one refresh cycle and exit")
 	serveCmd.Flags().Duration("schedule-interval", 0, "Enable in-process scheduled refreshes at the given interval")
 	rootCmd.AddCommand(serveCmd)
 }
