@@ -53,3 +53,14 @@ func TestRootCmd_HelpOmitsReport(t *testing.T) {
 		t.Fatal("expected root help to omit report command")
 	}
 }
+
+func TestRootCmd_HelpOmitsRun(t *testing.T) {
+	rootCmd.SetArgs([]string{"--help"})
+	output, err := executeCommand(rootCmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(output, "run") {
+		t.Fatal("expected root help to omit run command")
+	}
+}

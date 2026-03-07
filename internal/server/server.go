@@ -1,13 +1,16 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/liuerfire/sieve/internal/refresh"
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
@@ -19,16 +22,23 @@ const (
 )
 
 type Server struct {
-	storage *storage.Storage
+	storage   *storage.Storage
+	refresher refresher
 }
 
-func NewServer(s *storage.Storage) *Server {
+type refresher interface {
+	Status() refresh.Status
+	Trigger(ctx context.Context, source string) (refresh.Status, error)
+}
+
+func NewServer(s *storage.Storage, r refresher) *Server {
 	return &Server{
-		storage: s,
+		storage:   s,
+		refresher: r,
 	}
 }
 
-func (s *Server) ListenAndServe(addr string) error {
+func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", StaticHandler())
 	mux.HandleFunc("/api/items", s.handleGetItems)
@@ -43,6 +53,7 @@ func (s *Server) ListenAndServe(addr string) error {
 	mux.HandleFunc("/api/feeds", s.handleFeeds)
 	mux.HandleFunc("/api/feeds/", s.handleFeedByID)
 	mux.HandleFunc("/api/settings", s.handleSettings)
+	mux.HandleFunc("/api/refresh", s.handleRefresh)
 
 	server := &http.Server{
 		Addr:         addr,
@@ -52,8 +63,53 @@ func (s *Server) ListenAndServe(addr string) error {
 		IdleTimeout:  defaultIdleTimeout,
 	}
 
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = server.Shutdown(shutdownCtx)
+	}()
+
 	fmt.Printf("Sieve Web UI listening on %s\n", addr)
-	return server.ListenAndServe()
+	err := server.ListenAndServe()
+	if errors.Is(err, http.ErrServerClosed) && ctx.Err() != nil {
+		return nil
+	}
+	return err
+}
+
+func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
+	if s.refresher == nil {
+		http.Error(w, "refresh unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		w.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(w).Encode(s.refresher.Status()); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	case http.MethodPost:
+		status, err := s.refresher.Trigger(context.WithoutCancel(r.Context()), "manual")
+		if err != nil {
+			if errors.Is(err, refresh.ErrAlreadyRunning) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(status)
+				return
+			}
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusAccepted)
+		if err := json.NewEncoder(w).Encode(status); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {

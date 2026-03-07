@@ -119,3 +119,20 @@ export interface Settings {
   ai_burst_limit?: string
   ai_max_concurrency?: string
 }
+
+export interface RefreshResult {
+  sources_processed: number
+  sources_failed: number
+  items_processed: number
+  items_high_interest: number
+}
+
+export interface RefreshStatus {
+  running: boolean
+  last_trigger?: string
+  last_started_at?: string
+  last_completed_at?: string
+  last_success_at?: string
+  last_error?: string
+  last_result?: RefreshResult
+}

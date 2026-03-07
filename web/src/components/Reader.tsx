@@ -8,6 +8,7 @@ type ReaderMode = 'all' | 'saved' | 'digest'
 interface ReaderProps {
   feedIDFilter: string
   onDataRefresh?: () => void
+  refreshVersion?: number
 }
 
 const levelOptions = [
@@ -29,7 +30,7 @@ const formatDigestLabel = (days: number) => {
   }
 }
 
-const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
+const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVersion = 0 }) => {
   const [mode, setMode] = useState<ReaderMode>('all')
   const [qInput, setQInput] = useState('')
   const [q, setQ] = useState('')
@@ -80,7 +81,7 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh }) => {
 
   useEffect(() => {
     fetchItems()
-  }, [fetchItems])
+  }, [fetchItems, refreshVersion])
 
   const handleRefresh = useCallback(() => {
     fetchItems()

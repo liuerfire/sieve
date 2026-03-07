@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -13,9 +17,14 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the Web UI server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		ctx := cmd.Context()
+		ctx, stop := signal.NotifyContext(cmd.Context(), syscall.SIGINT, syscall.SIGTERM)
+		defer stop()
+
 		dbFile, _ := cmd.Flags().GetString("db")
 		port, _ := cmd.Flags().GetInt("port")
+		refreshNow, _ := cmd.Flags().GetBool("refresh-now")
+		schedule, _ := cmd.Flags().GetBool("schedule")
+		scheduleInterval, _ := cmd.Flags().GetDuration("schedule-interval")
 
 		s, err := storage.InitDB(ctx, dbFile)
 		if err != nil {
@@ -23,12 +32,29 @@ var serveCmd = &cobra.Command{
 		}
 		defer s.Close()
 
-		srv := server.NewServer(s)
-		return srv.ListenAndServe(fmt.Sprintf(":%d", port))
+		coordinator := newRefreshCoordinator(s)
+
+		if refreshNow {
+			_, err := coordinator.Trigger(context.WithoutCancel(ctx), "cli")
+			return err
+		}
+
+		if schedule {
+			if scheduleInterval <= 0 {
+				return fmt.Errorf("schedule-interval must be greater than zero")
+			}
+			go runScheduledRefresh(ctx, coordinator, scheduleInterval)
+		}
+
+		srv := server.NewServer(s, coordinator)
+		return srv.ListenAndServe(ctx, fmt.Sprintf(":%d", port))
 	},
 }
 
 func init() {
 	serveCmd.Flags().IntP("port", "p", 8080, "Port to listen on")
+	serveCmd.Flags().Bool("refresh-now", false, "Run one refresh cycle and exit")
+	serveCmd.Flags().Bool("schedule", false, "Enable in-process scheduled refreshes")
+	serveCmd.Flags().Duration("schedule-interval", time.Hour, "Refresh interval when --schedule is enabled")
 	rootCmd.AddCommand(serveCmd)
 }

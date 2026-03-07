@@ -6,7 +6,7 @@ on:
   workflow_dispatch:      # 支持手动点击运行
 
 jobs:
-  build-and-run:
+  build-and-refresh:
     runs-on: ubuntu-latest
 
     steps:
@@ -32,16 +32,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-sieve-db-
 
-      - name: Create config.json from secret
-        env:
-          CONFIG_JSON: ${{ secrets.CONFIG_JSON }}
-        run: echo "$CONFIG_JSON" > config.json
-
-      - name: Run Sieve Aggregator
+      - name: Refresh Sieve Database
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        run: ./bin/sieve run
+        run: ./bin/sieve serve --refresh-now
 
       - name: Upload Database Artifact
         uses: actions/upload-artifact@v4

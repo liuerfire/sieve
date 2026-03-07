@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { startTransition, useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Reader from './components/Reader'
 import ConfigForm from './components/ConfigForm'
 import { api } from './api'
-import type { Feed } from './types'
+import type { Feed, RefreshStatus } from './types'
 import './App.css'
 
 type View = 'reader' | 'config'
@@ -12,6 +12,10 @@ function App() {
   const [feedFilter, setFeedFilter] = useState('')
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [feedQuery, setFeedQuery] = useState('')
+  const [refreshStatus, setRefreshStatus] = useState<RefreshStatus | null>(null)
+  const [refreshMessage, setRefreshMessage] = useState('')
+  const [refreshVersion, setRefreshVersion] = useState(0)
+  const prevRefreshStatus = useRef<RefreshStatus | null>(null)
 
   const loadFeeds = useCallback(async () => {
     try {
@@ -33,6 +37,52 @@ function App() {
     if (!q) return feeds
     return feeds.filter(feed => feed.name.toLowerCase().includes(q))
   }, [feedQuery, feeds])
+
+  const loadRefreshStatus = useCallback(async () => {
+    try {
+      const status = await api.getRefreshStatus()
+      const previous = prevRefreshStatus.current
+      setRefreshStatus(status)
+      prevRefreshStatus.current = status
+
+      if (previous?.running && !status.running && status.last_completed_at !== previous.last_completed_at) {
+        startTransition(() => {
+          setRefreshVersion(v => v + 1)
+        })
+        loadFeeds()
+      }
+    } catch (err) {
+      setRefreshMessage(err instanceof Error ? err.message : 'Failed to load refresh status')
+    }
+  }, [loadFeeds])
+
+  useEffect(() => {
+    loadRefreshStatus()
+    const timer = window.setInterval(() => {
+      loadRefreshStatus()
+    }, 5000)
+    return () => window.clearInterval(timer)
+  }, [loadRefreshStatus])
+
+  const handleRefreshTrigger = useCallback(async () => {
+    try {
+      setRefreshMessage('')
+      const status = await api.triggerRefresh()
+      setRefreshStatus(status)
+      prevRefreshStatus.current = status
+    } catch (err) {
+      setRefreshMessage(err instanceof Error ? err.message : 'Failed to trigger refresh')
+      loadRefreshStatus()
+    }
+  }, [loadRefreshStatus])
+
+  const refreshLabel = useMemo(() => {
+    if (!refreshStatus) return 'Refresh unavailable'
+    if (refreshStatus.running) return 'Refresh in progress'
+    if (refreshStatus.last_error) return 'Last refresh failed'
+    if (refreshStatus.last_completed_at) return 'Last refresh complete'
+    return 'Ready to refresh'
+  }, [refreshStatus])
 
   return (
     <div className="app-shell">
@@ -60,6 +110,26 @@ function App() {
               Settings
             </button>
           </nav>
+
+          <section className="refresh-panel" aria-label="Refresh controls">
+            <div className="refresh-panel-copy">
+              <div className="refresh-panel-title">Refresh pipeline</div>
+              <div className="refresh-panel-status">{refreshLabel}</div>
+            </div>
+            <button
+              className="button button-primary refresh-panel-button"
+              onClick={handleRefreshTrigger}
+              disabled={refreshStatus?.running}
+            >
+              {refreshStatus?.running ? 'Refreshing...' : 'Refresh now'}
+            </button>
+            {refreshStatus?.last_result && (
+              <div className="refresh-panel-meta">
+                {refreshStatus.last_result.items_processed} items · {refreshStatus.last_result.items_high_interest} high interest
+              </div>
+            )}
+            {refreshMessage && <div className="error-message">{refreshMessage}</div>}
+          </section>
         </div>
       </aside>
 
@@ -104,7 +174,13 @@ function App() {
         </header>
 
         <main className="page-shell">
-          {view === 'reader' && <Reader feedIDFilter={feedFilter} onDataRefresh={loadFeeds} />}
+          {view === 'reader' && (
+            <Reader
+              feedIDFilter={feedFilter}
+              onDataRefresh={loadFeeds}
+              refreshVersion={refreshVersion}
+            />
+          )}
           {view === 'config' && <ConfigForm />}
         </main>
       </div>

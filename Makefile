@@ -9,7 +9,7 @@ GO_BUILD_CACHE=$(CACHE_DIR)/go-build
 GO_MOD_CACHE=$(CACHE_DIR)/go-mod
 GOLANGCI_CACHE=$(CACHE_DIR)/golangci-lint
 
-.PHONY: all build run test clean fmt
+.PHONY: all build serve test clean fmt
 
 all: build
 
@@ -27,8 +27,8 @@ build-pgo:
 	mkdir -p $(BIN_DIR)
 	go build -pgo=auto -o $(BIN_DIR)/$(BINARY_NAME) $(CMD_DIR)
 
-run: build
-	$(BIN_DIR)/$(BINARY_NAME) run
+serve: build
+	$(BIN_DIR)/$(BINARY_NAME) serve
 
 test:
 	go test ./... -v

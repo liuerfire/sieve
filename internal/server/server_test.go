@@ -1,7 +1,9 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -9,8 +11,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/liuerfire/sieve/internal/refresh"
 	"github.com/liuerfire/sieve/internal/storage"
 )
+
+type fakeRefresher struct {
+	status  refresh.Status
+	trigger func(context.Context, string) (refresh.Status, error)
+}
+
+func (f *fakeRefresher) Status() refresh.Status {
+	return f.status
+}
+
+func (f *fakeRefresher) Trigger(ctx context.Context, source string) (refresh.Status, error) {
+	if f.trigger != nil {
+		return f.trigger(ctx, source)
+	}
+	return f.status, nil
+}
 
 func TestHandleGetItems(t *testing.T) {
 	ctx := t.Context()
@@ -20,7 +39,7 @@ func TestHandleGetItems(t *testing.T) {
 	}
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items", nil)
 	w := httptest.NewRecorder()
@@ -42,7 +61,7 @@ func TestHandleGetSources_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
 	w := httptest.NewRecorder()
 	srv.handleGetSources(w, req)
@@ -61,7 +80,7 @@ func TestHandleSourceStats_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceStats(w, req)
@@ -80,7 +99,7 @@ func TestHandleSourceSuggestions_EmptyArrayNotNull(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceSuggestions(w, req)
@@ -95,7 +114,7 @@ func TestHandleSourceSuggestions_EmptyArrayNotNull(t *testing.T) {
 }
 
 func TestHandleUpdateItem_MethodNotAllowed(t *testing.T) {
-	srv := NewServer(nil)
+	srv := NewServer(nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/items/123", nil)
 	w := httptest.NewRecorder()
@@ -112,7 +131,7 @@ func TestHandleUpdateItem_Patch_Level(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	// Save a test item first
 	item := &storage.Item{
@@ -142,7 +161,7 @@ func TestHandleUpdateItem_Delete(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	// Save a test item first
 	item := &storage.Item{
@@ -170,7 +189,7 @@ func TestHandleUpdateItem_Patch_Saved(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	item := &storage.Item{
 		ID:          "saved-123",
@@ -203,7 +222,7 @@ func TestHandleUpdateItem_Patch_UserInterestOverride(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	item := &storage.Item{
 		ID:            "override-123",
@@ -237,7 +256,7 @@ func TestHandleSearchItems_FilterBySavedAndLevel(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	for _, it := range []*storage.Item{
 		{
@@ -278,12 +297,87 @@ func TestHandleSearchItems_FilterBySavedAndLevel(t *testing.T) {
 	}
 }
 
+func TestHandleRefreshStatus(t *testing.T) {
+	srv := NewServer(nil, &fakeRefresher{
+		status: refresh.Status{
+			Running:     true,
+			LastTrigger: "schedule",
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "/api/refresh", nil)
+	w := httptest.NewRecorder()
+	srv.handleRefresh(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var status refresh.Status
+	if err := json.NewDecoder(w.Body).Decode(&status); err != nil {
+		t.Fatal(err)
+	}
+	if !status.Running || status.LastTrigger != "schedule" {
+		t.Fatalf("unexpected status %#v", status)
+	}
+}
+
+func TestHandleRefreshTrigger(t *testing.T) {
+	triggered := false
+	srv := NewServer(nil, &fakeRefresher{
+		trigger: func(ctx context.Context, source string) (refresh.Status, error) {
+			triggered = true
+			return refresh.Status{
+				LastTrigger: source,
+				LastResult: &refresh.Result{
+					ItemsProcessed: 3,
+				},
+			}, nil
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/api/refresh", nil)
+	w := httptest.NewRecorder()
+	srv.handleRefresh(w, req)
+
+	if w.Code != http.StatusAccepted {
+		t.Fatalf("expected status 202, got %d", w.Code)
+	}
+	if !triggered {
+		t.Fatal("expected refresher trigger to be called")
+	}
+
+	var status refresh.Status
+	if err := json.NewDecoder(w.Body).Decode(&status); err != nil {
+		t.Fatal(err)
+	}
+	if status.LastTrigger != "manual" {
+		t.Fatalf("expected manual trigger source, got %q", status.LastTrigger)
+	}
+}
+
+func TestHandleRefreshTriggerConflict(t *testing.T) {
+	srv := NewServer(nil, &fakeRefresher{
+		trigger: func(ctx context.Context, source string) (refresh.Status, error) {
+			return refresh.Status{Running: true}, refresh.ErrAlreadyRunning
+		},
+	})
+
+	req := httptest.NewRequest(http.MethodPost, "/api/refresh", nil)
+	w := httptest.NewRecorder()
+	srv.handleRefresh(w, req)
+
+	if w.Code != http.StatusConflict {
+		t.Fatalf("expected status 409, got %d", w.Code)
+	}
+}
+
 func TestHandleDigest_ReturnsSavedAndHighInterest(t *testing.T) {
 	ctx := t.Context()
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	for _, it := range []*storage.Item{
 		{
@@ -333,7 +427,7 @@ func TestHandleDigest_InvalidDays(t *testing.T) {
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/digest?days=0", nil)
 	w := httptest.NewRecorder()
 
@@ -359,7 +453,7 @@ func TestHandleGetSources(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/sources", nil)
 	w := httptest.NewRecorder()
 
@@ -392,7 +486,7 @@ func TestHandleGetStats(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/stats", nil)
 	w := httptest.NewRecorder()
 
@@ -425,7 +519,7 @@ func TestHandleSourceStats(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-stats?limit=5", nil)
 	w := httptest.NewRecorder()
 
@@ -470,7 +564,7 @@ func TestHandleSourceSuggestions(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/source-suggestions?min_visible=2&limit=5", nil)
 	w := httptest.NewRecorder()
 	srv.handleSourceSuggestions(w, req)
@@ -516,7 +610,7 @@ func TestHandleSearchItems_FilterUnread(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/search?q=AI&unread=true", nil)
 	w := httptest.NewRecorder()
 	srv.handleSearchItems(w, req)
@@ -548,7 +642,7 @@ func TestHandleBulkRead(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodPost, "/api/items/bulk-read", strings.NewReader(`{"ids":["bulk-srv-1","bulk-srv-2"],"read":true}`))
 	w := httptest.NewRecorder()
 	srv.handleBulkRead(w, req)
@@ -571,7 +665,7 @@ func TestHandleFeedsCRUD(t *testing.T) {
 	ctx := t.Context()
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	createReq := httptest.NewRequest(http.MethodPost, "/api/feeds", strings.NewReader(`{"id":"feed-1","name":"Feed 1","url":"https://example.com/rss","enabled":true}`))
 	createW := httptest.NewRecorder()
@@ -613,7 +707,7 @@ func TestHandleSettings_GetPatch(t *testing.T) {
 	ctx := t.Context()
 	s, _ := storage.InitDB(ctx, ":memory:")
 	defer s.Close()
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 
 	patchReq := httptest.NewRequest(http.MethodPatch, "/api/settings", strings.NewReader(`{"preferred_language":"en","ai_provider":"gemini"}`))
 	patchW := httptest.NewRecorder()
@@ -663,7 +757,7 @@ func TestHandleSearchItems_FilterByFeedID(t *testing.T) {
 		}
 	}
 
-	srv := NewServer(s)
+	srv := NewServer(s, nil)
 	req := httptest.NewRequest(http.MethodGet, "/api/items/search?feed_id=feed-a", nil)
 	w := httptest.NewRecorder()
 	srv.handleSearchItems(w, req)
@@ -677,5 +771,27 @@ func TestHandleSearchItems_FilterByFeedID(t *testing.T) {
 	}
 	if len(got) != 1 || got[0].ID != "feed-item-1" {
 		t.Fatalf("unexpected feed_id results: %#v", got)
+	}
+}
+
+func TestListenAndServe_StopsOnContextCancel(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	srv := NewServer(nil, nil)
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- srv.ListenAndServe(ctx, "127.0.0.1:18080")
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			t.Fatalf("expected nil or ErrServerClosed, got %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("server did not stop after context cancellation")
 	}
 }

@@ -15,7 +15,7 @@ Sieve is an intelligent RSS news aggregator that uses AI to automatically filter
 
 ## Project Structure
 
-- `cmd/sieve/`: CLI entry point and command implementations (`run`, `serve`).
+- `cmd/sieve/`: CLI entry point and command implementations (`serve`).
 - `internal/`:
   - `ai/`: Clients for AI providers (Gemini, Qwen).
   - `config/`: Configuration file management (JSON).
@@ -47,12 +47,12 @@ export GEMINI_API_KEY=your_key
 # OR
 export QWEN_API_KEY=your_key
 
-./bin/sieve run      # Run the full aggregation process
-./bin/sieve serve    # Start the Web UI dashboard (default: localhost:8080)
+./bin/sieve serve --refresh-now  # Run one refresh cycle against the database
+./bin/sieve serve                # Start the Web UI dashboard (default: localhost:8080)
 ```
 
 ### Configuration
-Configuration is managed via `config.json`. It defines global interest rules and specific RSS sources.
+Configuration is managed from the SQLite-backed settings and feeds tables, typically through the Web UI/API.
 Interest levels:
 1. `high_interest` (⭐⭐)
 2. `interest` (⭐)

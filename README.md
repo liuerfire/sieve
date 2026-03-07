@@ -41,17 +41,17 @@ export GEMINI_API_KEY=your_gemini_api_key
 export QWEN_API_KEY=your_qwen_api_key
 ```
 
-### 3. Run Sieve Aggregator
+### 3. Refresh News Once
 
-To fetch news and process them with AI:
+To fetch news and process them with AI without starting the HTTP server:
 
 ```bash
-./bin/sieve run
+./bin/sieve serve --refresh-now
 ```
 
 ### 4. Start Web UI
 
-To browse your news items and manage configuration in the browser:
+To browse your news items, manage configuration, and trigger manual refreshes in the browser:
 
 ```bash
 ./bin/sieve serve
@@ -64,6 +64,13 @@ Reader supports:
 - Search by keyword plus source/level filters.
 - Save/unsave items for your second-brain list.
 - Manual interest override (`high_interest`, `interest`, `uninterested`, `exclude`).
+- Manual refresh plus refresh status.
+
+To enable periodic in-process refreshes while serving:
+
+```bash
+./bin/sieve serve --schedule --schedule-interval=1h
+```
 
 ### Security Notice
 

@@ -21,6 +21,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("config", "c", "config.json", "config file (default is config.json)")
 	rootCmd.PersistentFlags().StringP("db", "d", "sieve.db", "database file (default is sieve.db)")
 }

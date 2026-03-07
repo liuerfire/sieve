@@ -1,4 +1,4 @@
-import type { Item, Feed, Settings, ItemStats, SourceStats, SourceSuggestion } from './types'
+import type { Item, Feed, Settings, ItemStats, SourceStats, SourceSuggestion, RefreshStatus } from './types'
 
 const API_BASE = '/api'
 
@@ -149,6 +149,16 @@ export const api = {
 
   async getDigest(days = 7): Promise<Item[]> {
     return fetchWithErrorHandling<Item[]>(`${API_BASE}/digest?days=${days}`)
+  },
+
+  async getRefreshStatus(): Promise<RefreshStatus> {
+    return fetchWithErrorHandling<RefreshStatus>(`${API_BASE}/refresh`)
+  },
+
+  async triggerRefresh(): Promise<RefreshStatus> {
+    return fetchWithErrorHandling<RefreshStatus>(`${API_BASE}/refresh`, {
+      method: 'POST',
+    })
   },
 }
 

@@ -9,14 +9,7 @@ if [ -f .env ]; then
     export $(grep -v '^#' .env | xargs)
 fi
 
-# 2. Check for API Key environment variables
-if [ -z "$GEMINI_API_KEY" ] && [ -z "$QWEN_API_KEY" ]; then
-    echo "Error: GEMINI_API_KEY or QWEN_API_KEY environment variable not found."
-    echo "Please set one of them first via 'export GEMINI_API_KEY=your_key_here'."
-    exit 1
-fi
-
-# 3. Compile the project
+# 2. Compile the project
 echo "Compiling Sieve..."
 make build
 if [ $? -ne 0 ]; then
@@ -24,23 +17,14 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# 4. Run Sieve
+# 3. Run Sieve
 BINARY="./bin/sieve"
 
-# If no arguments are provided, use the default run command and config file
+# If no arguments are provided, start the Web server against the default database.
 if [ $# -eq 0 ]; then
-    CONFIG_FILE="config.json"
     DB_FILE="sieve.db"
-
-    # If config.json does not exist, warn the user
-    if [ ! -f "$CONFIG_FILE" ]; then
-        echo "Warning: $CONFIG_FILE not found in the current directory."
-        echo "Please ensure you have created a configuration file, or run manually: './run.sh run --config <path_to_config>'."
-        exit 1
-    fi
-
-    echo "Starting Sieve aggregator (using default config: $CONFIG_FILE)..."
-    $BINARY run --ui --config "$CONFIG_FILE" --db "$DB_FILE"
+    echo "Starting Sieve Web UI (using default database: $DB_FILE)..."
+    $BINARY serve --db "$DB_FILE"
 else
     # Forward all arguments to sieve
     echo "Executing: $BINARY $@"
