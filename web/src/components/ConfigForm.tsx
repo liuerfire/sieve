@@ -275,6 +275,17 @@ const ConfigForm: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <div className="feed-admin-actions">
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(feed.summarize)}
+                    onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, summarize: e.target.checked } : f))}
+                  />
+                  Summarize
+                </label>
+              </div>
             </article>
           ))}
         </div>
@@ -296,6 +307,17 @@ const ConfigForm: React.FC = () => {
                 onChange={(e) => setNewFeed(prev => ({ ...prev, url: e.target.value }))}
               />
             </div>
+          </div>
+
+          <div className="feed-admin-actions">
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={Boolean(newFeed.summarize)}
+                onChange={(e) => setNewFeed(prev => ({ ...prev, summarize: e.target.checked }))}
+              />
+              Summarize
+            </label>
           </div>
 
           <div className="feed-admin-actions end">

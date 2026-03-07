@@ -840,6 +840,20 @@ textarea.form-control {
   overflow: hidden;
 }
 
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
 .feed-url-field {
   grid-column: span 1;
 }
