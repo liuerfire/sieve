@@ -43,21 +43,21 @@ type SearchFilters struct {
 }
 
 type Feed struct {
-	ID           string
-	Name         string
-	URL          string
-	Enabled      bool
-	HighInterest string
-	Interest     string
-	Uninterested string
-	Exclude      string
-	Plugins      []string
-	Summarize    bool
-	Timeout      int
-	AIProvider   string
-	AIModel      string
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	ID           string    `json:"id"`
+	Name         string    `json:"name"`
+	URL          string    `json:"url"`
+	Enabled      bool      `json:"enabled"`
+	HighInterest string    `json:"high_interest,omitempty"`
+	Interest     string    `json:"interest,omitempty"`
+	Uninterested string    `json:"uninterested,omitempty"`
+	Exclude      string    `json:"exclude,omitempty"`
+	Plugins      []string  `json:"plugins,omitempty"`
+	Summarize    bool      `json:"summarize"`
+	Timeout      int       `json:"timeout,omitempty"`
+	AIProvider   string    `json:"ai_provider,omitempty"`
+	AIModel      string    `json:"ai_model,omitempty"`
+	CreatedAt    time.Time `json:"created_at,omitempty"`
+	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 }
 
 type ItemStats struct {

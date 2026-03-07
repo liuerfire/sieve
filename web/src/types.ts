@@ -107,6 +107,20 @@ export interface Feed {
   ai_model?: string
 }
 
+export interface CreateFeedInput {
+  url: string
+  enabled?: boolean
+  high_interest?: string
+  interest?: string
+  uninterested?: string
+  exclude?: string
+  plugins?: string[]
+  summarize?: boolean
+  timeout?: number
+  ai_provider?: string
+  ai_model?: string
+}
+
 export interface Settings {
   high_interest?: string
   interest?: string

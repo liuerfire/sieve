@@ -667,7 +667,18 @@ func TestHandleFeedsCRUD(t *testing.T) {
 	defer s.Close()
 	srv := NewServer(s, nil)
 
-	createReq := httptest.NewRequest(http.MethodPost, "/api/feeds", strings.NewReader(`{"id":"feed-1","name":"Feed 1","url":"https://example.com/rss","enabled":true}`))
+	rssServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/xml")
+		fmt.Fprintln(w, `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+<channel>
+  <title>Feed 1</title>
+</channel>
+</rss>`)
+	}))
+	defer rssServer.Close()
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/feeds", strings.NewReader(fmt.Sprintf(`{"url":"%s","enabled":true}`, rssServer.URL)))
 	createW := httptest.NewRecorder()
 	srv.handleFeeds(createW, createReq)
 	if createW.Code != http.StatusCreated {
@@ -680,26 +691,73 @@ func TestHandleFeedsCRUD(t *testing.T) {
 	if listW.Code != http.StatusOK {
 		t.Fatalf("expected 200 on list, got %d", listW.Code)
 	}
+	body := listW.Body.Bytes()
 	var feeds []storage.Feed
-	if err := json.NewDecoder(listW.Body).Decode(&feeds); err != nil {
+	if err := json.Unmarshal(body, &feeds); err != nil {
 		t.Fatal(err)
 	}
-	if len(feeds) != 1 || feeds[0].ID != "feed-1" {
+	if len(feeds) != 1 {
 		t.Fatalf("unexpected feed list: %#v", feeds)
 	}
+	if feeds[0].ID == "" {
+		t.Fatal("expected generated internal feed ID")
+	}
+	if feeds[0].Name != "Feed 1" {
+		t.Fatalf("expected generated name from feed title, got %#v", feeds[0])
+	}
 
-	patchReq := httptest.NewRequest(http.MethodPatch, "/api/feeds/feed-1", strings.NewReader(`{"name":"Updated Feed","url":"https://example.com/rss","enabled":false}`))
+	var rawFeeds []map[string]any
+	if err := json.Unmarshal(body, &rawFeeds); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := rawFeeds[0]["id"]; !ok {
+		t.Fatalf("expected lowercase id key in API payload, got %#v", rawFeeds[0])
+	}
+	if _, ok := rawFeeds[0]["name"]; !ok {
+		t.Fatalf("expected lowercase name key in API payload, got %#v", rawFeeds[0])
+	}
+
+	patchReq := httptest.NewRequest(http.MethodPatch, "/api/feeds/"+feeds[0].ID, strings.NewReader(fmt.Sprintf(`{"name":"Updated Feed","url":"%s","enabled":false}`, rssServer.URL)))
 	patchW := httptest.NewRecorder()
 	srv.handleFeedByID(patchW, patchReq)
 	if patchW.Code != http.StatusNoContent {
 		t.Fatalf("expected 204 on patch, got %d", patchW.Code)
 	}
 
-	delReq := httptest.NewRequest(http.MethodDelete, "/api/feeds/feed-1", nil)
+	delReq := httptest.NewRequest(http.MethodDelete, "/api/feeds/"+feeds[0].ID, nil)
 	delW := httptest.NewRecorder()
 	srv.handleFeedByID(delW, delReq)
 	if delW.Code != http.StatusNoContent {
 		t.Fatalf("expected 204 on delete, got %d", delW.Code)
+	}
+}
+
+func TestHandleFeedsCreateFallbackName(t *testing.T) {
+	ctx := t.Context()
+	s, _ := storage.InitDB(ctx, ":memory:")
+	defer s.Close()
+	srv := NewServer(s, nil)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/feeds", strings.NewReader(`{"url":"https://example.com/rss.xml"}`))
+	w := httptest.NewRecorder()
+	srv.handleFeeds(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Fatalf("expected 201 on create, got %d", w.Code)
+	}
+
+	feeds, err := s.ListFeeds(ctx, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(feeds) != 1 {
+		t.Fatalf("expected one feed, got %d", len(feeds))
+	}
+	if feeds[0].Name == "" {
+		t.Fatal("expected fallback generated name")
+	}
+	if feeds[0].ID == "" {
+		t.Fatal("expected generated fallback ID")
 	}
 }
 

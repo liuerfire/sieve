@@ -1,12 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { api } from '../api'
-import type { Feed, Settings } from '../types'
+import type { CreateFeedInput, Feed, Settings } from '../types'
 
 type SettingsDraft = Settings
 
-const defaultFeed: Feed = {
-  id: '',
-  name: '',
+const defaultFeed: CreateFeedInput = {
   url: '',
   enabled: true,
   summarize: false,
@@ -15,7 +13,7 @@ const defaultFeed: Feed = {
 const ConfigForm: React.FC = () => {
   const [feeds, setFeeds] = useState<Feed[]>([])
   const [settings, setSettings] = useState<SettingsDraft>({})
-  const [newFeed, setNewFeed] = useState<Feed>(defaultFeed)
+  const [newFeed, setNewFeed] = useState<CreateFeedInput>(defaultFeed)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,7 +41,7 @@ const ConfigForm: React.FC = () => {
   }, [])
 
   const canCreateFeed = useMemo(() => {
-    return newFeed.id.trim() !== '' && newFeed.name.trim() !== '' && newFeed.url.trim() !== ''
+    return newFeed.url.trim() !== ''
   }, [newFeed])
 
   const handleCreateFeed = async () => {
@@ -53,8 +51,6 @@ const ConfigForm: React.FC = () => {
     try {
       await api.createFeed({
         ...newFeed,
-        id: newFeed.id.trim(),
-        name: newFeed.name.trim(),
         url: newFeed.url.trim(),
       })
       setNewFeed(defaultFeed)
@@ -242,7 +238,6 @@ const ConfigForm: React.FC = () => {
               <div className="feed-admin-header">
                 <div>
                   <h3>{feed.name}</h3>
-                  <p>{feed.id}</p>
                 </div>
                 <div className="feed-admin-actions">
                   <label className="checkbox-chip">
@@ -262,11 +257,7 @@ const ConfigForm: React.FC = () => {
                 </div>
               </div>
 
-              <div className="settings-grid three-column">
-                <div className="form-group">
-                  <label>ID</label>
-                  <input className="form-control" value={feed.id} disabled />
-                </div>
+              <div className="settings-grid two-column">
                 <div className="form-group">
                   <label>Name</label>
                   <input
@@ -296,23 +287,7 @@ const ConfigForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="settings-grid three-column">
-            <div className="form-group">
-              <label>ID</label>
-              <input
-                className="form-control"
-                value={newFeed.id}
-                onChange={(e) => setNewFeed(prev => ({ ...prev, id: e.target.value }))}
-              />
-            </div>
-            <div className="form-group">
-              <label>Name</label>
-              <input
-                className="form-control"
-                value={newFeed.name}
-                onChange={(e) => setNewFeed(prev => ({ ...prev, name: e.target.value }))}
-              />
-            </div>
+          <div className="settings-grid">
             <div className="form-group feed-url-field">
               <label>URL</label>
               <input

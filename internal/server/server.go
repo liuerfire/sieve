@@ -2,13 +2,18 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mmcdole/gofeed"
 
 	"github.com/liuerfire/sieve/internal/refresh"
 	"github.com/liuerfire/sieve/internal/storage"
@@ -379,10 +384,13 @@ func (s *Server) handleFeeds(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if strings.TrimSpace(feed.ID) == "" || strings.TrimSpace(feed.Name) == "" || strings.TrimSpace(feed.URL) == "" {
-			http.Error(w, "id, name and url are required", http.StatusBadRequest)
+		if strings.TrimSpace(feed.URL) == "" {
+			http.Error(w, "url is required", http.StatusBadRequest)
 			return
 		}
+		feed.URL = strings.TrimSpace(feed.URL)
+		feed.ID = generateFeedID(feed.URL)
+		feed.Name = resolveFeedName(r.Context(), feed.URL)
 		if err := s.storage.CreateFeed(r.Context(), &feed); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -391,6 +399,37 @@ func (s *Server) handleFeeds(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func generateFeedID(rawURL string) string {
+	normalized := strings.TrimSpace(strings.ToLower(rawURL))
+	sum := sha256.Sum256([]byte(normalized))
+	return fmt.Sprintf("feed-%x", sum[:8])
+}
+
+func resolveFeedName(ctx context.Context, rawURL string) string {
+	parser := gofeed.NewParser()
+	feed, err := parser.ParseURLWithContext(rawURL, ctx)
+	if err == nil {
+		if title := strings.TrimSpace(feed.Title); title != "" {
+			return title
+		}
+	}
+
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+
+	host := strings.TrimSpace(parsed.Hostname())
+	base := path.Base(strings.Trim(strings.TrimSpace(parsed.Path), "/"))
+	if base != "" && base != "." && base != "/" {
+		return fmt.Sprintf("%s / %s", host, base)
+	}
+	if host != "" {
+		return host
+	}
+	return rawURL
 }
 
 func (s *Server) handleFeedByID(w http.ResponseWriter, r *http.Request) {

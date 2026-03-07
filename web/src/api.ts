@@ -1,4 +1,4 @@
-import type { Item, Feed, Settings, ItemStats, SourceStats, SourceSuggestion, RefreshStatus } from './types'
+import type { Item, Feed, Settings, ItemStats, SourceStats, SourceSuggestion, RefreshStatus, CreateFeedInput } from './types'
 
 const API_BASE = '/api'
 
@@ -56,7 +56,7 @@ export const api = {
     return fetchWithErrorHandling<Feed[]>(`${API_BASE}/feeds${qs}`)
   },
 
-  async createFeed(feed: Feed): Promise<void> {
+  async createFeed(feed: CreateFeedInput): Promise<void> {
     return fetchWithErrorHandling<void>(`${API_BASE}/feeds`, {
       method: 'POST',
       body: JSON.stringify(feed),
