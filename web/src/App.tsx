@@ -36,8 +36,8 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div className="app-header-main">
+      <aside className="app-sidebar">
+        <div className="app-sidebar-inner">
           <div className="brand-block">
             <span className="brand-mark">S</span>
             <div>
@@ -46,7 +46,7 @@ function App() {
             </div>
           </div>
 
-          <nav className="top-nav" aria-label="Primary">
+          <nav className="top-nav sidebar-nav" aria-label="Primary">
             <button
               className={`top-nav-item ${view === 'reader' ? 'active' : ''}`}
               onClick={() => setView('reader')}
@@ -60,48 +60,54 @@ function App() {
               Settings
             </button>
           </nav>
-
-          {view === 'reader' ? (
-            <label className="header-search" aria-label="Search feeds">
-              <span className="sr-only">Search feeds</span>
-              <input
-                type="search"
-                placeholder="Search feeds"
-                value={feedQuery}
-                onChange={(e) => setFeedQuery(e.target.value)}
-              />
-            </label>
-          ) : (
-            <div className="header-summary">Tune rules, AI preferences, and feed coverage.</div>
-          )}
         </div>
+      </aside>
 
-        {view === 'reader' && (
-          <div className="feed-chip-row" aria-label="Feed filters">
-            <button
-              className={`feed-chip ${feedFilter === '' ? 'active' : ''}`}
-              onClick={() => setFeedFilter('')}
-            >
-              All feeds
-            </button>
-            {filteredFeeds.map((feed) => (
-              <button
-                key={feed.id}
-                className={`feed-chip ${feedFilter === feed.id ? 'active' : ''}`}
-                onClick={() => setFeedFilter(feed.id)}
-                title={feed.name}
-              >
-                {feed.name}
-              </button>
-            ))}
+      <div className="app-main">
+        <header className="app-header">
+          <div className="app-header-main">
+            {view === 'reader' ? (
+              <label className="header-search" aria-label="Search feeds">
+                <span className="sr-only">Search feeds</span>
+                <input
+                  type="search"
+                  placeholder="Search feeds"
+                  value={feedQuery}
+                  onChange={(e) => setFeedQuery(e.target.value)}
+                />
+              </label>
+            ) : (
+              <div className="header-summary">Tune rules, AI preferences, and feed coverage.</div>
+            )}
           </div>
-        )}
-      </header>
 
-      <main className="page-shell">
-        {view === 'reader' && <Reader feedIDFilter={feedFilter} onDataRefresh={loadFeeds} />}
-        {view === 'config' && <ConfigForm />}
-      </main>
+          {view === 'reader' && (
+            <div className="feed-chip-row" aria-label="Feed filters">
+              <button
+                className={`feed-chip ${feedFilter === '' ? 'active' : ''}`}
+                onClick={() => setFeedFilter('')}
+              >
+                All feeds
+              </button>
+              {filteredFeeds.map((feed) => (
+                <button
+                  key={feed.id}
+                  className={`feed-chip ${feedFilter === feed.id ? 'active' : ''}`}
+                  onClick={() => setFeedFilter(feed.id)}
+                  title={feed.name}
+                >
+                  {feed.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </header>
+
+        <main className="page-shell">
+          {view === 'reader' && <Reader feedIDFilter={feedFilter} onDataRefresh={loadFeeds} />}
+          {view === 'config' && <ConfigForm />}
+        </main>
+      </div>
     </div>
   )
 }
