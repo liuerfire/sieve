@@ -69,7 +69,7 @@ Reader supports:
 To enable periodic in-process refreshes while serving:
 
 ```bash
-./bin/sieve serve --schedule --schedule-interval=1h
+./bin/sieve serve --schedule-interval=1h
 ```
 
 ### Security Notice
