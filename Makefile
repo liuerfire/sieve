@@ -9,7 +9,7 @@ GO_BUILD_CACHE=$(CACHE_DIR)/go-build
 GO_MOD_CACHE=$(CACHE_DIR)/go-mod
 GOLANGCI_CACHE=$(CACHE_DIR)/golangci-lint
 
-.PHONY: all build run report test clean fmt
+.PHONY: all build run test clean fmt
 
 all: build
 
@@ -29,9 +29,6 @@ build-pgo:
 
 run: build
 	$(BIN_DIR)/$(BINARY_NAME) run
-
-report: build
-	$(BIN_DIR)/$(BINARY_NAME) report
 
 test:
 	go test ./... -v
@@ -58,5 +55,4 @@ pgo:
 clean:
 	rm -rf $(BIN_DIR)
 	rm -f *.db
-	rm -f index.json
 	rm -f sieve

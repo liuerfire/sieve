@@ -1,19 +1,13 @@
-// Package engine orchestrates RSS feed fetching, AI filtering, and report generation.
+// Package engine orchestrates RSS feed fetching and AI filtering.
 package engine
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"html/template"
 	"log/slog"
-	"os"
-	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
-	"github.com/microcosm-cc/bluemonday"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/time/rate"
 
@@ -23,9 +17,6 @@ import (
 	"github.com/liuerfire/sieve/internal/storage"
 )
 
-// htmlSanitizer is a thread-safe HTML sanitizer for AI-generated content
-var htmlSanitizer = bluemonday.UGCPolicy()
-
 // Default concurrency and rate limiting configuration.
 const (
 	defaultAIRateLimit      = 500 * time.Millisecond // Time between AI requests
@@ -34,9 +25,9 @@ const (
 )
 
 // ProgressEvent represents a progress update during engine execution.
-// Type values: "source_start", "source_done", "item_start", "item_done", "gen_start", "gen_done"
+// Type values: "source_start", "source_done", "item_start", "item_done", "gen_done"
 type ProgressEvent struct {
-	Type    string // "source_start", "source_done", "item_start", "item_done", "gen_start", "gen_done"
+	Type    string // "source_start", "source_done", "item_start", "item_done", "gen_done"
 	Source  string
 	Item    string
 	Message string
@@ -66,7 +57,7 @@ type Classifier interface {
 	Summarize(ctx context.Context, cfg *config.AIConfig, title, desc, lang string) (string, error)
 }
 
-// Engine orchestrates RSS feed fetching, AI filtering, and report generation.
+// Engine orchestrates RSS feed fetching and AI filtering.
 type Engine struct {
 	cfg        *config.Config
 	storage    *storage.Storage
@@ -94,7 +85,6 @@ func (e *Engine) resolveAIConfig(src config.SourceConfig) *config.AIConfig {
 }
 
 func (e *Engine) Run(ctx context.Context) (*EngineResult, error) {
-	parentCtx := ctx
 	g, ctx := errgroup.WithContext(ctx)
 
 	result := &EngineResult{}
@@ -184,12 +174,7 @@ func (e *Engine) Run(ctx context.Context) (*EngineResult, error) {
 		slog.Warn("Some sources failed", "count", len(result.SourcesFailed), "failures", result.SourcesFailed)
 	}
 
-	// Generate final output
-	e.report(ProgressEvent{Type: "gen_start", Message: "Generating reports"})
-	if err := e.GenerateJSON(parentCtx, "index.json"); err != nil {
-		return nil, err
-	}
-	e.report(ProgressEvent{Type: "gen_done", Message: "Reports generated"})
+	e.report(ProgressEvent{Type: "gen_done", Message: "Aggregation complete"})
 
 	return result, nil
 }
@@ -278,338 +263,4 @@ func (e *Engine) processItem(ctx context.Context, src config.SourceConfig, item 
 
 	// 6. Atomic Persistence
 	return e.storage.SaveItem(ctx, item)
-}
-
-type jsonItem struct {
-	GUID        string `json:"guid"`
-	Title       string `json:"title"`
-	Link        string `json:"link"`
-	PubDate     string `json:"pubDate"`
-	Description string `json:"description"`
-}
-
-type jsonReport struct {
-	SourceName  string     `json:"source_name"`
-	SourceURL   string     `json:"source_url"`
-	SourceTitle string     `json:"source_title,omitempty"`
-	TotalItems  int        `json:"total_items"`
-	Items       []jsonItem `json:"items"`
-}
-
-func (e *Engine) GenerateJSON(ctx context.Context, outputPath string) error {
-	report := jsonReport{
-		SourceName:  "Sieve",
-		SourceURL:   "https://github.com/liuerfire/sieve",
-		SourceTitle: "Sieve Aggregated Report",
-		Items:       make([]jsonItem, 0),
-	}
-
-	for it, err := range e.storage.AllItems(ctx) {
-		if err != nil {
-			return fmt.Errorf("failed to get item from storage: %w", err)
-		}
-
-		title := it.Title
-		switch it.InterestLevel {
-		case "high_interest":
-			title = "⭐⭐ " + title
-		case "interest":
-			title = "⭐ " + title
-		}
-
-		desc := it.Description
-		if it.Summary != "" {
-			desc = it.Summary
-		}
-
-		report.Items = append(report.Items, jsonItem{
-			GUID:        it.ID,
-			Title:       title,
-			Link:        it.Link,
-			PubDate:     it.PublishedAt.Format(time.RFC1123Z),
-			Description: desc,
-		})
-	}
-	report.TotalItems = len(report.Items)
-
-	data, err := json.MarshalIndent(report, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
-	}
-
-	if err := os.WriteFile(outputPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write %s: %w", outputPath, err)
-	}
-
-	slog.Info("Successfully generated JSON report", "path", outputPath, "items", report.TotalItems)
-	return nil
-}
-
-func (e *Engine) GenerateHTML(ctx context.Context, outputPath string) error {
-	return e.generateFilteredHTML(ctx, outputPath, nil)
-}
-
-func (e *Engine) generateFilteredHTML(ctx context.Context, outputPath string, filter func(*storage.Item) bool) error {
-	funcMap := template.FuncMap{
-		"stars": func(level string) string {
-			switch level {
-			case "high_interest":
-				return "⭐⭐"
-			case "interest":
-				return "⭐"
-			default:
-				return ""
-			}
-		},
-	}
-
-	tmpl, err := template.New("html").Funcs(funcMap).Parse(HTMLTemplate)
-	if err != nil {
-		return fmt.Errorf("parse template: %w", err)
-	}
-
-	f, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("create file: %w", err)
-	}
-	defer f.Close()
-
-	type htmlItem struct {
-		GUID          string
-		Title         string
-		Link          string
-		PubDate       string
-		Description   template.HTML
-		Source        string
-		InterestLevel string
-		Reason        string
-	}
-
-	report := struct {
-		SourceName  string
-		SourceURL   string
-		SourceTitle string
-		TotalItems  int
-		GeneratedAt string
-		Items       []htmlItem
-		Archives    []string
-	}{
-		SourceName:  "Sieve",
-		SourceURL:   "https://github.com/liuerfire/sieve",
-		SourceTitle: "Sieve Aggregated Report",
-		GeneratedAt: time.Now().Format("2006-01-02 15:04:05"),
-		Items:       make([]htmlItem, 0),
-		Archives:    e.getArchives(outputPath),
-	}
-
-	for it, err := range e.storage.AllItems(ctx) {
-		if err != nil {
-			return fmt.Errorf("get item: %w", err)
-		}
-		if filter != nil && !filter(it) {
-			continue
-		}
-		desc := it.Description
-		if it.Summary != "" {
-			desc = it.Summary
-		}
-
-		report.Items = append(report.Items, htmlItem{
-			GUID:          it.ID,
-			Title:         it.Title,
-			Link:          it.Link,
-			PubDate:       it.PublishedAt.Format(time.RFC1123Z),
-			Description:   template.HTML(htmlSanitizer.Sanitize(desc)),
-			Source:        it.Source,
-			InterestLevel: it.InterestLevel,
-			Reason:        it.Reason,
-		})
-	}
-	report.TotalItems = len(report.Items)
-
-	if err := tmpl.Execute(f, report); err != nil {
-		return fmt.Errorf("execute template: %w", err)
-	}
-
-	slog.Info("Successfully generated HTML report", "path", outputPath, "items", report.TotalItems)
-	return nil
-}
-
-func (e *Engine) getArchives(outputPath string) []string {
-	dir := filepath.Dir(outputPath)
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return nil
-	}
-
-	var archives []string
-	for _, entry := range entries {
-		if !entry.IsDir() && strings.HasPrefix(entry.Name(), "archive-") && strings.HasSuffix(entry.Name(), ".html") {
-			archives = append(archives, entry.Name())
-		}
-	}
-	return archives
-}
-
-// GenerateHTMLWithArchives generates the main HTML file and archives if enabled.
-func (e *Engine) GenerateHTMLWithArchives(ctx context.Context, outputPath string) error {
-	// Generate main index.html with recent items only
-	maxAgeDays := e.cfg.Global.HTMLMaxAgeDays
-	if maxAgeDays <= 0 {
-		maxAgeDays = 7 // Default to 7 days
-	}
-	cutoff := time.Now().AddDate(0, 0, -maxAgeDays)
-
-	if err := e.generateFilteredHTML(ctx, outputPath, func(it *storage.Item) bool {
-		return it.PublishedAt.After(cutoff)
-	}); err != nil {
-		return err
-	}
-
-	// Generate archive files if enabled
-	if e.cfg.Global.EnableArchives {
-		if err := e.GenerateHTMLArchives(ctx, filepath.Dir(outputPath)); err != nil {
-			return fmt.Errorf("generate archives: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// GenerateHTMLArchives generates monthly archive HTML files for older items.
-func (e *Engine) GenerateHTMLArchives(ctx context.Context, outputDir string) error {
-	if outputDir == "" {
-		outputDir = "."
-	}
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
-		return fmt.Errorf("create archive output dir: %w", err)
-	}
-
-	// Group items by month
-	itemsByMonth := make(map[string][]*storage.Item)
-	cutoff := time.Now().AddDate(0, 0, -e.cfg.Global.HTMLMaxAgeDays)
-
-	for it, err := range e.storage.AllItems(ctx) {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		if err != nil {
-			return fmt.Errorf("get item: %w", err)
-		}
-		// Skip items that are in the main index
-		if it.PublishedAt.After(cutoff) {
-			continue
-		}
-		// Group by year-month
-		monthKey := it.PublishedAt.Format("2006-01")
-		itemsByMonth[monthKey] = append(itemsByMonth[monthKey], it)
-	}
-
-	// Generate archive file for each month
-	for month, items := range itemsByMonth {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-
-		filename := filepath.Join(outputDir, fmt.Sprintf("archive-%s.html", month))
-		if err := e.generateArchiveFile(ctx, filename, month, items); err != nil {
-			return fmt.Errorf("generate archive %s: %w", month, err)
-		}
-		slog.Info("Generated archive", "month", month, "items", len(items))
-	}
-
-	return nil
-}
-
-func (e *Engine) generateArchiveFile(ctx context.Context, filename, month string, items []*storage.Item) error {
-	// Check context at start
-	select {
-	case <-ctx.Done():
-		return ctx.Err()
-	default:
-	}
-
-	funcMap := template.FuncMap{
-		"stars": func(level string) string {
-			switch level {
-			case "high_interest":
-				return "⭐⭐"
-			case "interest":
-				return "⭐"
-			default:
-				return ""
-			}
-		},
-	}
-
-	tmpl, err := template.New("html").Funcs(funcMap).Parse(HTMLTemplate)
-	if err != nil {
-		return fmt.Errorf("parse template: %w", err)
-	}
-
-	f, err := os.Create(filename)
-	if err != nil {
-		return fmt.Errorf("create file: %w", err)
-	}
-	defer f.Close()
-
-	type htmlItem struct {
-		GUID          string
-		Title         string
-		Link          string
-		PubDate       string
-		Description   template.HTML
-		Source        string
-		InterestLevel string
-		Reason        string
-	}
-
-	report := struct {
-		SourceName   string
-		SourceURL    string
-		SourceTitle  string
-		TotalItems   int
-		GeneratedAt  string
-		Items        []htmlItem
-		ArchiveMonth string
-		IsArchive    bool
-	}{
-		SourceName:   "Sieve",
-		SourceURL:    "https://github.com/liuerfire/sieve",
-		SourceTitle:  fmt.Sprintf("Sieve Archive - %s", month),
-		GeneratedAt:  time.Now().Format("2006-01-02 15:04:05"),
-		Items:        make([]htmlItem, 0),
-		ArchiveMonth: month,
-		IsArchive:    true,
-	}
-
-	for _, it := range items {
-		desc := it.Description
-		if it.Summary != "" {
-			desc = it.Summary
-		}
-
-		report.Items = append(report.Items, htmlItem{
-			GUID:          it.ID,
-			Title:         it.Title,
-			Link:          it.Link,
-			PubDate:       it.PublishedAt.Format(time.RFC1123Z),
-			Description:   template.HTML(htmlSanitizer.Sanitize(desc)),
-			Source:        it.Source,
-			InterestLevel: it.InterestLevel,
-			Reason:        it.Reason,
-		})
-	}
-	report.TotalItems = len(report.Items)
-
-	if err := tmpl.Execute(f, report); err != nil {
-		return fmt.Errorf("execute template: %w", err)
-	}
-
-	return nil
 }

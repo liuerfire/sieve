@@ -43,9 +43,6 @@ type GlobalConfig struct {
 	AITimeBetweenRequests int       `json:"ai_time_between_ms,omitempty"`
 	AIBurstLimit          int       `json:"ai_burst_limit,omitempty"`
 	AIMaxConcurrency      int       `json:"ai_max_concurrency,omitempty"`
-	// HTML Archive settings
-	HTMLMaxAgeDays int  `json:"html_max_age_days,omitempty"` // Days to show in index.html (0 = all)
-	EnableArchives bool `json:"enable_archives,omitempty"`   // Generate monthly archive files
 }
 
 type SourceConfig struct {
@@ -117,11 +114,6 @@ func (c *Config) Validate() error {
 	}
 	if c.Global.AIMaxConcurrency < 0 {
 		return fmt.Errorf("ai_max_concurrency must be non-negative")
-	}
-
-	// Validate HTML archive settings (0 means show all/no archives)
-	if c.Global.HTMLMaxAgeDays < 0 {
-		return fmt.Errorf("html_max_age_days must be non-negative")
 	}
 
 	return nil

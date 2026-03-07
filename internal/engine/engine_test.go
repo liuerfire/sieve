@@ -90,7 +90,6 @@ func TestEngine_Run(t *testing.T) {
 	if result == nil {
 		t.Fatal("expected non-nil result")
 	}
-	defer os.Remove("index.json")
 
 	// Verify items in storage
 	var items []*storage.Item
@@ -107,11 +106,6 @@ func TestEngine_Run(t *testing.T) {
 
 	if items[0].InterestLevel != "high_interest" {
 		t.Errorf("expected interest level 'high_interest', got '%s'", items[0].InterestLevel)
-	}
-
-	// Verify index.json exists
-	if _, err := os.Stat("index.json"); os.IsNotExist(err) {
-		t.Errorf("index.json was not generated")
 	}
 }
 

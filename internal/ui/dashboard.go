@@ -148,9 +148,6 @@ func (m *Model) handleProgress(ev engine.ProgressEvent) {
 		}
 		m.addLog(fmt.Sprintf("Finished source: %s", ev.Source))
 
-	case "gen_start":
-		m.addLog(ev.Message)
-
 	case "gen_done":
 		m.addLog(ev.Message)
 	}

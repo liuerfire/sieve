@@ -35,8 +35,6 @@ func loadRuntimeConfig(ctx context.Context, s *storage.Storage) (*config.Config,
 			AITimeBetweenRequests: parseIntSetting(settings, "ai_time_between_ms"),
 			AIBurstLimit:          parseIntSetting(settings, "ai_burst_limit"),
 			AIMaxConcurrency:      parseIntSetting(settings, "ai_max_concurrency"),
-			HTMLMaxAgeDays:        parseIntSetting(settings, "html_max_age_days"),
-			EnableArchives:        parseBoolSetting(settings, "enable_archives"),
 		},
 		Sources: make([]config.SourceConfig, 0, len(feeds)),
 	}
@@ -93,16 +91,4 @@ func parseIntSetting(values map[string]string, key string) int {
 		return 0
 	}
 	return n
-}
-
-func parseBoolSetting(values map[string]string, key string) bool {
-	raw := strings.TrimSpace(values[key])
-	if raw == "" {
-		return false
-	}
-	v, err := strconv.ParseBool(raw)
-	if err != nil {
-		return false
-	}
-	return v
 }

@@ -48,8 +48,6 @@ export interface GlobalConfig {
   ai_time_between_ms?: number
   ai_burst_limit?: number
   ai_max_concurrency?: number
-  html_max_age_days?: number
-  enable_archives?: boolean
 }
 
 export interface Config {
@@ -120,6 +118,4 @@ export interface Settings {
   ai_time_between_ms?: string
   ai_burst_limit?: string
   ai_max_concurrency?: string
-  html_max_age_days?: string
-  enable_archives?: string
 }

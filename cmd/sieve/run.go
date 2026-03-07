@@ -19,7 +19,7 @@ import (
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "Run the aggregator",
-	Long:  `Fetch RSS feeds, classify with AI, and generate reports.`,
+	Long:  `Fetch RSS feeds, classify with AI, and update the database-backed reader.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
 		defer stop()

@@ -15,7 +15,7 @@ Sieve is an intelligent RSS news aggregator that uses AI to automatically filter
 
 ## Project Structure
 
-- `cmd/sieve/`: CLI entry point and command implementations (`run`, `report`, `serve`).
+- `cmd/sieve/`: CLI entry point and command implementations (`run`, `serve`).
 - `internal/`:
   - `ai/`: Clients for AI providers (Gemini, Qwen).
   - `config/`: Configuration file management (JSON).
@@ -49,7 +49,6 @@ export QWEN_API_KEY=your_key
 
 ./bin/sieve run      # Run the full aggregation process
 ./bin/sieve serve    # Start the Web UI dashboard (default: localhost:8080)
-./bin/sieve report   # Generate index.json and index.html from database
 ```
 
 ### Configuration

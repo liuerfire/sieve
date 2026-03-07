@@ -42,3 +42,14 @@ func TestRootCmd_NoArgs(t *testing.T) {
 		t.Error("expected root command to show available commands")
 	}
 }
+
+func TestRootCmd_HelpOmitsReport(t *testing.T) {
+	rootCmd.SetArgs([]string{"--help"})
+	output, err := executeCommand(rootCmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(output, "report") {
+		t.Fatal("expected root help to omit report command")
+	}
+}

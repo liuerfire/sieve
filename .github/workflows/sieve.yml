@@ -8,8 +8,6 @@ on:
 jobs:
   build-and-run:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # 允许提交数据库回仓库
 
     steps:
       - name: Checkout code
@@ -44,20 +42,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         run: ./bin/sieve run
-
-      - name: Generate HTML Report
-        run: ./bin/sieve report
-
-      - name: Prepare Deployment
-        run: |
-          mkdir -p public
-          cp index.html index.json public/
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
 
       - name: Upload Database Artifact
         uses: actions/upload-artifact@v4

@@ -12,16 +12,15 @@ An intelligent RSS news aggregator that uses AI to automatically filter and summ
 - 🔧 **Flexible Configuration**: Manage all RSS sources and interest topics via JSON configuration.
 - 📡 **Automated Scheduling**: Automatically executes every hour using GitHub Actions schedule.
 - 📰 **Multi-Source Support**: Supports any RSS feed.
-- 📡 **Free Hosting**: Use GitHub Pages to host RSS/HTML output.
 
 ## Classification Rules
 
 AI classifies items into 4 types based on the interest topics in the configuration:
 
-1. **High Interest** (`high_interest`) - Appears in the report with ⭐⭐.
-2. **Interest** (`interest`) - Appears in the report with ⭐.
-3. **Other** (`other`) - Appears in the report without stars (vague or low interest but not excluded).
-4. **Exclude** (`exclude`) - Does not appear in the report.
+1. **High Interest** (`high_interest`) - Prioritized in the reader and digest views.
+2. **Interest** (`interest`) - Kept visible in the reader.
+3. **Uninterested** (`uninterested`) - Still available but treated as lower signal.
+4. **Exclude** (`exclude`) - Hidden from normal reading views.
 
 ## Quick Start
 
@@ -65,26 +64,6 @@ Reader supports:
 - Search by keyword plus source/level filters.
 - Save/unsave items for your second-brain list.
 - Manual interest override (`high_interest`, `interest`, `uninterested`, `exclude`).
-
-### 5. Generate Reports
-
-You can manually generate JSON and HTML reports from the local database:
-
-```bash
-./run.sh report
-```
-
-By default, `index.json` and `index.html` will be generated. The generated JSON format strictly follows `schemas/items-summarized.schema.json`. You can customize the paths:
-
-```bash
-./run.sh report --json out.json --html index.html
-```
-
-If you only want to generate one of them, use the skip flags:
-
-```bash
-./run.sh report --skip-json
-```
 
 ### Security Notice
 

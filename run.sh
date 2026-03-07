@@ -36,7 +36,6 @@ if [ $# -eq 0 ]; then
     if [ ! -f "$CONFIG_FILE" ]; then
         echo "Warning: $CONFIG_FILE not found in the current directory."
         echo "Please ensure you have created a configuration file, or run manually: './run.sh run --config <path_to_config>'."
-        echo "Tip: You can also run './run.sh report' to generate a local report."
         exit 1
     fi
 
