@@ -84,6 +84,12 @@ function App() {
     return 'Ready to refresh'
   }, [refreshStatus])
 
+  const pageTitle = view === 'reader' ? 'Reader' : 'Settings'
+  const pageDescription =
+    view === 'reader'
+      ? 'Review items, filter by source, and trigger refreshes.'
+      : 'Manage feeds, rules, and AI defaults.'
+
   return (
     <div className="app-shell">
       <aside className="app-sidebar">
@@ -92,7 +98,7 @@ function App() {
             <span className="brand-mark">S</span>
             <div>
               <div className="brand-name">Sieve</div>
-              <div className="brand-tagline">AI news briefings for your feeds</div>
+              <div className="brand-tagline">RSS triage workspace</div>
             </div>
           </div>
 
@@ -136,18 +142,21 @@ function App() {
       <div className="app-main">
         <header className="app-header">
           <div className="app-header-main">
-            {view === 'reader' ? (
+            <div className="page-title-block">
+              <div className="page-title">{pageTitle}</div>
+              <div className="header-summary">{pageDescription}</div>
+            </div>
+
+            {view === 'reader' && (
               <label className="header-search" aria-label="Search feeds">
                 <span className="sr-only">Search feeds</span>
                 <input
                   type="search"
-                  placeholder="Search feeds"
+                  placeholder="Filter feeds"
                   value={feedQuery}
                   onChange={(e) => setFeedQuery(e.target.value)}
                 />
               </label>
-            ) : (
-              <div className="header-summary">Tune rules, AI preferences, and feed coverage.</div>
             )}
           </div>
 

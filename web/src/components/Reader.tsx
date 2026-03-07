@@ -109,10 +109,10 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVer
     <div className="reader-page">
       <section className="news-hero">
         <div>
-          <p className="eyebrow">Daily briefing</p>
-          <h1>Top stories from your reading graph</h1>
+          <p className="eyebrow">Overview</p>
+          <h1>Incoming items</h1>
           <p className="hero-copy">
-            Scan the strongest items first, narrow by signal, and keep tuning the stream without leaving the surface.
+            Review the latest stories, filter the stream, and update read state without leaving the queue.
           </p>
         </div>
         <button

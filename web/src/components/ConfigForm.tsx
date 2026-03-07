@@ -238,22 +238,7 @@ const ConfigForm: React.FC = () => {
               <div className="feed-admin-header">
                 <div>
                   <h3>{feed.name}</h3>
-                </div>
-                <div className="feed-admin-actions">
-                  <label className="checkbox-chip">
-                    <input
-                      type="checkbox"
-                      checked={feed.enabled}
-                      onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, enabled: e.target.checked } : f))}
-                    />
-                    Enabled
-                  </label>
-                  <button className="button button-outline" onClick={() => handleUpdateFeed(feed)} disabled={saving}>
-                    Update
-                  </button>
-                  <button className="button button-outline delete-button" onClick={() => handleDeleteFeed(feed.id)} disabled={saving}>
-                    Delete
-                  </button>
+                  <p className="feed-admin-meta">{feed.id}</p>
                 </div>
               </div>
 
@@ -276,7 +261,15 @@ const ConfigForm: React.FC = () => {
                 </div>
               </div>
 
-              <div className="feed-admin-actions">
+              <div className="feed-admin-options">
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={feed.enabled}
+                    onChange={(e) => setFeeds(prev => prev.map(f => f.id === feed.id ? { ...f, enabled: e.target.checked } : f))}
+                  />
+                  Enabled
+                </label>
                 <label className="checkbox-row">
                   <input
                     type="checkbox"
@@ -286,6 +279,15 @@ const ConfigForm: React.FC = () => {
                   Summarize
                 </label>
               </div>
+
+              <div className="feed-admin-actions">
+                <button className="button button-primary" onClick={() => handleUpdateFeed(feed)} disabled={saving}>
+                  Save
+                </button>
+                <button className="button button-outline delete-button" onClick={() => handleDeleteFeed(feed.id)} disabled={saving}>
+                  Delete
+                </button>
+              </div>
             </article>
           ))}
         </div>
@@ -294,11 +296,11 @@ const ConfigForm: React.FC = () => {
           <div className="feed-admin-header">
             <div>
               <h3>Add feed</h3>
-              <p>Create a new source in the reader graph.</p>
+              <p className="feed-admin-meta">Create a new source in the reader graph.</p>
             </div>
           </div>
 
-          <div className="settings-grid">
+          <div className="settings-grid two-column">
             <div className="form-group feed-url-field">
               <label>URL</label>
               <input
@@ -309,7 +311,15 @@ const ConfigForm: React.FC = () => {
             </div>
           </div>
 
-          <div className="feed-admin-actions">
+          <div className="feed-admin-options">
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={newFeed.enabled ?? true}
+                onChange={(e) => setNewFeed(prev => ({ ...prev, enabled: e.target.checked }))}
+              />
+              Enabled
+            </label>
             <label className="checkbox-row">
               <input
                 type="checkbox"
@@ -320,7 +330,7 @@ const ConfigForm: React.FC = () => {
             </label>
           </div>
 
-          <div className="feed-admin-actions end">
+          <div className="feed-admin-actions">
             <button className="button button-primary" onClick={handleCreateFeed} disabled={!canCreateFeed || saving}>
               Add feed
             </button>
