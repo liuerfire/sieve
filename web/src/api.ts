@@ -160,6 +160,10 @@ export const api = {
       method: 'POST',
     })
   },
+
+  getRefreshStreamURL(): string {
+    return `${API_BASE}/refresh/stream`
+  },
 }
 
 export { ApiError }

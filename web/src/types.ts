@@ -150,3 +150,20 @@ export interface RefreshStatus {
   last_error?: string
   last_result?: RefreshResult
 }
+
+export type RefreshEventKind = 'refresh_started' | 'progress' | 'refresh_finished'
+
+export interface RefreshStreamEvent {
+  run_id: string
+  seq: number
+  timestamp: string
+  kind: RefreshEventKind
+  type?: string
+  source?: string
+  item?: string
+  message?: string
+  level?: string
+  count?: number
+  total?: number
+  error?: string
+}

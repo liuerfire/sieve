@@ -1,10 +1,12 @@
 package server
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -16,8 +18,9 @@ import (
 )
 
 type fakeRefresher struct {
-	status  refresh.Status
-	trigger func(context.Context, string) (refresh.Status, error)
+	status    refresh.Status
+	trigger   func(context.Context, string) (refresh.Status, error)
+	subscribe func() ([]refresh.Event, <-chan refresh.Event, func())
 }
 
 func (f *fakeRefresher) Status() refresh.Status {
@@ -29,6 +32,15 @@ func (f *fakeRefresher) Trigger(ctx context.Context, source string) (refresh.Sta
 		return f.trigger(ctx, source)
 	}
 	return f.status, nil
+}
+
+func (f *fakeRefresher) Subscribe() ([]refresh.Event, <-chan refresh.Event, func()) {
+	if f.subscribe != nil {
+		return f.subscribe()
+	}
+	ch := make(chan refresh.Event)
+	close(ch)
+	return nil, ch, func() {}
 }
 
 func TestHandleGetItems(t *testing.T) {
@@ -369,6 +381,97 @@ func TestHandleRefreshTriggerConflict(t *testing.T) {
 
 	if w.Code != http.StatusConflict {
 		t.Fatalf("expected status 409, got %d", w.Code)
+	}
+}
+
+func TestHandleRefreshStreamUnavailable(t *testing.T) {
+	srv := NewServer(nil, nil)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/refresh/stream", nil)
+	w := httptest.NewRecorder()
+	srv.handleRefreshStream(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected status 503, got %d", w.Code)
+	}
+}
+
+func TestHandleRefreshStream(t *testing.T) {
+	live := make(chan refresh.Event, 1)
+	replay := []refresh.Event{
+		{
+			RunID: "run-1",
+			Seq:   1,
+			Kind:  refresh.EventKindRefreshStarted,
+		},
+	}
+
+	srv := NewServer(nil, &fakeRefresher{
+		subscribe: func() ([]refresh.Event, <-chan refresh.Event, func()) {
+			return replay, live, func() {}
+		},
+	})
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/api/refresh/stream", srv.handleRefreshStream)
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	done := make(chan string, 1)
+	go func() {
+		resp, err := http.Get(ts.URL + "/api/refresh/stream")
+		if err != nil {
+			done <- "request failed: " + err.Error()
+			return
+		}
+		defer resp.Body.Close()
+
+		if got := resp.Header.Get("Content-Type"); !strings.Contains(got, "text/event-stream") {
+			done <- "unexpected content type: " + got
+			return
+		}
+
+		payload, err := io.ReadAll(resp.Body)
+		if err != nil {
+			done <- "read failed: " + err.Error()
+			return
+		}
+		done <- string(payload)
+	}()
+
+	live <- refresh.Event{
+		RunID: "run-1",
+		Seq:   2,
+		Kind:  refresh.EventKindProgress,
+		Type:  "item_done",
+		Item:  "story-a",
+	}
+	close(live)
+
+	body := <-done
+	if strings.HasPrefix(body, "request failed:") || strings.HasPrefix(body, "unexpected content type:") || strings.HasPrefix(body, "read failed:") {
+		t.Fatal(body)
+	}
+
+	scanner := bufio.NewScanner(strings.NewReader(body))
+	var dataLines []string
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "data: ") {
+			dataLines = append(dataLines, strings.TrimPrefix(line, "data: "))
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		t.Fatalf("scan failed: %v", err)
+	}
+	if len(dataLines) != 2 {
+		t.Fatalf("expected 2 SSE data lines, got %d in %q", len(dataLines), body)
+	}
+	if !strings.Contains(dataLines[0], `"kind":"refresh_started"`) {
+		t.Fatalf("expected replayed start event, got %s", dataLines[0])
+	}
+	if !strings.Contains(dataLines[1], `"item":"story-a"`) {
+		t.Fatalf("expected live progress event, got %s", dataLines[1])
 	}
 }
 

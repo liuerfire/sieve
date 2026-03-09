@@ -14,7 +14,7 @@ import (
 )
 
 func newRefreshCoordinator(s *storage.Storage) *refresh.Coordinator {
-	return refresh.NewCoordinator(func(ctx context.Context) (*engine.EngineResult, error) {
+	return refresh.NewCoordinator(func(ctx context.Context, report func(engine.ProgressEvent)) (*engine.EngineResult, error) {
 		cfg, err := loadRuntimeConfig(ctx, s)
 		if err != nil {
 			return nil, fmt.Errorf("load runtime config from db: %w", err)
@@ -26,6 +26,7 @@ func newRefreshCoordinator(s *storage.Storage) *refresh.Coordinator {
 		}
 
 		eng := engine.NewEngine(cfg, s, client)
+		eng.OnProgress = report
 		return eng.Run(ctx)
 	})
 }

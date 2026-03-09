@@ -34,6 +34,7 @@ type Server struct {
 type refresher interface {
 	Status() refresh.Status
 	Trigger(ctx context.Context, source string) (refresh.Status, error)
+	Subscribe() ([]refresh.Event, <-chan refresh.Event, func())
 }
 
 func NewServer(s *storage.Storage, r refresher) *Server {
@@ -58,6 +59,7 @@ func (s *Server) ListenAndServe(ctx context.Context, addr string) error {
 	mux.HandleFunc("/api/feeds", s.handleFeeds)
 	mux.HandleFunc("/api/feeds/", s.handleFeedByID)
 	mux.HandleFunc("/api/settings", s.handleSettings)
+	mux.HandleFunc("/api/refresh/stream", s.handleRefreshStream)
 	mux.HandleFunc("/api/refresh", s.handleRefresh)
 
 	server := &http.Server{
@@ -115,6 +117,64 @@ func (s *Server) handleRefresh(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *Server) handleRefreshStream(w http.ResponseWriter, r *http.Request) {
+	if s.refresher == nil {
+		http.Error(w, "refresh unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
+		return
+	}
+
+	replay, events, cancel := s.refresher.Subscribe()
+	defer cancel()
+
+	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	for _, ev := range replay {
+		if err := writeSSEEvent(w, ev); err != nil {
+			return
+		}
+		flusher.Flush()
+	}
+
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case ev, ok := <-events:
+			if !ok {
+				return
+			}
+			if err := writeSSEEvent(w, ev); err != nil {
+				return
+			}
+			flusher.Flush()
+		}
+	}
+}
+
+func writeSSEEvent(w http.ResponseWriter, ev refresh.Event) error {
+	payload, err := json.Marshal(ev)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+	if _, err := fmt.Fprintf(w, "data: %s\n\n", payload); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (s *Server) handleUpdateItem(w http.ResponseWriter, r *http.Request) {

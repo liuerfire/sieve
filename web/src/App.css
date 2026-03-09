@@ -206,6 +206,134 @@ button {
   width: 100%;
 }
 
+.refresh-page {
+  display: grid;
+  gap: 20px;
+}
+
+.refresh-page-panel,
+.refresh-log-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.refresh-page-panel {
+  padding: 18px;
+}
+
+.refresh-page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.refresh-page-button {
+  min-width: 160px;
+}
+
+.refresh-page-meta {
+  margin-top: 12px;
+  color: var(--text-secondary);
+}
+
+.refresh-log-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(9, 105, 218, 0.04), transparent);
+}
+
+.refresh-log-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.refresh-log-status,
+.refresh-log-count,
+.refresh-log-time,
+.refresh-log-detail,
+.refresh-log-empty {
+  color: var(--text-secondary);
+}
+
+.refresh-log-status,
+.refresh-log-count,
+.refresh-log-detail {
+  font-size: 0.85rem;
+}
+
+.refresh-log-body {
+  max-height: 280px;
+  overflow: auto;
+}
+
+.refresh-log-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.refresh-log-row:last-child {
+  border-bottom: none;
+}
+
+.refresh-log-main {
+  min-width: 0;
+}
+
+.refresh-log-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.refresh-log-kind {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.refresh-log-kind-refresh_started {
+  color: var(--page-accent);
+}
+
+.refresh-log-kind-progress {
+  color: var(--text-primary);
+}
+
+.refresh-log-kind-refresh_finished {
+  color: #1a7f37;
+}
+
+.refresh-log-item {
+  font-weight: 600;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.refresh-log-detail {
+  margin-top: 4px;
+}
+
+.refresh-log-empty {
+  padding: 18px;
+}
+
 .top-nav-item,
 .feed-chip,
 .chip {
