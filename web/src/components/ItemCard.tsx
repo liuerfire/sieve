@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import DOMPurify from 'dompurify'
 import type { Item } from '../types'
 import { api } from '../api'
@@ -6,7 +6,6 @@ import { api } from '../api'
 interface ItemCardProps {
   item: Item
   onUpdate: () => void
-  variant?: 'featured' | 'standard'
 }
 
 const levelLabels: Record<string, string> = {
@@ -36,8 +35,8 @@ const formatPublishedDate = (value?: string) => {
   }).format(date)
 }
 
-const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate, variant = 'standard' }) => {
-  const [showThought, setShowThought] = useState(false)
+const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
+  const [showActions, setShowActions] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [optimisticRead, setOptimisticRead] = useState<boolean | null>(null)
   const [optimisticLevel, setOptimisticLevel] = useState<string | null>(null)
@@ -151,14 +150,10 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate, variant = 'standard
     }
   }, [item.ID, isUpdating, onUpdate])
 
-  const sanitizedSummary = item.Summary
-    ? DOMPurify.sanitize(item.Summary)
-    : item.Description
-      ? DOMPurify.sanitize(item.Description)
-      : ''
+  const sanitizedSummary = item.Summary ? DOMPurify.sanitize(item.Summary) : ''
 
   return (
-    <article className={`card story-card ${variant} ${displayRead ? 'read' : ''} ${isUpdating ? 'updating' : ''}`}>
+    <article className={`card story-card ${displayRead ? 'read' : ''} ${isUpdating ? 'updating' : ''}`}>
       {error && (
         <div className="error-banner" role="alert">
           {error}
@@ -166,119 +161,132 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate, variant = 'standard
         </div>
       )}
 
-      <div className="story-kicker-row">
-        <div className="story-meta-rail">
-          <span>{item.Source}</span>
-          {publishedDate && <span>{publishedDate}</span>}
-          {displaySaved && <span>Saved</span>}
-        </div>
-        <span
-          className={`level-badge level-${displayLevel}`}
-          aria-label={`Interest level: ${levelLabels[displayLevel] || displayLevel}`}
-        >
-          {levelLabels[displayLevel] || displayLevel.replace('_', ' ')}
-        </span>
-      </div>
-
-      <div className="card-header story-header">
-        <h3 className="card-title">
-          <a
-            href={item.Link}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${item.Title} (opens in new tab)`}
-          >
-            {item.Title}
-          </a>
-        </h3>
-      </div>
-
-      {sanitizedSummary && (
-        <div
-          className="card-summary"
-          dangerouslySetInnerHTML={{ __html: sanitizedSummary }}
-        />
-      )}
-
-      <div className="card-actions">
-        <div className="level-controls" role="group" aria-label="Change interest level">
-          {(Object.keys(levelEmoji) as Array<keyof typeof levelEmoji>).map((level) => (
-            <button
-              key={level}
-              onClick={() => updateLevel(level)}
-              disabled={isUpdating}
-              title={levelLabels[level]}
-              aria-label={`Mark as ${levelLabels[level]}`}
-              aria-pressed={displayLevel === level}
-              className={displayLevel === level ? 'active' : ''}
+      <div className={`story-row ${showActions ? 'expanded' : 'collapsed'}`}>
+        <div className="story-main">
+          <div className="story-main-top">
+            <span
+              className={`level-badge level-${displayLevel}`}
+              aria-label={`Interest level: ${levelLabels[displayLevel] || displayLevel}`}
             >
-              {levelEmoji[level]}
-            </button>
-          ))}
+              {levelLabels[displayLevel] || displayLevel.replace('_', ' ')}
+            </span>
+          </div>
+
+          <div className="story-meta-rail">
+            <span>{item.Source}</span>
+            {publishedDate && <span>{publishedDate}</span>}
+            {displaySaved && <span>Saved</span>}
+          </div>
+
+          <h3 className="card-title">
+            <a
+              href={item.Link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`${item.Title} (opens in new tab)`}
+            >
+              {item.Title}
+            </a>
+          </h3>
+
+          <div className="story-analysis">
+            {item.Reason && (
+              <p>
+                <strong>AI Reason:</strong> {item.Reason}
+              </p>
+            )}
+            {item.Thought && (
+              <p>
+                <strong>AI Thought:</strong> {item.Thought}
+              </p>
+            )}
+          </div>
+
+          {sanitizedSummary && (
+            <div
+              className="card-summary"
+              dangerouslySetInnerHTML={{ __html: sanitizedSummary }}
+            />
+          )}
         </div>
 
-        <div className="action-buttons">
-          <button
-            className="button button-outline"
-            onClick={toggleSaved}
-            disabled={isUpdating}
-            aria-label={displaySaved ? 'Unsave item' : 'Save item'}
-          >
-            {displaySaved ? 'Unsave' : 'Save'}
-          </button>
-          <button
-            className="button button-outline"
-            onClick={toggleRead}
-            disabled={isUpdating}
-            aria-label={displayRead ? 'Mark as unread' : 'Mark as read'}
-          >
-            {displayRead ? 'Mark unread' : 'Mark read'}
-          </button>
-          <button
-            className="button button-outline delete-button"
-            onClick={deleteItem}
-            disabled={isUpdating}
-            aria-label="Delete item"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-
-      <div className="story-secondary-row">
         <button
-          className="button button-outline subtle-button"
-          onClick={() => setShowThought(!showThought)}
-          aria-expanded={showThought}
-          aria-controls={`thought-panel-${item.ID}`}
+          className="story-actions-handle"
+          type="button"
+          onClick={() => setShowActions((value) => !value)}
+          aria-expanded={showActions}
+          aria-controls={`story-actions-panel-${item.ID}`}
+          aria-label={showActions ? 'Collapse controls' : 'Expand controls'}
         >
-          {showThought ? 'Hide analysis' : 'Show analysis'}
+          {showActions ? '>>' : '<<'}
         </button>
 
-        <label className="override-control" htmlFor={`override-${item.ID}`}>
-          <span>Override</span>
-          <select
-            id={`override-${item.ID}`}
-            className="form-control"
-            value={overrideLevel || ''}
-            onChange={e => setOverride(e.target.value)}
-            disabled={isUpdating}
-          >
-            <option value="">Use AI result</option>
-            <option value="high_interest">High Interest</option>
-            <option value="interest">Interest</option>
-            <option value="uninterested">Uninterested</option>
-            <option value="exclude">Exclude</option>
-          </select>
-        </label>
-      </div>
+        {showActions && (
+          <div className="story-actions">
+            <div id={`story-actions-panel-${item.ID}`} className="story-actions-panel">
+              <div className="level-controls" role="group" aria-label="Change interest level">
+                {(Object.keys(levelEmoji) as Array<keyof typeof levelEmoji>).map((level) => (
+                  <button
+                    key={level}
+                    onClick={() => updateLevel(level)}
+                    disabled={isUpdating}
+                    title={levelLabels[level]}
+                    aria-label={`Mark as ${levelLabels[level]}`}
+                    aria-pressed={displayLevel === level}
+                    className={displayLevel === level ? 'active' : ''}
+                  >
+                    {levelEmoji[level]}
+                  </button>
+                ))}
+              </div>
 
-      {showThought && (
-        <div id={`thought-panel-${item.ID}`} className="thought-panel">
-          <p><strong>Reason:</strong> {item.Reason}</p>
-          <p><strong>AI Thought:</strong> {item.Thought}</p>
-        </div>
-      )}
+              <div className="action-buttons">
+                <button
+                  className="button button-outline"
+                  onClick={toggleSaved}
+                  disabled={isUpdating}
+                  aria-label={displaySaved ? 'Unsave item' : 'Save item'}
+                >
+                  {displaySaved ? 'Unsave' : 'Save'}
+                </button>
+                <button
+                  className="button button-outline"
+                  onClick={toggleRead}
+                  disabled={isUpdating}
+                  aria-label={displayRead ? 'Mark as unread' : 'Mark as read'}
+                >
+                  {displayRead ? 'Mark unread' : 'Mark read'}
+                </button>
+                <button
+                  className="button button-outline delete-button"
+                  onClick={deleteItem}
+                  disabled={isUpdating}
+                  aria-label="Delete item"
+                >
+                  Delete
+                </button>
+              </div>
+
+              <label className="override-control" htmlFor={`override-${item.ID}`}>
+                <span>Override</span>
+                <select
+                  id={`override-${item.ID}`}
+                  className="form-control"
+                  value={overrideLevel || ''}
+                  onChange={e => setOverride(e.target.value)}
+                  disabled={isUpdating}
+                >
+                  <option value="">Use AI result</option>
+                  <option value="high_interest">High Interest</option>
+                  <option value="interest">Interest</option>
+                  <option value="uninterested">Uninterested</option>
+                  <option value="exclude">Exclude</option>
+                </select>
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
     </article>
   )
 }

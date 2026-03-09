@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import ItemCard from './ItemCard'
 import { api } from '../api'
 import type { Item, AsyncState, ItemStats, SourceSuggestion } from '../types'
@@ -101,9 +101,6 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVer
       fetchItems()
     }
   }, [itemsState.data, fetchItems])
-
-  const featuredItem = itemsState.data?.[0] ?? null
-  const remainingItems = useMemo(() => itemsState.data?.slice(1) ?? [], [itemsState.data])
 
   return (
     <div className="reader-page">
@@ -260,16 +257,10 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVer
         </div>
       )}
 
-      {featuredItem && (
-        <section className="featured-story">
-          <ItemCard item={featuredItem} onUpdate={handleUpdate} variant="featured" />
-        </section>
-      )}
-
-      {remainingItems.length > 0 && (
+      {itemsState.data && itemsState.data.length > 0 && (
         <section className="story-grid" role="feed" aria-label="News items">
-          {remainingItems.map((item) => (
-            <ItemCard key={item.ID} item={item} onUpdate={handleUpdate} variant="standard" />
+          {itemsState.data.map((item) => (
+            <ItemCard key={item.ID} item={item} onUpdate={handleUpdate} />
           ))}
         </section>
       )}
