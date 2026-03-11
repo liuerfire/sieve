@@ -150,10 +150,21 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
     }
   }, [item.ID, isUpdating, onUpdate])
 
-  const sanitizedSummary = item.Summary ? DOMPurify.sanitize(item.Summary) : ''
+  const sanitizedSummary = useMemo(() => {
+    if (!item.Summary) return ''
+    const html = DOMPurify.sanitize(item.Summary)
+    const hasTLDR = html.toLowerCase().includes('tldr') || html.toLowerCase().includes('tl;dr')
+    if (!hasTLDR) {
+      return `<p><strong>TL;DR:</strong> ${html.replace(/^<p>/i, '')}`
+    }
+    return html
+  }, [item.Summary])
 
   return (
-    <article className={`card story-card ${displayRead ? 'read' : ''} ${isUpdating ? 'updating' : ''}`}>
+    <article
+      id={`item-${item.ID}`}
+      className={`card story-card ${displayRead ? 'read' : ''} ${isUpdating ? 'updating' : ''}`}
+    >
       {error && (
         <div className="error-banner" role="alert">
           {error}
@@ -163,21 +174,6 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
 
       <div className={`story-row ${showActions ? 'expanded' : 'collapsed'}`}>
         <div className="story-main">
-          <div className="story-main-top">
-            <span
-              className={`level-badge level-${displayLevel}`}
-              aria-label={`Interest level: ${levelLabels[displayLevel] || displayLevel}`}
-            >
-              {levelLabels[displayLevel] || displayLevel.replace('_', ' ')}
-            </span>
-          </div>
-
-          <div className="story-meta-rail">
-            <span>{item.Source}</span>
-            {publishedDate && <span>{publishedDate}</span>}
-            {displaySaved && <span>Saved</span>}
-          </div>
-
           <h3 className="card-title">
             <a
               href={item.Link}
@@ -189,18 +185,20 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
             </a>
           </h3>
 
-          <div className="story-analysis">
-            {item.Reason && (
-              <p>
-                <strong>AI Reason:</strong> {item.Reason}
-              </p>
-            )}
-            {item.Thought && (
-              <p>
-                <strong>AI Thought:</strong> {item.Thought}
-              </p>
-            )}
+          <div className="story-meta-rail">
+            <span>{item.Source}</span>
+            {publishedDate && <span>|</span>}
+            {publishedDate && <span>{publishedDate}</span>}
+            {displaySaved && <span>|</span>}
+            {displaySaved && <span>Saved</span>}
           </div>
+
+          {(item.Reason || item.InterestLevel) && (
+            <div className="story-analysis">
+              <span className="insight-icon" role="img" aria-label="Insight">💡</span>
+              <p>{item.Reason || `Categorized as ${levelLabels[displayLevel]}`}</p>
+            </div>
+          )}
 
           {sanitizedSummary && (
             <div
@@ -208,6 +206,20 @@ const ItemCard: React.FC<ItemCardProps> = ({ item, onUpdate }) => {
               dangerouslySetInnerHTML={{ __html: sanitizedSummary }}
             />
           )}
+
+          <footer className="story-footer">
+            <div className="did-you-know">
+              {item.Thought && (
+                <>
+                  <span role="img" aria-label="Did you know?">💡</span>
+                  <p><strong>Did you know?</strong> {item.Thought}</p>
+                </>
+              )}
+            </div>
+            <div className="rating-stars" aria-label={`Rating: ${levelEmoji[displayLevel]}`}>
+              {levelEmoji[displayLevel]}
+            </div>
+          </footer>
         </div>
 
         <button

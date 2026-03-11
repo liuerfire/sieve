@@ -104,134 +104,6 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVer
 
   return (
     <div className="reader-page">
-      <section className="news-hero">
-        <div>
-          <p className="eyebrow">Overview</p>
-          <h1>Incoming items</h1>
-          <p className="hero-copy">
-            Review the latest stories, filter the stream, and update read state without leaving the queue.
-          </p>
-        </div>
-        <button
-          className="button button-primary"
-          onClick={handleRefresh}
-          disabled={itemsState.state === 'loading'}
-          aria-label="Refresh news items"
-        >
-          {itemsState.state === 'loading' ? 'Refreshing...' : 'Refresh'}
-        </button>
-      </section>
-
-      {stats && (
-        <section className="stats-strip" aria-label="Reader stats">
-          <div className="stat-card">
-            <div className="stat-label">Visible</div>
-            <div className="stat-value">{stats.total_visible}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Saved</div>
-            <div className="stat-value">{stats.saved}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">High Interest</div>
-            <div className="stat-value">{stats.high_interest}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-label">Unread</div>
-            <div className="stat-value">{stats.unread_visible}</div>
-          </div>
-        </section>
-      )}
-
-      <section className="reader-toolbar card">
-        <div className="chip-row" role="tablist" aria-label="Reader modes">
-          <button className={`chip ${mode === 'all' ? 'active' : ''}`} onClick={() => setMode('all')}>
-            All
-          </button>
-          <button className={`chip ${mode === 'saved' ? 'active' : ''}`} onClick={() => setMode('saved')}>
-            Saved
-          </button>
-          <button className={`chip ${mode === 'digest' ? 'active' : ''}`} onClick={() => setMode('digest')}>
-            Digest
-          </button>
-        </div>
-
-        {mode !== 'digest' ? (
-          <div className="toolbar-grid">
-            <label className="search-field toolbar-search">
-              <span className="sr-only">Search items</span>
-              <input
-                className="form-control"
-                placeholder="Search keywords"
-                value={qInput}
-                onChange={e => setQInput(e.target.value)}
-              />
-            </label>
-
-            <div className="chip-row compact" aria-label="Interest level filter">
-              {levelOptions.map((option) => (
-                <button
-                  key={option.value || 'all'}
-                  className={`chip ${level === option.value ? 'active' : ''}`}
-                  onClick={() => setLevel(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="utility-row">
-              <label className={`chip toggle-chip ${unreadOnly ? 'active' : ''}`}>
-                <input
-                  type="checkbox"
-                  checked={unreadOnly}
-                  onChange={e => setUnreadOnly(e.target.checked)}
-                />
-                Unread only
-              </label>
-              <button className="button button-outline" onClick={() => handleBulkRead(true)}>
-                Mark visible read
-              </button>
-              <button className="button button-outline" onClick={() => handleBulkRead(false)}>
-                Mark visible unread
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="utility-row">
-            <span className="toolbar-label">Digest range</span>
-            {[7, 14, 30].map((days) => (
-              <button
-                key={days}
-                className={`chip ${digestDays === days ? 'active' : ''}`}
-                onClick={() => setDigestDays(days)}
-              >
-                {formatDigestLabel(days)}
-              </button>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {sourceSuggestions.length > 0 && (
-        <section className="briefing-card card">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Source analysis</p>
-              <h2>Prune candidates</h2>
-            </div>
-          </div>
-          <div className="source-stats-list">
-            {sourceSuggestions.map((sg) => (
-              <div key={sg.source} className="source-stats-row">
-                <span className="source-name">{sg.source}</span>
-                <span className="source-metrics">{sg.visible} visible · {sg.reason}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
       {itemsState.state === 'error' && (
         <div className="error-message" role="alert">
           <p>Error loading items: {itemsState.error}</p>
@@ -258,11 +130,33 @@ const Reader: React.FC<ReaderProps> = ({ feedIDFilter, onDataRefresh, refreshVer
       )}
 
       {itemsState.data && itemsState.data.length > 0 && (
-        <section className="story-grid" role="feed" aria-label="News items">
-          {itemsState.data.map((item) => (
-            <ItemCard key={item.ID} item={item} onUpdate={handleUpdate} />
-          ))}
-        </section>
+        <div className="reader-layout">
+          <aside className="reader-sidebar">
+            {itemsState.data.some(item => item.InterestLevel === 'high_interest') && (
+              <div className="highlights-card">
+                <h3 className="highlights-title">⭐⭐ Highlights</h3>
+                <ul className="highlights-list">
+                  {itemsState.data
+                    .filter(item => item.InterestLevel === 'high_interest')
+                    .map(item => (
+                      <li key={item.ID} className="highlight-item">
+                        <span className="stars">⭐⭐</span>
+                        <a href={`#item-${item.ID}`}>{item.Title}</a>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </aside>
+
+          <main className="reader-main">
+            <section className="story-grid" role="feed" aria-label="News items">
+              {itemsState.data.map((item) => (
+                <ItemCard key={item.ID} item={item} onUpdate={handleUpdate} />
+              ))}
+            </section>
+          </main>
+        </div>
       )}
     </div>
   )
