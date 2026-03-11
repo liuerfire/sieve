@@ -1,121 +1,92 @@
 # Sieve
 
-An intelligent RSS news aggregator that uses AI to automatically filter and summarize news content based on personal interests.
+Sieve runs a config-driven plugin pipeline for one source at a time and writes RSS output files under `output/`.
 
-## Features
+## What It Does
 
-- 🌐 **Interactive Web UI**: A modern dashboard for reading news, monitoring aggregation, and managing settings.
-- 🤖 **AI Smart Filtering**: Uses AI to automatically filter content based on 4 levels of interest.
-- ⭐ **Interest Grading**: High interest (⭐⭐), General interest (⭐), and other content.
-- 🌐 **Deep Analysis Mode**: Optional structured summaries (output in preferred language).
-- 🔌 **Plugin System**: Supports fetching web metadata, full content, Hacker News comments, etc.
-- 🔧 **Flexible Configuration**: Manage all RSS sources and interest topics via JSON configuration.
-- 📡 **Automated Scheduling**: Automatically executes every hour using GitHub Actions schedule.
-- 📰 **Multi-Source Support**: Supports any RSS feed.
+- Loads a JSON config file describing providers, plugin options, and sources.
+- Runs `collect -> process -> report` for a named source.
+- Supports built-in plugins for RSS collection, deduplication, metadata/content fetching, LLM grading, LLM summarization, and RSS output.
+- Supports source-specific plugins for cnBeta, Hacker News, Product Hunt, Zhihu, and Zaihuapd.
 
-## Classification Rules
+## Build
 
-AI classifies items into 4 types based on the interest topics in the configuration:
-
-1. **High Interest** (`high_interest`) - Prioritized in the reader and digest views.
-2. **Interest** (`interest`) - Kept visible in the reader.
-3. **Uninterested** (`uninterested`) - Still available but treated as lower signal.
-4. **Exclude** (`exclude`) - Hidden from normal reading views.
-
-## Quick Start
-
-### 1. Build the Project
-
-Ensure you have Go 1.25 or later and Node.js (for Web UI) installed:
+Go 1.25 or later is required.
 
 ```bash
 make build
 ```
 
-### 2. Configure AI Providers
-
-Sieve supports Gemini and Qwen (Tongyi Qianwen) AI providers. You can provide one or both API keys. Sieve will prioritize them based on your configuration:
+## Run
 
 ```bash
-export GEMINI_API_KEY=your_gemini_api_key
-export QWEN_API_KEY=your_qwen_api_key
+./bin/sieve hacker-news --config config.json
 ```
 
-### 3. Start Web UI
-
-To browse your news items, manage configuration, and trigger manual refreshes in the browser:
+Dry run:
 
 ```bash
-./bin/sieve serve
+./bin/sieve hacker-news --config config.json --dry-run
 ```
 
-Navigate to `http://localhost:8080`.
+## Environment Variables
 
-Reader supports:
-- `All`, `Saved`, and `Digest` views.
-- Search by keyword plus source/level filters.
-- Save/unsave items for your second-brain list.
-- Manual interest override (`high_interest`, `interest`, `uninterested`, `exclude`).
-- Manual refresh plus refresh status.
+Set the API key required by your configured provider or source plugin.
 
-To enable periodic in-process refreshes while serving:
+LLM providers:
 
-```bash
-./bin/sieve serve --schedule-interval=1h
+- `ANTHROPIC_API_KEY`
+- `OPENAI_API_KEY`
+- `GEMINI_API_KEY`
+- `QWEN_API_KEY`
+- `OPENROUTER_API_KEY`
+- `GROK_API_KEY`
+
+Source plugins:
+
+- `PRODUCTHUNT_API_KEY`
+
+## Config Format
+
+Sieve uses a JSON config like this:
+
+```json
+{
+  "llm": {
+    "provider": "qwen",
+    "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "models": {
+      "fast": "qwen-turbo",
+      "balanced": "qwen-plus",
+      "powerful": "qwen-max"
+    }
+  },
+  "plugins": {
+    "builtin/reporter-rss": {
+      "outputPath": "output/hacker-news.xml"
+    }
+  },
+  "sources": [
+    {
+      "name": "hacker-news",
+      "context": "Best posts from Hacker News",
+      "plugins": [
+        "builtin/collect-rss",
+        "builtin/fetch-meta",
+        "builtin/llm-grade",
+        "builtin/reporter-rss"
+      ]
+    }
+  ]
+}
 ```
 
-### Security Notice
+## Output
 
-**Never commit API keys to version control.** Use environment variables or a `.env` file (added to `.gitignore`).
-
-## API Endpoints (Web UI)
-
-- `GET /api/items`: fetch latest items.
-- `PATCH /api/items/:id`: update `level`, `read`, `saved`, `user_interest_override`.
-- `DELETE /api/items/:id`: delete an item.
-- `GET /api/items/search?q=&source=&level=&saved=`: full-text search + filters.
-- `GET /api/digest`: weekly digest feed (saved + recent high-interest).
+- RSS files are written wherever `builtin/reporter-rss.outputPath` points.
+- Deduplication history is stored as `output/<source>-processed.json`.
 
 ## Contributor Note
 
 - Files under `docs/plans/` are working notes and are optional to commit.
 - Do not commit `docs/plans/` changes unless explicitly requested.
-
-## Reference Configuration
-
-```json
-{
-  "$schema": "./schemas/config.schema.json",
-  "global": {
-    "high_interest": "major_news,programming_tools,productivity",
-    "interest": "market_trends,ai_software,programming_languages,open_source,science",
-    "uninterested": "industry_figures,history,infrastructure,crypto,chips,iphone,autonomous_driving",
-    "exclude": "nft,cars,aviation,gaming_consoles,development_boards,biographies",
-    "preferred_language": "en",
-    "timeout": 5,
-    "ai": {
-      "provider": "gemini",
-      "model": "gemini-3-pro-preview"
-    }
-  },
-  "sources": [
-    {
-      "name": "cnbeta",
-      "title": "cnBeta.com - Tech News",
-      "url": "https://www.cnbeta.com.tw/backend.php",
-      "exclude": "health_tips,entertainment_gossip",
-      "plugins": ["cnbeta_fetch_content"],
-      "summarize": false
-    },
-    {
-      "name": "hacker-news",
-      "url": "https://hnrss.org/best",
-      "uninterested": "security,privacy",
-      "exclude": "government_policy,social_news,code_golf",
-      "plugins": ["fetch_meta", "fetch_content", "hn_fetch_comments"],
-      "summarize": true,
-      "timeout": 20
-    }
-  ]
-}
-```
