@@ -8,18 +8,18 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 func TestZaihuapd_CleansTrailingPromoAndEmojiPrefix(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{
-			Title: "🍀🚀  Example title",
+			Title:       "🍀🚀  Example title",
 			Description: `<p>Hello</p><div><span>🍀</span><a href="https://t.me/zaihuanews">promo</a><br/></div><img src="tail.jpg"/>`,
 		}.WithDefaults(),
 	}
-	got, err := Plugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "zaihuapd"}, plugin.WorkflowContext{
+	got, err := Plugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "zaihuapd"}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	if err != nil {

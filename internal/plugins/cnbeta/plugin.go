@@ -8,15 +8,15 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type Plugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
-func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, _ plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.PluginEntry, _ plugins.Context) ([]types.FeedItem, error) {
 	client := httpx.NewClient()
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
@@ -63,5 +63,5 @@ func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config
 }
 
 func init() {
-	plugin.RegisterWorkflow("cnbeta", Plugin{})
+	plugins.Register("cnbeta", Plugin{})
 }

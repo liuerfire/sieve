@@ -5,17 +5,17 @@ import (
 	"path/filepath"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/output"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
+	"github.com/liuerfire/sieve/internal/storage"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type DeduplicatePlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
-func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) ([]types.FeedItem, error) {
-	tracker, err := output.NewGUIDTracker(filepath.Join("output", runCtx.SourceName+"-processed.json"))
+func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
+	tracker, err := storage.NewGUIDTracker(filepath.Join("output", runCtx.SourceName+"-processed.json"))
 	if err != nil {
 		return nil, err
 	}
@@ -54,5 +54,5 @@ func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem,
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/deduplicate", DeduplicatePlugin{})
+	plugins.Register("builtin/deduplicate", DeduplicatePlugin{})
 }

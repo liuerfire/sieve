@@ -13,12 +13,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type Plugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 var graphqlURL = "https://api.producthunt.com/v2/api/graphql"
@@ -27,10 +27,10 @@ type collectOptions struct {
 	Limit int `json:"limit"`
 }
 
-func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ plugin.WorkflowContext) (plugin.CollectResult, error) {
+func (Plugin) Collect(ctx context.Context, entry config.PluginEntry, _ plugins.Context) (plugins.CollectResult, error) {
 	token := os.Getenv("PRODUCTHUNT_API_KEY")
 	if token == "" {
-		return plugin.CollectResult{}, fmt.Errorf("PRODUCTHUNT_API_KEY not set")
+		return plugins.CollectResult{}, fmt.Errorf("PRODUCTHUNT_API_KEY not set")
 	}
 	var opts collectOptions
 	_ = json.Unmarshal(entry.Options, &opts)
@@ -53,13 +53,13 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 	body, _ := json.Marshal(payload)
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, graphqlURL, bytes.NewReader(body))
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := httpx.NewClient().Do(req)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
 
@@ -89,7 +89,7 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 
 	items := make([]types.FeedItem, 0, len(data.Data.Posts.Edges))
@@ -121,7 +121,7 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 			},
 		}.WithDefaults())
 	}
-	return plugin.CollectResult{Title: "Product Hunt", Items: items}, nil
+	return plugins.CollectResult{Title: "Product Hunt", Items: items}, nil
 }
 
 func resolveLink(raw string) string {
@@ -147,5 +147,5 @@ func GraphqlURLForTest(next string) func() {
 }
 
 func init() {
-	plugin.RegisterWorkflow("producthunt", Plugin{})
+	plugins.Register("producthunt", Plugin{})
 }

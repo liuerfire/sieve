@@ -8,12 +8,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type CollectRSSHubPlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 type collectRSSHubOptions struct {
@@ -21,22 +21,22 @@ type collectRSSHubOptions struct {
 	MaxItems int    `json:"maxItems"`
 }
 
-func (CollectRSSHubPlugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) (plugin.CollectResult, error) {
+func (CollectRSSHubPlugin) Collect(ctx context.Context, entry config.PluginEntry, runCtx plugins.Context) (plugins.CollectResult, error) {
 	var opts collectRSSHubOptions
 	if err := json.Unmarshal(entry.Options, &opts); err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	if opts.Route == "" {
-		return plugin.CollectResult{}, fmt.Errorf("collect-rsshub: route is required")
+		return plugins.CollectResult{}, fmt.Errorf("collect-rsshub: route is required")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, opts.Route, nil)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	resp, err := httpx.NewClient().Do(req)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
 
@@ -53,7 +53,7 @@ func (CollectRSSHubPlugin) Collect(ctx context.Context, entry config.WorkflowPlu
 		} `json:"item"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 
 	items := make([]types.FeedItem, 0, len(payload.Item))
@@ -77,9 +77,9 @@ func (CollectRSSHubPlugin) Collect(ctx context.Context, entry config.WorkflowPlu
 		items = items[:3]
 	}
 
-	return plugin.CollectResult{Title: payload.Title, Items: items}, nil
+	return plugins.CollectResult{Title: payload.Title, Items: items}, nil
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/collect-rsshub", CollectRSSHubPlugin{})
+	plugins.Register("builtin/collect-rsshub", CollectRSSHubPlugin{})
 }

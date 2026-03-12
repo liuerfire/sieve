@@ -5,15 +5,15 @@ import (
 	"strings"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type CleanTextPlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
-func (CleanTextPlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, _ plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (CleanTextPlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.PluginEntry, _ plugins.Context) ([]types.FeedItem, error) {
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
 		item.Title = cleanZeroWidth(item.Title)
@@ -31,5 +31,5 @@ func cleanZeroWidth(value string) string {
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/clean-text", CleanTextPlugin{})
+	plugins.Register("builtin/clean-text", CleanTextPlugin{})
 }

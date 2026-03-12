@@ -10,12 +10,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type FetchContentPlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 var filterKeywords = []string{"category", "categories", "tag", "topic", "icon", "avatar"}
@@ -36,7 +36,7 @@ func shouldFilterImage(src string, isFirstImage bool) bool {
 	return false
 }
 
-func (FetchContentPlugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, _ plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (FetchContentPlugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.PluginEntry, _ plugins.Context) ([]types.FeedItem, error) {
 	client := httpx.NewClient()
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
@@ -116,5 +116,5 @@ func (FetchContentPlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/fetch-content", FetchContentPlugin{})
+	plugins.Register("builtin/fetch-content", FetchContentPlugin{})
 }

@@ -1,4 +1,4 @@
-package plugins
+package plugins_test
 
 import (
 	"context"
@@ -10,11 +10,11 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
+	"github.com/liuerfire/sieve/internal/plugins"
 	_ "github.com/liuerfire/sieve/internal/plugins/cnbeta"
 	_ "github.com/liuerfire/sieve/internal/plugins/producthunt"
 	producthunt "github.com/liuerfire/sieve/internal/plugins/producthunt"
 	"github.com/liuerfire/sieve/internal/plugins/zhihu"
-	"github.com/liuerfire/sieve/internal/plugin"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -24,12 +24,12 @@ func TestCNBeta_RewritesDescriptionFromArticlePage(t *testing.T) {
 	}))
 	defer server.Close()
 
-	loaded, err := plugin.LoadWorkflowPlugins([]config.WorkflowPluginEntry{{Name: "cnbeta"}})
+	loaded, err := plugins.Load([]config.PluginEntry{{Name: "cnbeta"}})
 	if err != nil {
-		t.Fatalf("LoadWorkflowPlugins: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 	items := []types.FeedItem{types.FeedItem{Link: server.URL}.WithDefaults()}
-	got, err := loaded[0].Plugin.ProcessItems(context.Background(), items, loaded[0].Entry, plugin.WorkflowContext{
+	got, err := loaded[0].Plugin.ProcessItems(context.Background(), items, loaded[0].Entry, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	if err != nil {
@@ -51,11 +51,11 @@ func TestProductHunt_CollectsRankVotesAndTopics(t *testing.T) {
 	_ = os.Setenv("PRODUCTHUNT_API_KEY", "test")
 	defer os.Unsetenv("PRODUCTHUNT_API_KEY")
 
-	loaded, err := plugin.LoadWorkflowPlugins([]config.WorkflowPluginEntry{{Name: "producthunt"}})
+	loaded, err := plugins.Load([]config.PluginEntry{{Name: "producthunt"}})
 	if err != nil {
-		t.Fatalf("LoadWorkflowPlugins: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
-	result, err := loaded[0].Plugin.Collect(context.Background(), loaded[0].Entry, plugin.WorkflowContext{})
+	result, err := loaded[0].Plugin.Collect(context.Background(), loaded[0].Entry, plugins.Context{})
 	if err != nil {
 		t.Fatalf("Collect: %v", err)
 	}
@@ -73,11 +73,11 @@ func TestZhihu_CollectsHotListItems(t *testing.T) {
 	oldURL := zhihu.HotListURLForTest(server.URL)
 	defer oldURL()
 
-	loaded, err := plugin.LoadWorkflowPlugins([]config.WorkflowPluginEntry{{Name: "zhihu"}})
+	loaded, err := plugins.Load([]config.PluginEntry{{Name: "zhihu"}})
 	if err != nil {
-		t.Fatalf("LoadWorkflowPlugins: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
-	result, err := loaded[0].Plugin.Collect(context.Background(), loaded[0].Entry, plugin.WorkflowContext{})
+	result, err := loaded[0].Plugin.Collect(context.Background(), loaded[0].Entry, plugins.Context{})
 	if err != nil {
 		t.Fatalf("Collect: %v", err)
 	}

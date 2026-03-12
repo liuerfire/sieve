@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestParseWorkflowConfig_ValidConfig(t *testing.T) {
-	cfg, err := ParseWorkflowConfig([]byte(`{
+func TestParse_ValidConfig(t *testing.T) {
+	cfg, err := Parse([]byte(`{
 		"llm": {
 			"provider": "openai",
 			"baseUrl": "https://example.com/v1",
@@ -40,7 +40,7 @@ func TestParseWorkflowConfig_ValidConfig(t *testing.T) {
 		]
 	}`))
 	if err != nil {
-		t.Fatalf("ParseWorkflowConfig returned error: %v", err)
+		t.Fatalf("Parse returned error: %v", err)
 	}
 
 	if cfg.LLM.Provider != "openai" {
@@ -60,8 +60,8 @@ func TestParseWorkflowConfig_ValidConfig(t *testing.T) {
 	}
 }
 
-func TestParseWorkflowConfig_InvalidPluginEntry(t *testing.T) {
-	_, err := ParseWorkflowConfig([]byte(`{
+func TestParse_InvalidPluginEntry(t *testing.T) {
+	_, err := Parse([]byte(`{
 		"llm": {
 			"provider": "openai",
 			"models": {
@@ -88,7 +88,7 @@ func TestParseWorkflowConfig_InvalidPluginEntry(t *testing.T) {
 	}
 }
 
-func TestLoadWorkflowConfig_ReadsJSONFile(t *testing.T) {
+func TestLoad_ReadsJSONFile(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "config.json")
 	if err := os.WriteFile(path, []byte(`{
@@ -110,17 +110,17 @@ func TestLoadWorkflowConfig_ReadsJSONFile(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	cfg, err := LoadWorkflowConfig(path)
+	cfg, err := Load(path)
 	if err != nil {
-		t.Fatalf("LoadWorkflowConfig returned error: %v", err)
+		t.Fatalf("Load returned error: %v", err)
 	}
 	if cfg.Sources[0].Name != "cnbeta" {
 		t.Fatalf("expected source cnbeta, got %q", cfg.Sources[0].Name)
 	}
 }
 
-func TestParseWorkflowConfig_AcceptsQwenProvider(t *testing.T) {
-	cfg, err := ParseWorkflowConfig([]byte(`{
+func TestParse_AcceptsQwenProvider(t *testing.T) {
+	cfg, err := Parse([]byte(`{
 		"llm": {
 			"provider": "qwen",
 			"models": {
@@ -137,7 +137,7 @@ func TestParseWorkflowConfig_AcceptsQwenProvider(t *testing.T) {
 		]
 	}`))
 	if err != nil {
-		t.Fatalf("ParseWorkflowConfig returned error: %v", err)
+		t.Fatalf("Parse returned error: %v", err)
 	}
 	if cfg.LLM.Provider != "qwen" {
 		t.Fatalf("expected provider qwen, got %q", cfg.LLM.Provider)

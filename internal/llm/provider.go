@@ -24,17 +24,17 @@ type GradeItem struct {
 }
 
 type GradeRequest struct {
-	SourceContext string
-	Context       string
-	GlobalHigh    string
-	GlobalInterest string
+	SourceContext      string
+	Context            string
+	GlobalHigh         string
+	GlobalInterest     string
 	GlobalUninterested string
-	GlobalAvoid string
-	High         string
-	Interest     string
-	Uninterested string
-	Avoid        string
-	Items        []GradeItem
+	GlobalAvoid        string
+	High               string
+	Interest           string
+	Uninterested       string
+	Avoid              string
+	Items              []GradeItem
 }
 
 type GradeResult struct {

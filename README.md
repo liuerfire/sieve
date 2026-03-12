@@ -85,6 +85,7 @@ Sieve uses a JSON config like this:
 
 - RSS files are written wherever `builtin/reporter-rss.outputPath` points.
 - Deduplication history is stored as `output/<source>-processed.json`.
+- The file-backed state helpers for those artifacts live under `internal/storage/`.
 
 ## Contributor Note
 

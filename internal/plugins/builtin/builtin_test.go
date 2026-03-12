@@ -13,12 +13,12 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
-func testRunContext(source string) plugin.WorkflowContext {
-	return plugin.WorkflowContext{
+func testRunContext(source string) plugins.Context {
+	return plugins.Context{
 		SourceName: source,
 		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
@@ -42,7 +42,7 @@ func TestCollectRSS_ParsesFeedItems(t *testing.T) {
 	}))
 	defer server.Close()
 
-	entry := config.WorkflowPluginEntry{
+	entry := config.PluginEntry{
 		Name:    "builtin/collect-rss",
 		Options: mustJSON(map[string]any{"url": server.URL}),
 	}
@@ -77,12 +77,12 @@ func TestCollectRSS_DryRunLimitsItems(t *testing.T) {
 	}))
 	defer server.Close()
 
-	entry := config.WorkflowPluginEntry{
+	entry := config.PluginEntry{
 		Name:    "builtin/collect-rss",
 		Options: mustJSON(map[string]any{"url": server.URL}),
 	}
 
-	result, err := CollectRSSPlugin{}.Collect(context.Background(), entry, plugin.WorkflowContext{
+	result, err := CollectRSSPlugin{}.Collect(context.Background(), entry, plugins.Context{
 		SourceName: "feed",
 		IsDryRun:   true,
 		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -115,7 +115,7 @@ func TestDeduplicate_MarksProcessedItemsRejected(t *testing.T) {
 		types.FeedItem{GUID: "b", Title: "B"}.WithDefaults(),
 	}
 
-	got, err := DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
+	got, err := DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
@@ -123,7 +123,7 @@ func TestDeduplicate_MarksProcessedItemsRejected(t *testing.T) {
 		t.Fatal("expected first pass items to remain non-rejected")
 	}
 
-	got, err = DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
+	got, err = DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestDeduplicate_DryRunReturnsOriginalItems(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{GUID: "a", Title: "A"}.WithDefaults(),
 	}
-	got, err := DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/deduplicate"}, plugin.WorkflowContext{
+	got, err := DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, plugins.Context{
 		SourceName: "source",
 		IsDryRun:   true,
 		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
@@ -170,7 +170,7 @@ func TestCleanText_NormalizesWhitespace(t *testing.T) {
 		}.WithDefaults(),
 	}
 
-	got, err := CleanTextPlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/clean-text"}, testRunContext("source"))
+	got, err := CleanTextPlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/clean-text"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
@@ -189,14 +189,14 @@ func TestReporterRSS_LogsOutputPath(t *testing.T) {
 
 	err := ReporterRSSPlugin{}.Report(context.Background(), []types.FeedItem{
 		types.FeedItem{Title: "A", Link: "https://example.com/a", GUID: "a"}.WithDefaults(),
-	}, config.WorkflowPluginEntry{
+	}, config.PluginEntry{
 		Name: "builtin/reporter-rss",
 		Options: mustJSON(map[string]any{
 			"outputPath": outputPath,
 			"sourceName": "test-source",
 			"title":      "Test Feed",
 		}),
-	}, plugin.WorkflowContext{
+	}, plugins.Context{
 		SourceName: "test-source",
 		Logger:     slog.New(slog.NewTextHandler(&logs, nil)),
 	})

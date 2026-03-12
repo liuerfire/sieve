@@ -8,15 +8,15 @@ import (
 	"github.com/PuerkitoBio/goquery"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type Plugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
-func (Plugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, _ plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (Plugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.PluginEntry, _ plugins.Context) ([]types.FeedItem, error) {
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
 		item.Title = trimLeadingEmoji(item.Title)
@@ -62,5 +62,5 @@ func trimLeadingEmoji(s string) string {
 }
 
 func init() {
-	plugin.RegisterWorkflow("zaihuapd", Plugin{})
+	plugins.Register("zaihuapd", Plugin{})
 }

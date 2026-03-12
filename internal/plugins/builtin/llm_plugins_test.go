@@ -9,7 +9,7 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/llm"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -22,12 +22,12 @@ func TestLLMGrade_AppliesValidatedResults(t *testing.T) {
 		}.WithDefaults(),
 	}
 
-	got, err := LLMGradePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{
+	got, err := LLMGradePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{
 		Name: "builtin/llm-grade",
 		Options: mustJSON(map[string]any{
 			"globalHighInterest": "go",
 		}),
-	}, plugin.WorkflowContext{
+	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		LLM: func(string) any {
 			return llm.StaticProvider{
@@ -53,12 +53,12 @@ func TestLLMSummarize_UpdatesTitleAndDescription(t *testing.T) {
 		}.WithDefaults(),
 	}
 
-	got, err := LLMSummarizePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{
+	got, err := LLMSummarizePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{
 		Name: "builtin/llm-summarize",
 		Options: mustJSON(map[string]any{
 			"preferredLanguage": "en",
 		}),
-	}, plugin.WorkflowContext{
+	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		LLM: func(string) any {
 			return llm.StaticProvider{
@@ -87,10 +87,10 @@ func TestLLMSummarize_RejectedSummaryMarksItemRejected(t *testing.T) {
 		}.WithDefaults(),
 	}
 
-	got, err := LLMSummarizePlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{
+	got, err := LLMSummarizePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{
 		Name:    "builtin/llm-summarize",
 		Options: json.RawMessage(`{}`),
-	}, plugin.WorkflowContext{
+	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		LLM: func(string) any {
 			return llm.StaticProvider{

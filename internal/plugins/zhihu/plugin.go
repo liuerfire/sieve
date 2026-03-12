@@ -10,12 +10,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type Plugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 var hotListURL = "https://api.zhihu.com/topstory/hot-lists/total"
@@ -24,7 +24,7 @@ type collectOptions struct {
 	Limit int `json:"limit"`
 }
 
-func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ plugin.WorkflowContext) (plugin.CollectResult, error) {
+func (Plugin) Collect(ctx context.Context, entry config.PluginEntry, _ plugins.Context) (plugins.CollectResult, error) {
 	var opts collectOptions
 	_ = json.Unmarshal(entry.Options, &opts)
 	if opts.Limit == 0 {
@@ -32,20 +32,20 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, hotListURL, nil)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	req.Header.Set("Accept", "application/json")
 	resp, err := httpx.NewClient().Do(req)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
 
 	var payload struct {
 		Data []struct {
-			CardID    string `json:"card_id"`
+			CardID     string `json:"card_id"`
 			DetailText string `json:"detail_text"`
-			Target struct {
+			Target     struct {
 				ID      any    `json:"id"`
 				Title   string `json:"title"`
 				URL     string `json:"url"`
@@ -55,7 +55,7 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	if len(payload.Data) > opts.Limit {
 		payload.Data = payload.Data[:opts.Limit]
@@ -75,7 +75,7 @@ func (Plugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, _ p
 			},
 		}.WithDefaults())
 	}
-	return plugin.CollectResult{Title: "知乎热榜", Items: items}, nil
+	return plugins.CollectResult{Title: "知乎热榜", Items: items}, nil
 }
 
 func toQuestionURL(apiURL string) string {
@@ -102,5 +102,5 @@ func HotListURLForTest(next string) func() {
 }
 
 func init() {
-	plugin.RegisterWorkflow("zhihu", Plugin{})
+	plugins.Register("zhihu", Plugin{})
 }

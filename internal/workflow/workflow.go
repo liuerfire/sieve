@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"maps"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -17,8 +18,8 @@ var pipelinePrefix = []string{
 
 type Params struct {
 	SourceName          string
-	SourceConfig        config.WorkflowSourceConfig
-	LLMConfig           config.WorkflowLLMConfig
+	SourceConfig        config.SourceConfig
+	LLMConfig           config.LLMConfig
 	GlobalPluginOptions map[string]json.RawMessage
 	IsDryRun            bool
 	Logger              *slog.Logger
@@ -28,7 +29,7 @@ type Params struct {
 func Run(ctx context.Context, params Params) error {
 	logInfo(params.Logger, "starting workflow", "source", params.SourceName, "dryRun", params.IsDryRun)
 
-	runCtx := plugin.WorkflowContext{
+	runCtx := plugins.Context{
 		SourceName:    params.SourceName,
 		SourceContext: params.SourceConfig.Context,
 		IsDryRun:      params.IsDryRun,
@@ -36,28 +37,28 @@ func Run(ctx context.Context, params Params) error {
 		LLM:           params.LLMFactory,
 	}
 
-	sourceEntries := make([]config.WorkflowPluginEntry, 0, len(params.SourceConfig.Plugins))
+	sourceEntries := make([]config.PluginEntry, 0, len(params.SourceConfig.Plugins))
 	for _, entry := range params.SourceConfig.Plugins {
-		sourceEntries = append(sourceEntries, config.WorkflowPluginEntry{
+		sourceEntries = append(sourceEntries, config.PluginEntry{
 			Name:    entry.Name,
 			Options: mergeOptions(params.GlobalPluginOptions[entry.Name], entry.Options),
 		})
 	}
 
-	sourcePlugins, err := plugin.LoadWorkflowPlugins(sourceEntries)
+	sourcePlugins, err := plugins.Load(sourceEntries)
 	if err != nil {
 		return err
 	}
 
-	prefixEntries := make([]config.WorkflowPluginEntry, 0, len(pipelinePrefix))
+	prefixEntries := make([]config.PluginEntry, 0, len(pipelinePrefix))
 	for _, name := range pipelinePrefix {
-		prefixEntries = append(prefixEntries, config.WorkflowPluginEntry{
+		prefixEntries = append(prefixEntries, config.PluginEntry{
 			Name:    name,
 			Options: params.GlobalPluginOptions[name],
 		})
 	}
 
-	prefixPlugins, err := plugin.LoadWorkflowPlugins(prefixEntries)
+	prefixPlugins, err := plugins.Load(prefixEntries)
 	if err != nil {
 		return err
 	}
@@ -80,11 +81,11 @@ func Run(ctx context.Context, params Params) error {
 	processed := items
 	for _, loaded := range prefixPlugins {
 		logInfo(params.Logger, "running process plugin", "source", params.SourceName, "plugin", loaded.Name, "items", len(processed))
-		processed = plugin.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		processed = plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
 	}
 	for _, loaded := range sourcePlugins {
 		logInfo(params.Logger, "running process plugin", "source", params.SourceName, "plugin", loaded.Name, "items", len(processed))
-		processed = plugin.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		processed = plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
 	}
 
 	visibleCount := 0
@@ -139,9 +140,7 @@ func mergeOptions(global json.RawMessage, local json.RawMessage) json.RawMessage
 	_ = json.Unmarshal(global, &merged)
 	localValues := map[string]any{}
 	_ = json.Unmarshal(local, &localValues)
-	for key, value := range localValues {
-		merged[key] = value
-	}
+	maps.Copy(merged, localValues)
 	return mustMarshal(merged)
 }
 

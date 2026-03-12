@@ -10,19 +10,19 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type Plugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 var algoliaItemURL = "https://hn.algolia.com/api/v1/items/%s"
 
 var itemIDPattern = regexp.MustCompile(`id=(\d+)`)
 
-func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
 	client := httpx.NewClient()
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
@@ -103,5 +103,5 @@ func extractComments(children []hnChild, depth int, maxDepth int) []map[string]a
 }
 
 func init() {
-	plugin.RegisterWorkflow("hacker-news", Plugin{})
+	plugins.Register("hacker-news", Plugin{})
 }

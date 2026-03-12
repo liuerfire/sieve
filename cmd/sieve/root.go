@@ -53,13 +53,13 @@ func newRootCmd() *cobra.Command {
 var rootCmd = newRootCmd()
 
 func defaultRunRoot(cmd *cobra.Command, args []string, configPath string, dryRun bool) error {
-	cfg, err := config.LoadWorkflowConfig(configPath)
+	cfg, err := config.Load(configPath)
 	if err != nil {
 		return err
 	}
 
 	sourceName := args[0]
-	var source *config.WorkflowSourceConfig
+	var source *config.SourceConfig
 	for i := range cfg.Sources {
 		if cfg.Sources[i].Name == sourceName {
 			source = &cfg.Sources[i]

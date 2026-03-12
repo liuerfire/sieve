@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -27,7 +27,7 @@ func TestFetchMeta_StoresMetaDescription(t *testing.T) {
 		types.FeedItem{Link: server.URL}.WithDefaults(),
 	}
 
-	got, err := FetchMetaPlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/fetch-meta"}, testRunContext("source"))
+	got, err := FetchMetaPlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/fetch-meta"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestFetchContent_FiltersImagesAndCapturesText(t *testing.T) {
 		types.FeedItem{Link: server.URL}.WithDefaults(),
 	}
 
-	got, err := FetchContentPlugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "builtin/fetch-content"}, testRunContext("source"))
+	got, err := FetchContentPlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/fetch-content"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
@@ -138,7 +138,7 @@ func TestReporterRSS_AppendsExistingItemsAndLimitsTo50(t *testing.T) {
 		}.WithDefaults(),
 	}
 
-	entry := config.WorkflowPluginEntry{
+	entry := config.PluginEntry{
 		Name: "builtin/reporter-rss",
 		Options: mustJSON(map[string]any{
 			"outputPath": path,
@@ -146,7 +146,7 @@ func TestReporterRSS_AppendsExistingItemsAndLimitsTo50(t *testing.T) {
 			"title":      "Source Feed",
 		}),
 	}
-	err := ReporterRSSPlugin{}.Report(context.Background(), items, entry, plugin.WorkflowContext{
+	err := ReporterRSSPlugin{}.Report(context.Background(), items, entry, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	if err != nil {

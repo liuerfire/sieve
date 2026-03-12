@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -34,7 +34,7 @@ func TestHackerNews_ExtractsNestedComments(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{GUID: "https://news.ycombinator.com/item?id=123"}.WithDefaults(),
 	}
-	got, err := Plugin{}.ProcessItems(context.Background(), items, config.WorkflowPluginEntry{Name: "hacker-news"}, plugin.WorkflowContext{
+	got, err := Plugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "hacker-news"}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	if err != nil {

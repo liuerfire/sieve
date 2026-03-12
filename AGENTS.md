@@ -17,11 +17,10 @@ Sieve is a config-driven CLI that fetches, filters, enriches, summarizes, and re
 
 - `cmd/sieve/`: CLI entry point for `sieve <source-name> [--config <path>] [--dry-run]`.
 - `internal/`:
-  - `config/`: Legacy config code plus the new workflow config parser.
-  - `http/`, `retry/`, `output/`: Shared runtime helpers.
+  - `config/`: JSON config schema, parsing, and validation.
+  - `http/`, `retry/`, `storage/`: Shared runtime helpers.
   - `llm/`: Provider adapter layer for the new workflow.
-  - `plugin/`: Workflow plugin registry and context.
-  - `plugins/`: Built-in and source-specific plugin implementations.
+  - `plugins/`: Plugin registry/runtime plus built-in and source-specific implementations.
   - `workflow/`: Main orchestrator for the pipeline.
 - `Makefile`: Build and task automation.
 
@@ -33,7 +32,7 @@ Use the `Makefile` for building and testing:
 make build   # Builds the binary into bin/sieve
 make test    # Runs all tests
 make fmt     # Formats code using goimports
-make clean   # Cleans up build artifacts, caches, and output files
+make clean   # Cleans up build artifacts and output files
 ```
 
 ### Running the Application

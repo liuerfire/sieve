@@ -7,12 +7,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/llm"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type LLMSummarizePlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 type llmSummarizeOptions struct {
@@ -21,7 +21,7 @@ type llmSummarizeOptions struct {
 	MaxConcurrency    int    `json:"maxConcurrency"`
 }
 
-func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, entry config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, entry config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
 	adapter, err := requireProvider(runCtx, "balanced")
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 	return out, nil
 }
 
-func requireProvider(runCtx plugin.WorkflowContext, tier string) (llm.Provider, error) {
+func requireProvider(runCtx plugins.Context, tier string) (llm.Provider, error) {
 	if runCtx.LLM == nil {
 		return nil, fmt.Errorf("llm provider not configured")
 	}
@@ -100,5 +100,5 @@ func stringFromExtra(value any) string {
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/llm-summarize", LLMSummarizePlugin{})
+	plugins.Register("builtin/llm-summarize", LLMSummarizePlugin{})
 }

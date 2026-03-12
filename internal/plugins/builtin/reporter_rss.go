@@ -9,12 +9,12 @@ import (
 	"path/filepath"
 
 	"github.com/liuerfire/sieve/internal/config"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type ReporterRSSPlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 type reporterRSSOptions struct {
@@ -82,7 +82,7 @@ func FormatRSSItems(items []types.FeedItem, showReason bool) []rssItem {
 	return result
 }
 
-func (ReporterRSSPlugin) Report(_ context.Context, items []types.FeedItem, entry config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) error {
+func (ReporterRSSPlugin) Report(_ context.Context, items []types.FeedItem, entry config.PluginEntry, runCtx plugins.Context) error {
 	var opts reporterRSSOptions
 	if err := json.Unmarshal(entry.Options, &opts); err != nil {
 		return err
@@ -147,5 +147,5 @@ func writeRSS(path string, feed rssFeed) error {
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/reporter-rss", ReporterRSSPlugin{})
+	plugins.Register("builtin/reporter-rss", ReporterRSSPlugin{})
 }

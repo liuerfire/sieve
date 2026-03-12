@@ -9,12 +9,12 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	httpx "github.com/liuerfire/sieve/internal/http"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type CollectRSSPlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 type collectRSSOptions struct {
@@ -22,18 +22,18 @@ type collectRSSOptions struct {
 	MaxItems int    `json:"maxItems"`
 }
 
-func (CollectRSSPlugin) Collect(ctx context.Context, entry config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) (plugin.CollectResult, error) {
+func (CollectRSSPlugin) Collect(ctx context.Context, entry config.PluginEntry, runCtx plugins.Context) (plugins.CollectResult, error) {
 	var opts collectRSSOptions
 	if err := json.Unmarshal(entry.Options, &opts); err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 	if opts.URL == "" {
-		return plugin.CollectResult{}, fmt.Errorf("collect-rss: url is required")
+		return plugins.CollectResult{}, fmt.Errorf("collect-rss: url is required")
 	}
 
 	req, err := gofeed.NewParser().ParseURLWithContext(opts.URL, ctx)
 	if err != nil {
-		return plugin.CollectResult{}, err
+		return plugins.CollectResult{}, err
 	}
 
 	items := make([]types.FeedItem, 0, len(req.Items))
@@ -58,13 +58,13 @@ func (CollectRSSPlugin) Collect(ctx context.Context, entry config.WorkflowPlugin
 		items = items[:3]
 	}
 
-	return plugin.CollectResult{
+	return plugins.CollectResult{
 		Title: req.Title,
 		Items: items,
 	}, nil
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/collect-rss", CollectRSSPlugin{})
+	plugins.Register("builtin/collect-rss", CollectRSSPlugin{})
 	_ = httpx.DefaultUserAgent
 }

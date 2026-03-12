@@ -7,27 +7,27 @@ import (
 
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/llm"
-	"github.com/liuerfire/sieve/internal/plugin"
+	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
 type LLMGradePlugin struct {
-	plugin.BaseWorkflowPlugin
+	plugins.BasePlugin
 }
 
 type llmGradeOptions struct {
 	GlobalHighInterest string `json:"globalHighInterest"`
-	GlobalInterest string `json:"globalInterest"`
+	GlobalInterest     string `json:"globalInterest"`
 	GlobalUninterested string `json:"globalUninterested"`
-	GlobalAvoid string `json:"globalAvoid"`
-	HighInterest string `json:"highInterest"`
-	Interest string `json:"interest"`
-	Uninterested string `json:"uninterested"`
-	Avoid string `json:"avoid"`
-	Context string `json:"context"`
+	GlobalAvoid        string `json:"globalAvoid"`
+	HighInterest       string `json:"highInterest"`
+	Interest           string `json:"interest"`
+	Uninterested       string `json:"uninterested"`
+	Avoid              string `json:"avoid"`
+	Context            string `json:"context"`
 }
 
-func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, entry config.WorkflowPluginEntry, runCtx plugin.WorkflowContext) ([]types.FeedItem, error) {
+func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, entry config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
 	adapter, err := requireProvider(runCtx, "balanced")
 	if err != nil {
 		return nil, err
@@ -57,17 +57,17 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 	}
 
 	results, err := adapter.Grade(ctx, llm.GradeRequest{
-		SourceContext:       runCtx.SourceContext,
-		Context:             opts.Context,
-		GlobalHigh:          opts.GlobalHighInterest,
-		GlobalInterest:      opts.GlobalInterest,
-		GlobalUninterested:  opts.GlobalUninterested,
-		GlobalAvoid:         opts.GlobalAvoid,
-		High:                opts.HighInterest,
-		Interest:            opts.Interest,
-		Uninterested:        opts.Uninterested,
-		Avoid:               opts.Avoid,
-		Items:               reqItems,
+		SourceContext:      runCtx.SourceContext,
+		Context:            opts.Context,
+		GlobalHigh:         opts.GlobalHighInterest,
+		GlobalInterest:     opts.GlobalInterest,
+		GlobalUninterested: opts.GlobalUninterested,
+		GlobalAvoid:        opts.GlobalAvoid,
+		High:               opts.HighInterest,
+		Interest:           opts.Interest,
+		Uninterested:       opts.Uninterested,
+		Avoid:              opts.Avoid,
+		Items:              reqItems,
 	})
 	if err != nil {
 		return nil, err
@@ -96,5 +96,5 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 }
 
 func init() {
-	plugin.RegisterWorkflow("builtin/llm-grade", LLMGradePlugin{})
+	plugins.Register("builtin/llm-grade", LLMGradePlugin{})
 }
