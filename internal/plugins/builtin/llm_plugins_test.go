@@ -43,6 +43,30 @@ func TestLLMGrade_AppliesValidatedResults(t *testing.T) {
 	}
 }
 
+func TestLLMGrade_RejectsUnknownLevel(t *testing.T) {
+	items := []types.FeedItem{
+		types.FeedItem{
+			Title: "A",
+			GUID:  "g1",
+			Extra: map[string]any{"meta": "desc"},
+		}.WithDefaults(),
+	}
+
+	_, err := LLMGradePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{
+		Name: "builtin/llm-grade",
+	}, plugins.Context{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		LLM: func(string) any {
+			return llm.StaticProvider{
+				GradeResults: []llm.GradeResult{{GUID: "g1", Level: "recommend", Reason: "fit"}},
+			}
+		},
+	})
+	if err == nil {
+		t.Fatal("expected invalid LLM level to return an error")
+	}
+}
+
 func TestLLMSummarize_UpdatesTitleAndDescription(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{

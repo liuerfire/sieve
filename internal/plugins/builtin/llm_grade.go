@@ -81,6 +81,11 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 		if result.GUID == "" || result.Reason == "" {
 			return nil, fmt.Errorf("invalid grade result")
 		}
+		switch types.FeedLevel(result.Level) {
+		case types.LevelCritical, types.LevelRecommended, types.LevelOptional, types.LevelRejected:
+		default:
+			return nil, fmt.Errorf("invalid grade level %q", result.Level)
+		}
 		gradeMap[result.GUID] = result
 	}
 

@@ -15,6 +15,10 @@ type DeduplicatePlugin struct {
 }
 
 func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
+	if runCtx.IsDryRun {
+		return items, nil
+	}
+
 	tracker, err := storage.NewGUIDTracker(filepath.Join("output", runCtx.SourceName+"-processed.json"))
 	if err != nil {
 		return nil, err
@@ -35,10 +39,6 @@ func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem,
 	tracker.Cleanup()
 	if err := tracker.Persist(); err != nil {
 		return nil, err
-	}
-
-	if runCtx.IsDryRun {
-		return items, nil
 	}
 
 	result := make([]types.FeedItem, 0, len(items))

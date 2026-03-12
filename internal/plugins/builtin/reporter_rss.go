@@ -95,11 +95,18 @@ func (ReporterRSSPlugin) Report(_ context.Context, items []types.FeedItem, entry
 		showReason = *opts.ShowReason
 	}
 
-	existing, _ := readRSS(opts.OutputPath)
+	existing, err := readRSS(opts.OutputPath)
+	if err != nil {
+		return err
+	}
 	formatted := FormatRSSItems(items, showReason)
 	allItems := append(formatted, existing.Channel.Items...)
 	if len(allItems) > 50 {
 		allItems = allItems[:50]
+	}
+
+	if runCtx.IsDryRun {
+		return nil
 	}
 
 	if err := writeRSS(opts.OutputPath, rssFeed{

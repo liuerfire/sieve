@@ -162,6 +162,37 @@ func TestDeduplicate_DryRunReturnsOriginalItems(t *testing.T) {
 	}
 }
 
+func TestDeduplicate_DryRunDoesNotPersistHistory(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "output"), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	prevWD, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	defer func() { _ = os.Chdir(prevWD) }()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+
+	items := []types.FeedItem{
+		types.FeedItem{GUID: "a", Title: "A"}.WithDefaults(),
+	}
+	_, err = DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, plugins.Context{
+		SourceName: "source",
+		IsDryRun:   true,
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err != nil {
+		t.Fatalf("ProcessItems returned error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join("output", "source-processed.json")); !os.IsNotExist(err) {
+		t.Fatalf("expected no persisted history in dry-run, got err=%v", err)
+	}
+}
+
 func TestCleanText_NormalizesWhitespace(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{
@@ -210,6 +241,58 @@ func TestReporterRSS_LogsOutputPath(t *testing.T) {
 	}
 	if !strings.Contains(output, outputPath) {
 		t.Fatalf("expected output path in logs, got %s", output)
+	}
+}
+
+func TestReporterRSS_DryRunDoesNotWriteOutput(t *testing.T) {
+	dir := t.TempDir()
+	outputPath := filepath.Join(dir, "feed.xml")
+
+	err := ReporterRSSPlugin{}.Report(context.Background(), []types.FeedItem{
+		types.FeedItem{Title: "A", Link: "https://example.com/a", GUID: "a"}.WithDefaults(),
+	}, config.PluginEntry{
+		Name: "builtin/reporter-rss",
+		Options: mustJSON(map[string]any{
+			"outputPath": outputPath,
+			"sourceName": "test-source",
+			"title":      "Test Feed",
+		}),
+	}, plugins.Context{
+		SourceName: "test-source",
+		IsDryRun:   true,
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err != nil {
+		t.Fatalf("Report returned error: %v", err)
+	}
+
+	if _, err := os.Stat(outputPath); !os.IsNotExist(err) {
+		t.Fatalf("expected no RSS output in dry-run, got err=%v", err)
+	}
+}
+
+func TestReporterRSS_ReturnsReadError(t *testing.T) {
+	dir := t.TempDir()
+	outputPath := filepath.Join(dir, "feed.xml")
+	if err := os.WriteFile(outputPath, []byte("<rss"), 0o644); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	err := ReporterRSSPlugin{}.Report(context.Background(), []types.FeedItem{
+		types.FeedItem{Title: "A", Link: "https://example.com/a", GUID: "a"}.WithDefaults(),
+	}, config.PluginEntry{
+		Name: "builtin/reporter-rss",
+		Options: mustJSON(map[string]any{
+			"outputPath": outputPath,
+			"sourceName": "test-source",
+			"title":      "Test Feed",
+		}),
+	}, plugins.Context{
+		SourceName: "test-source",
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err == nil {
+		t.Fatal("expected invalid existing RSS to return an error")
 	}
 }
 

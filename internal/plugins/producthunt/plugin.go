@@ -22,6 +22,7 @@ type Plugin struct {
 }
 
 var graphqlURL = "https://api.producthunt.com/v2/api/graphql"
+var now = time.Now
 
 type collectOptions struct {
 	Limit int `json:"limit"`
@@ -38,15 +39,19 @@ func (Plugin) Collect(ctx context.Context, entry config.PluginEntry, _ plugins.C
 		opts.Limit = 10
 	}
 
-	now := time.Now().UTC()
-	pstMidnight := time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, time.UTC)
-	if pstMidnight.After(now) {
-		pstMidnight = pstMidnight.Add(-24 * time.Hour)
+	la, err := time.LoadLocation("America/Los_Angeles")
+	if err != nil {
+		return plugins.CollectResult{}, err
+	}
+	current := now().In(la)
+	postedAfter := time.Date(current.Year(), current.Month(), current.Day(), 0, 0, 0, 0, la).UTC()
+	if postedAfter.After(now().UTC()) {
+		postedAfter = postedAfter.Add(-24 * time.Hour)
 	}
 	payload := map[string]any{
 		"query": "query($postedAfter: DateTime!, $first: Int!) { posts(order: VOTES, first: $first, postedAfter: $postedAfter) { edges { node { id name tagline description url website votesCount createdAt topics { edges { node { name } } } } } } }",
 		"variables": map[string]any{
-			"postedAfter": pstMidnight.Format(time.RFC3339),
+			"postedAfter": postedAfter.Format(time.RFC3339),
 			"first":       opts.Limit,
 		},
 	}
@@ -143,6 +148,14 @@ func GraphqlURLForTest(next string) func() {
 	graphqlURL = next
 	return func() {
 		graphqlURL = prev
+	}
+}
+
+func swapNow(fn func() time.Time) func() {
+	prev := now
+	now = fn
+	return func() {
+		now = prev
 	}
 }
 
