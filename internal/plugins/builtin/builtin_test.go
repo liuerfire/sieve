@@ -329,6 +329,101 @@ func TestReporterRSS_ReturnsReadError(t *testing.T) {
 	}
 }
 
+func TestReporterHTML_WritesVisibleItemsOnly(t *testing.T) {
+	dir := t.TempDir()
+	outputPath := filepath.Join(dir, "feed.html")
+	var logs strings.Builder
+
+	err := ReporterHTMLPlugin{}.Report(context.Background(), []types.FeedItem{
+		types.FeedItem{
+			Title:       "Visible item",
+			Link:        "https://example.com/a",
+			GUID:        "a",
+			Description: "<p>Summary body</p>",
+			Level:       types.LevelCritical,
+			Reason:      "Strong match",
+		}.WithDefaults(),
+		types.FeedItem{
+			Title:       "Rejected item",
+			Link:        "https://example.com/b",
+			GUID:        "b",
+			Description: "<p>Should not appear</p>",
+			Level:       types.LevelRejected,
+			Reason:      "No match",
+		}.WithDefaults(),
+	}, config.PluginEntry{
+		Name: "builtin/reporter-html",
+		Options: mustJSON(map[string]any{
+			"outputPath": outputPath,
+			"sourceName": "test-source",
+			"title":      "Test Feed",
+		}),
+	}, plugins.Context{
+		SourceName: "test-source",
+		Logger:     slog.New(slog.NewTextHandler(&logs, nil)),
+	})
+	if err != nil {
+		t.Fatalf("Report returned error: %v", err)
+	}
+
+	data, err := os.ReadFile(outputPath)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	output := string(data)
+	for _, want := range []string{"Test Feed", "Visible item", "Summary body", "Strong match", "Critical", "Open original"} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("expected html output to contain %q, got %s", want, output)
+		}
+	}
+	if strings.Contains(output, "Rejected item") {
+		t.Fatalf("expected rejected item to be omitted, got %s", output)
+	}
+	if !strings.Contains(logs.String(), "wrote html output") {
+		t.Fatalf("expected html reporter log, got %s", logs.String())
+	}
+}
+
+func TestReporterHTML_DryRunDoesNotWriteOutput(t *testing.T) {
+	dir := t.TempDir()
+	outputPath := filepath.Join(dir, "feed.html")
+
+	err := ReporterHTMLPlugin{}.Report(context.Background(), []types.FeedItem{
+		types.FeedItem{Title: "A", Link: "https://example.com/a", GUID: "a"}.WithDefaults(),
+	}, config.PluginEntry{
+		Name: "builtin/reporter-html",
+		Options: mustJSON(map[string]any{
+			"outputPath": outputPath,
+			"sourceName": "test-source",
+			"title":      "Test Feed",
+		}),
+	}, plugins.Context{
+		SourceName: "test-source",
+		IsDryRun:   true,
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err != nil {
+		t.Fatalf("Report returned error: %v", err)
+	}
+
+	if _, err := os.Stat(outputPath); !os.IsNotExist(err) {
+		t.Fatalf("expected no HTML output in dry-run, got err=%v", err)
+	}
+}
+
+func TestReporterHTML_RequiresOutputPath(t *testing.T) {
+	err := ReporterHTMLPlugin{}.Report(context.Background(), nil, config.PluginEntry{
+		Name:    "builtin/reporter-html",
+		Options: mustJSON(map[string]any{}),
+	}, plugins.Context{
+		SourceName: "test-source",
+		Logger:     slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err == nil {
+		t.Fatal("expected missing outputPath to fail")
+	}
+}
+
 func TestFetchMeta_ClearsMetaOnHTTPErrorStatus(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "blocked", http.StatusForbidden)
