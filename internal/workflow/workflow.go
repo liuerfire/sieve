@@ -31,10 +31,6 @@ type Params struct {
 func Run(ctx context.Context, params Params) error {
 	logInfo(params.Logger, "starting workflow", "source", params.SourceName, "dryRun", params.IsDryRun)
 
-	if err := validateLLMRequirements(params); err != nil {
-		return err
-	}
-
 	runCtx := plugins.Context{
 		SourceName:    params.SourceName,
 		SourceContext: params.SourceConfig.Context,
@@ -155,24 +151,6 @@ func isRequiredProcessPlugin(name string) bool {
 	default:
 		return false
 	}
-}
-
-func validateLLMRequirements(params Params) error {
-	if params.LLMConfig.Provider == "" {
-		return nil
-	}
-	for _, entry := range params.SourceConfig.Plugins {
-		if !isRequiredProcessPlugin(entry.Name) {
-			continue
-		}
-		switch entry.Name {
-		case "builtin/llm-grade", "builtin/llm-summarize":
-			if params.LLMConfig.Provider != "qwen" {
-				return fmt.Errorf("llm provider %q does not support %s", params.LLMConfig.Provider, entry.Name)
-			}
-		}
-	}
-	return nil
 }
 
 func mergeOptions(global json.RawMessage, local json.RawMessage) json.RawMessage {

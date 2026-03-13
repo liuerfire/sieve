@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/liuerfire/sieve/internal/config"
+	"github.com/liuerfire/sieve/internal/llm"
 	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
@@ -20,6 +21,10 @@ type recorderPlugin struct {
 	events        *[]string
 	reportTitle   *string
 	processErr    error
+}
+
+type llmProbePlugin struct {
+	plugins.BasePlugin
 }
 
 func (p recorderPlugin) Collect(_ context.Context, entry config.PluginEntry, _ plugins.Context) (plugins.CollectResult, error) {
@@ -53,6 +58,16 @@ func (p recorderPlugin) Report(_ context.Context, _ []types.FeedItem, entry conf
 		*p.reportTitle = payload.Title
 	}
 	return nil
+}
+
+func (llmProbePlugin) ProcessItems(_ context.Context, items []types.FeedItem, _ config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
+	if runCtx.LLM == nil {
+		return nil, errors.New("llm provider not configured")
+	}
+	if _, err := runCtx.LLM("balanced"); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 func TestRunWorkflow_RunsCollectPrefixSourceAndReportInOrder(t *testing.T) {
@@ -215,7 +230,7 @@ func TestRunWorkflow_AllowsOptionalProcessPluginFailure(t *testing.T) {
 func TestRunWorkflow_ReturnsErrorForUnsupportedLLMProvider(t *testing.T) {
 	plugins.Register("builtin/deduplicate", recorderPlugin{})
 	plugins.Register("builtin/clean-text", recorderPlugin{})
-	plugins.Register("builtin/llm-grade", recorderPlugin{})
+	plugins.Register("builtin/llm-grade", llmProbePlugin{})
 	plugins.Register("source/test", recorderPlugin{
 		collectResult: plugins.CollectResult{
 			Items: []types.FeedItem{types.FeedItem{Title: "first"}.WithDefaults()},
@@ -235,8 +250,11 @@ func TestRunWorkflow_ReturnsErrorForUnsupportedLLMProvider(t *testing.T) {
 			Provider: "openai",
 		},
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		LLMFactory: func(string) (llm.Provider, error) {
+			return llm.CreateProvider(llm.Config{Provider: "openai", Model: "test-model"})
+		},
 	})
-	if err == nil || !strings.Contains(err.Error(), `llm provider "openai" does not support builtin/llm-grade`) {
+	if err == nil || !strings.Contains(err.Error(), `unsupported provider "openai"`) {
 		t.Fatalf("expected unsupported provider error, got %v", err)
 	}
 }
