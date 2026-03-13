@@ -28,6 +28,12 @@ func (FetchMetaPlugin) ProcessItems(ctx context.Context, items []types.FeedItem,
 		if err == nil {
 			resp, err := client.Do(req)
 			if err == nil {
+				if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+					_ = resp.Body.Close()
+					item.Extra["meta"] = ""
+					result = append(result, item)
+					continue
+				}
 				doc, err := goquery.NewDocumentFromReader(resp.Body)
 				_ = resp.Body.Close()
 				if err == nil {

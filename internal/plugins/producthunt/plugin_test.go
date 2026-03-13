@@ -76,3 +76,20 @@ func TestCollect_UsesLosAngelesMidnightOutsideDST(t *testing.T) {
 		t.Fatalf("Collect returned error: %v", err)
 	}
 }
+
+func TestCollect_ReturnsErrorOnHTTPStatusFailure(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "rate limited", http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	restoreURL := GraphqlURLForTest(server.URL)
+	defer restoreURL()
+
+	t.Setenv("PRODUCTHUNT_API_KEY", "test-token")
+
+	_, err := Plugin{}.Collect(context.Background(), config.PluginEntry{Name: "producthunt"}, plugins.Context{})
+	if err == nil {
+		t.Fatal("expected HTTP status failure to return an error")
+	}
+}

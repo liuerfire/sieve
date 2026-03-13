@@ -58,6 +58,13 @@ func (FetchContentPlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 			result = append(result, item)
 			continue
 		}
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			_ = resp.Body.Close()
+			item.Extra["content"] = ""
+			item.Extra["images"] = []map[string]any{}
+			result = append(result, item)
+			continue
+		}
 		doc, err := goquery.NewDocumentFromReader(resp.Body)
 		_ = resp.Body.Close()
 		if err != nil {

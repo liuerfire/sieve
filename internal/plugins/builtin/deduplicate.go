@@ -26,6 +26,9 @@ func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem,
 
 	newGuids := make(map[string]struct{}, len(items))
 	for _, item := range items {
+		if item.GUID == "" {
+			continue
+		}
 		if !tracker.IsProcessed(item.GUID) {
 			newGuids[item.GUID] = struct{}{}
 		}
@@ -43,6 +46,10 @@ func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem,
 
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
+		if item.GUID == "" {
+			result = append(result, item)
+			continue
+		}
 		if _, ok := newGuids[item.GUID]; ok {
 			result = append(result, item)
 			continue

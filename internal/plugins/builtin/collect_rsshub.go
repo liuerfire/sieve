@@ -39,6 +39,9 @@ func (CollectRSSHubPlugin) Collect(ctx context.Context, entry config.PluginEntry
 		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return plugins.CollectResult{}, fmt.Errorf("collect-rsshub: unexpected status %d", resp.StatusCode)
+	}
 
 	var payload struct {
 		Title string `json:"title"`

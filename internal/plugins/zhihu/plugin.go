@@ -3,6 +3,7 @@ package zhihu
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -40,6 +41,9 @@ func (Plugin) Collect(ctx context.Context, entry config.PluginEntry, _ plugins.C
 		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return plugins.CollectResult{}, fmt.Errorf("zhihu: unexpected status %d", resp.StatusCode)
+	}
 
 	var payload struct {
 		Data []struct {

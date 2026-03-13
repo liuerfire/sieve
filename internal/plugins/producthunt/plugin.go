@@ -67,6 +67,9 @@ func (Plugin) Collect(ctx context.Context, entry config.PluginEntry, _ plugins.C
 		return plugins.CollectResult{}, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return plugins.CollectResult{}, fmt.Errorf("producthunt: unexpected status %d", resp.StatusCode)
+	}
 
 	var data struct {
 		Data struct {

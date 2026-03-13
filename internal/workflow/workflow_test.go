@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"reflect"
@@ -18,6 +19,7 @@ type recorderPlugin struct {
 	collectResult plugins.CollectResult
 	events        *[]string
 	reportTitle   *string
+	processErr    error
 }
 
 func (p recorderPlugin) Collect(_ context.Context, entry config.PluginEntry, _ plugins.Context) (plugins.CollectResult, error) {
@@ -30,6 +32,9 @@ func (p recorderPlugin) Collect(_ context.Context, entry config.PluginEntry, _ p
 func (p recorderPlugin) ProcessItems(_ context.Context, items []types.FeedItem, entry config.PluginEntry, _ plugins.Context) ([]types.FeedItem, error) {
 	if p.events != nil {
 		*p.events = append(*p.events, "process:"+entry.Name)
+	}
+	if p.processErr != nil {
+		return nil, p.processErr
 	}
 	return append(items, types.FeedItem{Title: entry.Name}.WithDefaults()), nil
 }
@@ -159,5 +164,79 @@ func TestRunWorkflow_LogsProgressAndSummary(t *testing.T) {
 		if !strings.Contains(output, want) {
 			t.Fatalf("expected log output to contain %q, got %s", want, output)
 		}
+	}
+}
+
+func TestRunWorkflow_ReturnsErrorForRequiredProcessPluginFailure(t *testing.T) {
+	plugins.Register("builtin/deduplicate", recorderPlugin{processErr: errors.New("dedup failed")})
+	plugins.Register("builtin/clean-text", recorderPlugin{})
+	plugins.Register("source/test", recorderPlugin{
+		collectResult: plugins.CollectResult{
+			Items: []types.FeedItem{types.FeedItem{Title: "first"}.WithDefaults()},
+		},
+	})
+
+	err := Run(context.Background(), Params{
+		SourceName: "source",
+		SourceConfig: config.SourceConfig{
+			Name:    "source",
+			Plugins: []config.PluginEntry{{Name: "source/test"}},
+		},
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err == nil || !strings.Contains(err.Error(), `required process plugin "builtin/deduplicate" failed`) {
+		t.Fatalf("expected required plugin error, got %v", err)
+	}
+}
+
+func TestRunWorkflow_AllowsOptionalProcessPluginFailure(t *testing.T) {
+	plugins.Register("builtin/deduplicate", recorderPlugin{})
+	plugins.Register("builtin/clean-text", recorderPlugin{})
+	plugins.Register("source/test", recorderPlugin{
+		collectResult: plugins.CollectResult{
+			Items: []types.FeedItem{types.FeedItem{Title: "first"}.WithDefaults()},
+		},
+		processErr: errors.New("optional failed"),
+	})
+
+	err := Run(context.Background(), Params{
+		SourceName: "source",
+		SourceConfig: config.SourceConfig{
+			Name:    "source",
+			Plugins: []config.PluginEntry{{Name: "source/test"}},
+		},
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err != nil {
+		t.Fatalf("expected optional plugin failure to be ignored, got %v", err)
+	}
+}
+
+func TestRunWorkflow_ReturnsErrorForUnsupportedLLMProvider(t *testing.T) {
+	plugins.Register("builtin/deduplicate", recorderPlugin{})
+	plugins.Register("builtin/clean-text", recorderPlugin{})
+	plugins.Register("builtin/llm-grade", recorderPlugin{})
+	plugins.Register("source/test", recorderPlugin{
+		collectResult: plugins.CollectResult{
+			Items: []types.FeedItem{types.FeedItem{Title: "first"}.WithDefaults()},
+		},
+	})
+
+	err := Run(context.Background(), Params{
+		SourceName: "source",
+		SourceConfig: config.SourceConfig{
+			Name: "source",
+			Plugins: []config.PluginEntry{
+				{Name: "source/test"},
+				{Name: "builtin/llm-grade"},
+			},
+		},
+		LLMConfig: config.LLMConfig{
+			Provider: "openai",
+		},
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	})
+	if err == nil || !strings.Contains(err.Error(), `llm provider "openai" does not support builtin/llm-grade`) {
+		t.Fatalf("expected unsupported provider error, got %v", err)
 	}
 }

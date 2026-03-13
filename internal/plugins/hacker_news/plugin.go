@@ -49,6 +49,12 @@ func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config
 			result = append(result, item)
 			continue
 		}
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			_ = resp.Body.Close()
+			item.Extra["comments"] = []map[string]any{}
+			result = append(result, item)
+			continue
+		}
 		var payload struct {
 			Children []hnChild `json:"children"`
 		}

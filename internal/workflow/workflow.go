@@ -3,10 +3,12 @@ package workflow
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"maps"
 
 	"github.com/liuerfire/sieve/internal/config"
+	"github.com/liuerfire/sieve/internal/llm"
 	"github.com/liuerfire/sieve/internal/plugins"
 	"github.com/liuerfire/sieve/internal/types"
 )
@@ -28,6 +30,10 @@ type Params struct {
 
 func Run(ctx context.Context, params Params) error {
 	logInfo(params.Logger, "starting workflow", "source", params.SourceName, "dryRun", params.IsDryRun)
+
+	if err := validateLLMRequirements(params); err != nil {
+		return err
+	}
 
 	runCtx := plugins.Context{
 		SourceName:    params.SourceName,
@@ -81,11 +87,25 @@ func Run(ctx context.Context, params Params) error {
 	processed := items
 	for _, loaded := range prefixPlugins {
 		logInfo(params.Logger, "running process plugin", "source", params.SourceName, "plugin", loaded.Name, "items", len(processed))
-		processed = plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		nextItems, err := plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		if err != nil {
+			if isRequiredProcessPlugin(loaded.Name) {
+				return fmt.Errorf("required process plugin %q failed: %w", loaded.Name, err)
+			}
+			continue
+		}
+		processed = nextItems
 	}
 	for _, loaded := range sourcePlugins {
 		logInfo(params.Logger, "running process plugin", "source", params.SourceName, "plugin", loaded.Name, "items", len(processed))
-		processed = plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		nextItems, err := plugins.ApplyProcessItems(ctx, processed, loaded, runCtx)
+		if err != nil {
+			if isRequiredProcessPlugin(loaded.Name) {
+				return fmt.Errorf("required process plugin %q failed: %w", loaded.Name, err)
+			}
+			continue
+		}
+		processed = nextItems
 	}
 
 	visibleCount := 0
@@ -126,6 +146,33 @@ func logInfo(logger *slog.Logger, msg string, args ...any) {
 		return
 	}
 	logger.Info(msg, args...)
+}
+
+func isRequiredProcessPlugin(name string) bool {
+	switch name {
+	case "builtin/deduplicate", "builtin/llm-grade", "builtin/llm-summarize":
+		return true
+	default:
+		return false
+	}
+}
+
+func validateLLMRequirements(params Params) error {
+	if params.LLMConfig.Provider == "" {
+		return nil
+	}
+	for _, entry := range params.SourceConfig.Plugins {
+		if !isRequiredProcessPlugin(entry.Name) {
+			continue
+		}
+		switch entry.Name {
+		case "builtin/llm-grade", "builtin/llm-summarize":
+			if !llm.SupportsRemoteTasks(params.LLMConfig.Provider) {
+				return fmt.Errorf("llm provider %q does not support %s", params.LLMConfig.Provider, entry.Name)
+			}
+		}
+	}
+	return nil
 }
 
 func mergeOptions(global json.RawMessage, local json.RawMessage) json.RawMessage {

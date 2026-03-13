@@ -193,6 +193,39 @@ func TestDeduplicate_DryRunDoesNotPersistHistory(t *testing.T) {
 	}
 }
 
+func TestDeduplicate_DoesNotTreatEmptyGUIDAsDuplicate(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(dir, "output"), 0o755); err != nil {
+		t.Fatalf("MkdirAll: %v", err)
+	}
+	prevWD, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Getwd: %v", err)
+	}
+	defer func() { _ = os.Chdir(prevWD) }()
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("Chdir: %v", err)
+	}
+
+	items := []types.FeedItem{
+		types.FeedItem{GUID: "", Title: "A", Link: "https://example.com/a"}.WithDefaults(),
+		types.FeedItem{GUID: "", Title: "B", Link: "https://example.com/b"}.WithDefaults(),
+	}
+
+	_, err = DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
+	if err != nil {
+		t.Fatalf("ProcessItems returned error: %v", err)
+	}
+
+	got, err := DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
+	if err != nil {
+		t.Fatalf("ProcessItems returned error: %v", err)
+	}
+	if got[0].Level == types.LevelRejected || got[1].Level == types.LevelRejected {
+		t.Fatalf("expected empty-guid items to remain visible, got %#v", got)
+	}
+}
+
 func TestCleanText_NormalizesWhitespace(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{
@@ -293,6 +326,59 @@ func TestReporterRSS_ReturnsReadError(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected invalid existing RSS to return an error")
+	}
+}
+
+func TestFetchMeta_ClearsMetaOnHTTPErrorStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "blocked", http.StatusForbidden)
+	}))
+	defer server.Close()
+
+	items := []types.FeedItem{
+		types.FeedItem{Title: "A", Link: server.URL}.WithDefaults(),
+	}
+
+	got, err := FetchMetaPlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/fetch-meta"}, testRunContext("source"))
+	if err != nil {
+		t.Fatalf("ProcessItems returned error: %v", err)
+	}
+	if meta := got[0].Extra["meta"]; meta != "" {
+		t.Fatalf("expected empty meta on HTTP error, got %#v", meta)
+	}
+}
+
+func TestFetchContent_ClearsContentOnHTTPErrorStatus(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "blocked", http.StatusTooManyRequests)
+	}))
+	defer server.Close()
+
+	items := []types.FeedItem{
+		types.FeedItem{Title: "A", Link: server.URL}.WithDefaults(),
+	}
+
+	got, err := FetchContentPlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/fetch-content"}, testRunContext("source"))
+	if err != nil {
+		t.Fatalf("ProcessItems returned error: %v", err)
+	}
+	if content := got[0].Extra["content"]; content != "" {
+		t.Fatalf("expected empty content on HTTP error, got %#v", content)
+	}
+}
+
+func TestCollectRSSHub_ReturnsErrorOnHTTPStatusFailure(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "upstream failed", http.StatusBadGateway)
+	}))
+	defer server.Close()
+
+	_, err := CollectRSSHubPlugin{}.Collect(context.Background(), config.PluginEntry{
+		Name:    "builtin/collect-rsshub",
+		Options: mustJSON(map[string]any{"route": server.URL}),
+	}, testRunContext("source"))
+	if err == nil {
+		t.Fatal("expected HTTP status failure to return an error")
 	}
 }
 

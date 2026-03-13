@@ -71,7 +71,7 @@ func TestApplyProcessItems_OnErrorReturnsOriginalItems(t *testing.T) {
 	}
 
 	items := []types.FeedItem{{Title: "kept"}}
-	got := ApplyProcessItems(
+	got, err := ApplyProcessItems(
 		context.Background(),
 		items,
 		loaded,
@@ -79,6 +79,9 @@ func TestApplyProcessItems_OnErrorReturnsOriginalItems(t *testing.T) {
 			Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		},
 	)
+	if err == nil {
+		t.Fatal("expected process error")
+	}
 
 	if len(got) != 1 || got[0].Title != "kept" {
 		t.Fatalf("expected original items to be returned, got %#v", got)

@@ -79,15 +79,15 @@ func Load(entries []config.PluginEntry) ([]LoadedPlugin, error) {
 	return loaded, nil
 }
 
-func ApplyProcessItems(ctx context.Context, items []types.FeedItem, loaded LoadedPlugin, runCtx Context) []types.FeedItem {
+func ApplyProcessItems(ctx context.Context, items []types.FeedItem, loaded LoadedPlugin, runCtx Context) ([]types.FeedItem, error) {
 	nextItems, err := loaded.Plugin.ProcessItems(ctx, items, loaded.Entry, runCtx)
 	if err != nil {
 		if runCtx.Logger != nil {
 			runCtx.Logger.Warn("process items failed", "plugin", loaded.Name, "error", err)
 		}
-		return items
+		return items, err
 	}
-	return nextItems
+	return nextItems, nil
 }
 
 func swapRegistry(next map[string]Plugin) func() {

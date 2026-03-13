@@ -89,8 +89,12 @@ var providerEnvKeys = map[string]string{
 	"grok":       "GROK_API_KEY",
 }
 
+func SupportsRemoteTasks(provider string) bool {
+	return provider == "qwen"
+}
+
 func (p RemoteProvider) Grade(ctx context.Context, req GradeRequest) ([]GradeResult, error) {
-	if p.Config.Provider != "qwen" {
+	if !SupportsRemoteTasks(p.Config.Provider) {
 		return nil, fmt.Errorf("remote grade not implemented for %s", p.Config.Provider)
 	}
 	type responseEnvelope struct {
@@ -104,7 +108,7 @@ func (p RemoteProvider) Grade(ctx context.Context, req GradeRequest) ([]GradeRes
 }
 
 func (p RemoteProvider) Summarize(ctx context.Context, req SummaryRequest) (SummaryResult, error) {
-	if p.Config.Provider != "qwen" {
+	if !SupportsRemoteTasks(p.Config.Provider) {
 		return SummaryResult{}, fmt.Errorf("remote summarize not implemented for %s", p.Config.Provider)
 	}
 	var result SummaryResult
