@@ -3,6 +3,7 @@ package llm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -78,6 +79,7 @@ func TestStaticProvider_GradeAndSummarize(t *testing.T) {
 
 func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 	var requestBody map[string]any
+	var wrote []GradeResult
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/chat/completions" {
 			t.Fatalf("expected /chat/completions path, got %s", r.URL.Path)
@@ -97,7 +99,12 @@ func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 		_, _ = io.WriteString(w, `{
 			"choices": [{
 				"message": {
-					"content": "{\"items\":[{\"guid\":\"g1\",\"level\":\"critical\",\"reason\":\"fit\"}]}"
+					"tool_calls": [{
+						"function": {
+							"name": "write_grade_results",
+							"arguments": "{\"items\":[{\"guid\":\"g1\",\"level\":\"critical\",\"reason\":\"fit\"}]}"
+						}
+					}]
 				}
 			}]
 		}`)
@@ -116,6 +123,10 @@ func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 
 	results, err := provider.Grade(context.Background(), GradeRequest{
 		Items: []GradeItem{{GUID: "g1", Title: "Title", Meta: "Meta"}},
+		WriteGradeResults: func(_ context.Context, results []GradeResult) error {
+			wrote = results
+			return nil
+		},
 	})
 	if err != nil {
 		t.Fatalf("Grade: %v", err)
@@ -126,12 +137,19 @@ func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 	if requestBody["model"] != "qwen-plus" {
 		t.Fatalf("unexpected model %#v", requestBody["model"])
 	}
-	if _, ok := requestBody["response_format"]; !ok {
-		t.Fatal("expected response_format in request body")
+	if _, ok := requestBody["tools"]; !ok {
+		t.Fatal("expected tools in request body")
+	}
+	if _, ok := requestBody["tool_choice"]; !ok {
+		t.Fatal("expected tool_choice in request body")
+	}
+	if len(wrote) != 1 || wrote[0].GUID != "g1" {
+		t.Fatalf("unexpected written grade results: %#v", wrote)
 	}
 }
 
 func TestQwenProvider_SummarizeUsesChatCompletions(t *testing.T) {
+	var wrote SummaryResult
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/chat/completions" {
 			t.Fatalf("expected /chat/completions path, got %s", r.URL.Path)
@@ -144,7 +162,61 @@ func TestQwenProvider_SummarizeUsesChatCompletions(t *testing.T) {
 		_, _ = io.WriteString(w, `{
 			"choices": [{
 				"message": {
-					"content": "{\"guid\":\"g1\",\"title\":\"Summary title\",\"description\":\"<p>summary</p>\",\"rejected\":false}"
+					"tool_calls": [{
+						"function": {
+							"name": "write_summary",
+							"arguments": "{\"guid\":\"g1\",\"title\":\"Summary title\",\"description\":\"<p>summary</p>\",\"rejected\":false}"
+						}
+					}]
+				}
+			}]
+		}`)
+	}))
+	defer server.Close()
+
+	t.Setenv("QWEN_API_KEY", "test-qwen-key")
+	provider, err := CreateProvider(Config{
+		Provider: "qwen",
+		Model:    "qwen-plus",
+		BaseURL:  server.URL,
+	})
+	if err != nil {
+		t.Fatalf("CreateProvider: %v", err)
+	}
+
+	result, err := provider.Summarize(context.Background(), SummaryRequest{
+		GUID:              "g1",
+		Title:             "Title",
+		Description:       "Description",
+		PreferredLanguage: "en",
+		WriteSummary: func(_ context.Context, result SummaryResult) error {
+			wrote = result
+			return nil
+		},
+	})
+	if err != nil {
+		t.Fatalf("Summarize: %v", err)
+	}
+	if result.GUID != "g1" || result.Title != "Summary title" {
+		t.Fatalf("unexpected summary result: %#v", result)
+	}
+	if wrote.GUID != "g1" || wrote.Title != "Summary title" {
+		t.Fatalf("unexpected written summary result: %#v", wrote)
+	}
+}
+
+func TestQwenProvider_SummarizeNormalizesGUIDToRequest(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{
+			"choices": [{
+				"message": {
+					"tool_calls": [{
+						"function": {
+							"name": "write_summary",
+							"arguments": "{\"guid\":\"translated-guid\",\"title\":\"Summary title\",\"description\":\"<p>summary</p>\",\"rejected\":false}"
+						}
+					}]
 				}
 			}]
 		}`)
@@ -170,7 +242,86 @@ func TestQwenProvider_SummarizeUsesChatCompletions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Summarize: %v", err)
 	}
-	if result.GUID != "g1" || result.Title != "Summary title" {
-		t.Fatalf("unexpected summary result: %#v", result)
+	if result.GUID != "g1" {
+		t.Fatalf("expected normalized guid, got %#v", result)
+	}
+}
+
+func TestQwenProvider_GradeReturnsErrorForUnexpectedToolCall(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{
+			"choices": [{
+				"message": {
+					"tool_calls": [{
+						"function": {
+							"name": "write_summary",
+							"arguments": "{\"guid\":\"g1\",\"title\":\"Summary title\",\"description\":\"<p>summary</p>\",\"rejected\":false}"
+						}
+					}]
+				}
+			}]
+		}`)
+	}))
+	defer server.Close()
+
+	t.Setenv("QWEN_API_KEY", "test-qwen-key")
+	provider, err := CreateProvider(Config{
+		Provider: "qwen",
+		Model:    "qwen-plus",
+		BaseURL:  server.URL,
+	})
+	if err != nil {
+		t.Fatalf("CreateProvider: %v", err)
+	}
+
+	_, err = provider.Grade(context.Background(), GradeRequest{
+		Items: []GradeItem{{GUID: "g1", Title: "Title", Meta: "Meta"}},
+	})
+	if err == nil {
+		t.Fatal("expected tool call name mismatch to fail")
+	}
+}
+
+func TestQwenProvider_SummarizeReturnsWriterError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{
+			"choices": [{
+				"message": {
+					"tool_calls": [{
+						"function": {
+							"name": "write_summary",
+							"arguments": "{\"guid\":\"g1\",\"title\":\"Summary title\",\"description\":\"<p>summary</p>\",\"rejected\":false}"
+						}
+					}]
+				}
+			}]
+		}`)
+	}))
+	defer server.Close()
+
+	t.Setenv("QWEN_API_KEY", "test-qwen-key")
+	provider, err := CreateProvider(Config{
+		Provider: "qwen",
+		Model:    "qwen-plus",
+		BaseURL:  server.URL,
+	})
+	if err != nil {
+		t.Fatalf("CreateProvider: %v", err)
+	}
+
+	wantErr := errors.New("write failed")
+	_, err = provider.Summarize(context.Background(), SummaryRequest{
+		GUID:              "g1",
+		Title:             "Title",
+		Description:       "Description",
+		PreferredLanguage: "en",
+		WriteSummary: func(context.Context, SummaryResult) error {
+			return wantErr
+		},
+	})
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected writer error, got %v", err)
 	}
 }

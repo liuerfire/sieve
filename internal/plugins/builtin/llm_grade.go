@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/llm"
@@ -68,6 +69,12 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 		Uninterested:       opts.Uninterested,
 		Avoid:              opts.Avoid,
 		Items:              reqItems,
+		WriteGradeResults: func(ctx context.Context, results []llm.GradeResult) error {
+			if runCtx.IsDryRun {
+				return nil
+			}
+			return writeGradeResultsFile(ctx, filepath.Join("output", runCtx.SourceName+"-llm-grade.json"), results)
+		},
 	})
 	if err != nil {
 		return nil, err

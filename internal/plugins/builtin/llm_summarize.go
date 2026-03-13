@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/liuerfire/sieve/internal/config"
 	"github.com/liuerfire/sieve/internal/llm"
@@ -22,7 +23,7 @@ type llmSummarizeOptions struct {
 }
 
 func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, entry config.PluginEntry, runCtx plugins.Context) ([]types.FeedItem, error) {
-	adapter, err := requireProvider(runCtx, "balanced")
+	adapter, err := requireProvider(runCtx, "powerful")
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +37,8 @@ func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 		opts.PreferredLanguage = "zh-CN"
 	}
 
+	summaryPath := filepath.Join("output", runCtx.SourceName+"-llm-summary.json")
+	writtenSummaries := make([]llm.SummaryResult, 0, len(items))
 	out := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
 		if item.Level == types.LevelRejected {
@@ -55,6 +58,13 @@ func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 			Title:             item.Title,
 			Description:       item.Description,
 			Extra:             item.Extra,
+			WriteSummary: func(ctx context.Context, result llm.SummaryResult) error {
+				if runCtx.IsDryRun {
+					return nil
+				}
+				writtenSummaries = append(writtenSummaries, result)
+				return writeSummaryResultsFile(ctx, summaryPath, writtenSummaries)
+			},
 		})
 		if err != nil {
 			return nil, err
