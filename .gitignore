@@ -30,7 +30,6 @@ vendor/
 # Temporary files
 tmp/
 .cache/
-config.json
 SESSION.md
 docs/plans/
 

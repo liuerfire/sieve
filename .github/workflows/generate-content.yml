@@ -1,0 +1,242 @@
+name: Generate Content
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: generate-content
+  cancel-in-progress: false
+
+jobs:
+  prepare-sources:
+    runs-on: ubuntu-latest
+    outputs:
+      sources: ${{ steps.sources.outputs.sources }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Extract source names
+        id: sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          sources_json="$(python3 - <<'PY'
+          import json
+          with open("config.json", "r", encoding="utf-8") as fh:
+              cfg = json.load(fh)
+          names = []
+          for source in cfg.get("sources", []):
+              name = source.get("name", "").strip()
+              if name:
+                  names.append(name)
+          print(json.dumps(names))
+          PY
+          )"
+          echo "sources=${sources_json}" >> "${GITHUB_OUTPUT}"
+
+  run-source:
+    needs: prepare-sources
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        source: ${{ fromJson(needs.prepare-sources.outputs.sources) }}
+    env:
+      GO111MODULE: "on"
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build sieve
+        run: make build
+
+      - name: Run source
+        run: ./bin/sieve "${{ matrix.source }}" --config config.json
+
+      - name: Stage source output
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p publish
+          shopt -s nullglob
+          files=(output/${{ matrix.source }}*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No output files found for source ${{ matrix.source }}"
+            exit 1
+          fi
+          cp "${files[@]}" publish/
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-output-${{ matrix.source }}
+          path: publish
+          if-no-files-found: error
+
+  publish-pages:
+    needs:
+      - prepare-sources
+      - run-source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download source artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: source-output-*
+          path: output
+          merge-multiple: true
+
+      - name: Create Pages index
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          python3 - <<'PY'
+          import html
+          import json
+          from pathlib import Path
+
+          with open("config.json", "r", encoding="utf-8") as fh:
+              cfg = json.load(fh)
+
+          rows = []
+          for source in cfg.get("sources", []):
+              name = source.get("name", "").strip()
+              if not name:
+                  continue
+              title = source.get("title") or name
+              html_path = Path("output") / f"{name}.html"
+              xml_path = Path("output") / f"{name}.xml"
+              if not html_path.exists() and not xml_path.exists():
+                  continue
+              links = []
+              if html_path.exists():
+                  links.append(f'<a href="{html.escape(html_path.name)}">HTML</a>')
+              if xml_path.exists():
+                  links.append(f'<a href="{html.escape(xml_path.name)}">RSS</a>')
+              rows.append(
+                  "<article>"
+                  f"<h2>{html.escape(title)}</h2>"
+                  f"<p>{html.escape(name)}</p>"
+                  f"<div>{' · '.join(links)}</div>"
+                  "</article>"
+              )
+
+          body = "\n".join(rows) if rows else "<p>No generated content yet.</p>"
+          page = f"""<!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <title>Sieve Output</title>
+            <style>
+              body {{
+                margin: 0;
+                font-family: "Avenir Next", "Segoe UI", sans-serif;
+                color: #1f1a17;
+                background: linear-gradient(180deg, #faf4eb 0%, #efe5d6 100%);
+              }}
+              main {{
+                width: min(960px, calc(100vw - 32px));
+                margin: 0 auto;
+                padding: 40px 0 72px;
+              }}
+              h1 {{
+                margin: 0 0 10px;
+                font-size: clamp(36px, 7vw, 72px);
+                letter-spacing: -0.05em;
+              }}
+              p {{
+                color: #6b6259;
+              }}
+              .grid {{
+                display: grid;
+                gap: 16px;
+                margin-top: 28px;
+              }}
+              article {{
+                padding: 20px 22px;
+                border-radius: 22px;
+                background: rgba(255, 250, 242, 0.88);
+                border: 1px solid rgba(72, 53, 33, 0.1);
+                box-shadow: 0 18px 40px rgba(56, 38, 20, 0.08);
+              }}
+              h2 {{
+                margin: 0 0 8px;
+                font-size: 24px;
+              }}
+              a {{
+                color: #7c3f15;
+                text-decoration: none;
+                font-weight: 600;
+              }}
+            </style>
+          </head>
+          <body>
+            <main>
+              <h1>Sieve Output</h1>
+              <p>Generated every hour from the configured sources.</p>
+              <section class="grid">
+                {body}
+              </section>
+            </main>
+          </body>
+          </html>
+          """
+          Path("output/index.html").write_text(page, encoding="utf-8")
+          Path("output/.nojekyll").write_text("", encoding="utf-8")
+          PY
+
+      - name: Upload published site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-site
+          path: output
+          if-no-files-found: error
+
+  deploy-gh-pages:
+    needs: publish-pages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download published site
+        uses: actions/download-artifact@v4
+        with:
+          name: published-site
+          path: output
+
+      - name: Publish gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          publish_dir="$(mktemp -d)"
+          cp -R output/. "${publish_dir}/"
+          cd "${publish_dir}"
+          git init --initial-branch=gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update generated content"
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin gh-pages

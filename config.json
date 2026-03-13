@@ -1,0 +1,169 @@
+{
+  "llm": {
+    "provider": "qwen",
+    "baseUrl": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "models": {
+      "fast": "qwen3-turbo",
+      "balanced": "qwen-plus",
+      "powerful": "qwen3-max"
+    }
+  },
+  "plugins": {
+    "builtin/collect-rss": { "maxItems": 20 },
+    "builtin/collect-rsshub": { "maxItems": 20 },
+    "builtin/llm-grade": {
+      "globalHighInterest": "编程工具发布/分享,编程效率改进经验,新AI模型发布公告",
+      "globalInterest": "国内/国际必读新闻,AI软件技术进展,开源项目,软件新功能,科学前沿进展",
+      "globalUninterested": "行业公司/人物,历史/旧闻,基础设施,加密货币,芯片技术,iPhone,iOS,自动驾驶",
+      "globalAvoid": "NFT,汽车,航空,游戏主机,游戏引擎,3A游戏,开发板,人物传记,SoC,微软Copilot,.NET,Java"
+    },
+    "builtin/llm-summarize": {
+      "preferredLanguage": "zh",
+      "maxConcurrency": 10
+    }
+  },
+  "sources": [
+    {
+      "name": "cnbeta",
+      "title": "cnBeta.com - 中文业界资讯站",
+      "plugins": [
+        {
+          "name": "builtin/collect-rss",
+          "options": { "url": "https://www.cnbeta.com.tw/backend.php" }
+        },
+        "cnbeta",
+        {
+          "name": "builtin/llm-grade",
+          "options": {
+            "uninterested": "非技术人员的观点,奇闻轶事",
+            "avoid": "健康贴士,娱乐明星日常"
+          }
+        },
+        {
+          "name": "builtin/reporter-rss",
+          "options": { "outputPath": "output/cnbeta.xml" }
+        },
+        {
+          "name": "builtin/reporter-html",
+          "options": { "outputPath": "output/cnbeta.html" }
+        }
+      ]
+    },
+    {
+      "name": "hacker-news",
+      "plugins": [
+        {
+          "name": "builtin/collect-rss",
+          "options": { "url": "https://hnrss.org/best" }
+        },
+        "builtin/fetch-meta",
+        "builtin/fetch-content",
+        "hacker-news",
+        {
+          "name": "builtin/llm-grade",
+          "options": {
+            "uninterested": "安全,隐私,演变史",
+            "avoid": "时政/社会新闻,代码高尔夫,怀旧情怀,程序员无关新闻"
+          }
+        },
+        "builtin/llm-summarize",
+        "builtin/llm-grade",
+        {
+          "name": "builtin/reporter-rss",
+          "options": { "outputPath": "output/hacker-news.xml" }
+        },
+        {
+          "name": "builtin/reporter-html",
+          "options": { "outputPath": "output/hacker-news.html" }
+        }
+      ]
+    },
+    {
+      "name": "phoronix",
+      "title": "Phoronix",
+      "plugins": [
+        {
+          "name": "builtin/collect-rss",
+          "options": { "url": "https://www.phoronix.com/rss.php" }
+        },
+        "builtin/fetch-content",
+        {
+          "name": "builtin/llm-grade",
+          "options": {
+            "highInterest": "新软件项目,KDE,Firefox,Chrome,苹果电脑Linux支持,新发行版",
+            "interest": "Rust,Linux桌面技术",
+            "uninterested": "Go,Blender,BSD,AMD显卡,网络性能,平铺式WM,虚拟化技术,RISC-V,游戏支持",
+            "avoid": "非主流硬件,最新款芯片相关,主板,性能评测,硬件安全"
+          }
+        },
+        "builtin/llm-summarize",
+        {
+          "name": "builtin/reporter-rss",
+          "options": { "outputPath": "output/phoronix.xml" }
+        },
+        {
+          "name": "builtin/reporter-html",
+          "options": { "outputPath": "output/phoronix.html" }
+        }
+      ]
+    },
+    {
+      "name": "superset-releases",
+      "title": "Superset Releases",
+      "context": "Superset 是编码代理的桌面终端应用，允许同时运行多个 CLI 编码代理（如 Claude Code），每个任务在独立的 git worktree 中隔离，提供内置 diff 查看器等功能。用户主要关注改动日志中与桌面应用相关的功能改进（UI、交互、终端功能等），对后端、数据库、CI 等基础设施改动不感兴趣",
+      "plugins": [
+        {
+          "name": "builtin/collect-rss",
+          "options": {
+            "url": "https://github.com/superset-sh/superset/releases.atom"
+          }
+        },
+        {
+          "name": "builtin/llm-grade",
+          "options": {
+            "highInterest": "Desktop Release",
+            "avoid": "Canary Release"
+          }
+        },
+        "builtin/llm-summarize",
+        {
+          "name": "builtin/reporter-rss",
+          "options": { "outputPath": "output/superset-releases.xml" }
+        },
+        {
+          "name": "builtin/reporter-html",
+          "options": { "outputPath": "output/superset-releases.html" }
+        }
+      ]
+    },
+    {
+      "name": "claude-code-releases",
+      "title": "Claude Code Releases",
+      "context": "Claude Code 是 Anthropic 官方的 Claude AI 命令行工具，用于软件开发辅助。用户不关心 Windows 平台特定改动和安全相关改动",
+      "plugins": [
+        {
+          "name": "builtin/collect-rss",
+          "options": {
+            "url": "https://github.com/anthropics/claude-code/releases.atom"
+          }
+        },
+        "builtin/llm-grade",
+        {
+          "name": "builtin/llm-summarize",
+          "options": {
+            "context": "总结时需要将重要改动（新功能、重大 bug 修复）和其他改动（小优化、依赖更新等）分开描述"
+          }
+        },
+        "builtin/llm-grade",
+        {
+          "name": "builtin/reporter-rss",
+          "options": { "outputPath": "output/claude-code-releases.xml" }
+        },
+        {
+          "name": "builtin/reporter-html",
+          "options": { "outputPath": "output/claude-code-releases.html" }
+        }
+      ]
+    }
+  ]
+}
