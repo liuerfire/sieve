@@ -65,19 +65,20 @@ type Provider interface {
 	Summarize(ctx context.Context, req SummaryRequest) (SummaryResult, error)
 }
 
-type RemoteProvider struct {
+type QwenProvider struct {
 	Config Config
 }
 
 func CreateProvider(cfg Config) (Provider, error) {
-	envKey, ok := providerEnvKeys[cfg.Provider]
-	if !ok {
+	switch cfg.Provider {
+	case "qwen":
+		if os.Getenv(providerEnvKeys[cfg.Provider]) == "" {
+			return nil, fmt.Errorf("%s not set", providerEnvKeys[cfg.Provider])
+		}
+		return QwenProvider{Config: cfg}, nil
+	default:
 		return nil, fmt.Errorf("unsupported provider %q", cfg.Provider)
 	}
-	if os.Getenv(envKey) == "" {
-		return nil, fmt.Errorf("%s not set", envKey)
-	}
-	return RemoteProvider{Config: cfg}, nil
 }
 
 var providerEnvKeys = map[string]string{
@@ -89,51 +90,26 @@ var providerEnvKeys = map[string]string{
 	"grok":       "GROK_API_KEY",
 }
 
-func SupportsRemoteTasks(provider string) bool {
-	return provider == "qwen"
-}
-
-func (p RemoteProvider) Grade(ctx context.Context, req GradeRequest) ([]GradeResult, error) {
-	if !SupportsRemoteTasks(p.Config.Provider) {
-		return nil, fmt.Errorf("remote grade not implemented for %s", p.Config.Provider)
-	}
+func (p QwenProvider) Grade(ctx context.Context, req GradeRequest) ([]GradeResult, error) {
 	type responseEnvelope struct {
 		Items []GradeResult `json:"items"`
 	}
 	var envelope responseEnvelope
-	if err := p.callQwenJSON(ctx, buildGradePrompt(req), &envelope); err != nil {
+	if err := p.callChatCompletions(ctx, buildGradePrompt(req), &envelope); err != nil {
 		return nil, err
 	}
 	return envelope.Items, nil
 }
 
-func (p RemoteProvider) Summarize(ctx context.Context, req SummaryRequest) (SummaryResult, error) {
-	if !SupportsRemoteTasks(p.Config.Provider) {
-		return SummaryResult{}, fmt.Errorf("remote summarize not implemented for %s", p.Config.Provider)
-	}
+func (p QwenProvider) Summarize(ctx context.Context, req SummaryRequest) (SummaryResult, error) {
 	var result SummaryResult
-	if err := p.callQwenJSON(ctx, buildSummaryPrompt(req), &result); err != nil {
+	if err := p.callChatCompletions(ctx, buildSummaryPrompt(req), &result); err != nil {
 		return SummaryResult{}, err
 	}
 	return result, nil
 }
 
-type StaticProvider struct {
-	GradeResults  []GradeResult
-	SummaryResult SummaryResult
-	GradeErr      error
-	SummaryErr    error
-}
-
-func (p StaticProvider) Grade(_ context.Context, _ GradeRequest) ([]GradeResult, error) {
-	return p.GradeResults, p.GradeErr
-}
-
-func (p StaticProvider) Summarize(_ context.Context, _ SummaryRequest) (SummaryResult, error) {
-	return p.SummaryResult, p.SummaryErr
-}
-
-func (p RemoteProvider) callQwenJSON(ctx context.Context, prompt string, target any) error {
+func (p QwenProvider) callChatCompletions(ctx context.Context, prompt string, target any) error {
 	baseURL := strings.TrimRight(p.Config.BaseURL, "/")
 	if baseURL == "" {
 		baseURL = "https://dashscope.aliyuncs.com/compatible-mode/v1"

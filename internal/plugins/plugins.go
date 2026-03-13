@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/liuerfire/sieve/internal/config"
+	"github.com/liuerfire/sieve/internal/llm"
 	"github.com/liuerfire/sieve/internal/types"
 )
 
@@ -15,7 +16,7 @@ type Context struct {
 	SourceContext string
 	IsDryRun      bool
 	Logger        *slog.Logger
-	LLM           func(tier string) any
+	LLM           func(tier string) (llm.Provider, error)
 }
 
 type CollectResult struct {

@@ -79,7 +79,7 @@ func defaultRunRoot(cmd *cobra.Command, args []string, configPath string, dryRun
 		GlobalPluginOptions: cfg.Plugins,
 		IsDryRun:            dryRun,
 		Logger:              logger,
-		LLMFactory: func(tier string) any {
+		LLMFactory: func(tier string) (llm.Provider, error) {
 			model := cfg.LLM.Models.Balanced
 			switch tier {
 			case "fast":
@@ -87,15 +87,11 @@ func defaultRunRoot(cmd *cobra.Command, args []string, configPath string, dryRun
 			case "powerful":
 				model = cfg.LLM.Models.Powerful
 			}
-			provider, err := llm.CreateProvider(llm.Config{
+			return llm.CreateProvider(llm.Config{
 				Provider: cfg.LLM.Provider,
 				Model:    model,
 				BaseURL:  cfg.LLM.BaseURL,
 			})
-			if err != nil {
-				return llm.StaticProvider{GradeErr: err, SummaryErr: err}
-			}
-			return provider
 		},
 	})
 }

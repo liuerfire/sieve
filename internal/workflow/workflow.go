@@ -25,7 +25,7 @@ type Params struct {
 	GlobalPluginOptions map[string]json.RawMessage
 	IsDryRun            bool
 	Logger              *slog.Logger
-	LLMFactory          func(tier string) any
+	LLMFactory          func(tier string) (llm.Provider, error)
 }
 
 func Run(ctx context.Context, params Params) error {
@@ -167,7 +167,7 @@ func validateLLMRequirements(params Params) error {
 		}
 		switch entry.Name {
 		case "builtin/llm-grade", "builtin/llm-summarize":
-			if !llm.SupportsRemoteTasks(params.LLMConfig.Provider) {
+			if params.LLMConfig.Provider != "qwen" {
 				return fmt.Errorf("llm provider %q does not support %s", params.LLMConfig.Provider, entry.Name)
 			}
 		}

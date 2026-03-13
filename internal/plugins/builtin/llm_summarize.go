@@ -85,11 +85,7 @@ func requireProvider(runCtx plugins.Context, tier string) (llm.Provider, error) 
 	if runCtx.LLM == nil {
 		return nil, fmt.Errorf("llm provider not configured")
 	}
-	provider, ok := runCtx.LLM(tier).(llm.Provider)
-	if !ok {
-		return nil, fmt.Errorf("llm provider has unexpected type")
-	}
-	return provider, nil
+	return runCtx.LLM(tier)
 }
 
 func stringFromExtra(value any) string {

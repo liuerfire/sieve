@@ -10,6 +10,21 @@ import (
 	"testing"
 )
 
+type staticProvider struct {
+	gradeResults  []GradeResult
+	summaryResult SummaryResult
+	gradeErr      error
+	summaryErr    error
+}
+
+func (p staticProvider) Grade(_ context.Context, _ GradeRequest) ([]GradeResult, error) {
+	return p.gradeResults, p.gradeErr
+}
+
+func (p staticProvider) Summarize(_ context.Context, _ SummaryRequest) (SummaryResult, error) {
+	return p.summaryResult, p.summaryErr
+}
+
 func TestCreateProvider_RequiresExpectedAPIKey(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
@@ -34,9 +49,9 @@ func TestCreateProvider_RequiresExpectedAPIKey(t *testing.T) {
 }
 
 func TestStaticProvider_GradeAndSummarize(t *testing.T) {
-	provider := StaticProvider{
-		GradeResults: []GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
-		SummaryResult: SummaryResult{
+	provider := staticProvider{
+		gradeResults: []GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
+		summaryResult: SummaryResult{
 			GUID:        "g1",
 			Title:       "summary title",
 			Description: "<p>summary</p>",

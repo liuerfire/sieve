@@ -13,6 +13,21 @@ import (
 	"github.com/liuerfire/sieve/internal/types"
 )
 
+type staticProvider struct {
+	gradeResults  []llm.GradeResult
+	summaryResult llm.SummaryResult
+	gradeErr      error
+	summaryErr    error
+}
+
+func (p staticProvider) Grade(_ context.Context, _ llm.GradeRequest) ([]llm.GradeResult, error) {
+	return p.gradeResults, p.gradeErr
+}
+
+func (p staticProvider) Summarize(_ context.Context, _ llm.SummaryRequest) (llm.SummaryResult, error) {
+	return p.summaryResult, p.summaryErr
+}
+
 func TestLLMGrade_AppliesValidatedResults(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{
@@ -29,10 +44,10 @@ func TestLLMGrade_AppliesValidatedResults(t *testing.T) {
 		}),
 	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		LLM: func(string) any {
-			return llm.StaticProvider{
-				GradeResults: []llm.GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
-			}
+		LLM: func(string) (llm.Provider, error) {
+			return staticProvider{
+				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
+			}, nil
 		},
 	})
 	if err != nil {
@@ -56,10 +71,10 @@ func TestLLMGrade_RejectsUnknownLevel(t *testing.T) {
 		Name: "builtin/llm-grade",
 	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		LLM: func(string) any {
-			return llm.StaticProvider{
-				GradeResults: []llm.GradeResult{{GUID: "g1", Level: "recommend", Reason: "fit"}},
-			}
+		LLM: func(string) (llm.Provider, error) {
+			return staticProvider{
+				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "recommend", Reason: "fit"}},
+			}, nil
 		},
 	})
 	if err == nil {
@@ -84,14 +99,14 @@ func TestLLMSummarize_UpdatesTitleAndDescription(t *testing.T) {
 		}),
 	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		LLM: func(string) any {
-			return llm.StaticProvider{
-				SummaryResult: llm.SummaryResult{
+		LLM: func(string) (llm.Provider, error) {
+			return staticProvider{
+				summaryResult: llm.SummaryResult{
 					GUID:        "g1",
 					Title:       "New",
 					Description: "<p>summary</p>",
 				},
-			}
+			}, nil
 		},
 	})
 	if err != nil {
@@ -116,13 +131,13 @@ func TestLLMSummarize_RejectedSummaryMarksItemRejected(t *testing.T) {
 		Options: json.RawMessage(`{}`),
 	}, plugins.Context{
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-		LLM: func(string) any {
-			return llm.StaticProvider{
-				SummaryResult: llm.SummaryResult{
+		LLM: func(string) (llm.Provider, error) {
+			return staticProvider{
+				summaryResult: llm.SummaryResult{
 					GUID:     "g1",
 					Rejected: true,
 				},
-			}
+			}, nil
 		},
 	})
 	if err != nil {
