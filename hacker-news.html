@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hacker News: Best</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 252, 246, 0.86);
+      --ink: #1e1a16;
+      --muted: #6c6258;
+      --line: rgba(71, 56, 38, 0.12);
+      --shadow: 0 20px 50px rgba(48, 35, 22, 0.12);
+      --critical: #9f2f22;
+      --recommended: #b56a00;
+      --optional: #2d6a4f;
+      --accent: #d8c3a5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(226, 205, 173, 0.9), transparent 34%),
+        radial-gradient(circle at top right, rgba(179, 208, 210, 0.7), transparent 28%),
+        linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+    a { color: inherit; }
+    .shell {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 36px 0 80px;
+    }
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      max-width: 12ch;
+    }
+    .summary {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 60ch;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .stat {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.52);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .items {
+      display: grid;
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .card {
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .cardhead {
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    .title {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      color: white;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .badge.critical { background: var(--critical); }
+    .badge.recommended { background: var(--recommended); }
+    .badge.optional { background: var(--optional); }
+    .reason {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--accent);
+      background: rgba(216, 195, 165, 0.18);
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .body {
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 18px auto;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      box-shadow: 0 14px 30px rgba(31, 20, 10, 0.1);
+    }
+    .body p:first-child { margin-top: 0; }
+    .empty {
+      margin-top: 22px;
+      padding: 36px 28px;
+      border: 1px dashed var(--line);
+      border-radius: 24px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.36);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    @media (max-width: 720px) {
+      .shell { width: min(100vw - 20px, 1120px); padding-top: 18px; }
+      .hero, .card { padding: 18px; border-radius: 20px; }
+      .cardhead { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">hacker-news</p>
+      <h1>Hacker News: Best</h1>
+      <p class="summary">A direct browser view of the latest visible items, with summaries and grading reasons.</p>
+      <div class="stats">
+        <div class="stat"><strong>11</strong><span>Visible Items</span></div>
+        <div class="stat"><strong>5</strong><span>Critical</span></div>
+        <div class="stat"><strong>5</strong><span>Recommended</span></div>
+        <div class="stat"><strong>1</strong><span>Optional</span></div>
+      </div>
+    </section>
+    
+    <section class="items">
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Spotify AI DJ 无法理解古典音乐的基本结构</h2>
+            <div class="meta">
+              <span>Sun, 15 Mar 2026 08:04:55 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47385272" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge recommended">Recommended</span>
+        </div>
+        <p class="reason">讨论AI在音乐理解上的局限，属AI软件技术进展（global interest），作者背景为经典计算机科普作家，增强可信度与技术深度，但非核心AI模型发布，故非critical</p>
+        <div class="body">&lt;p&gt;作者 Charles Petzold 批评 Spotify 的 AI DJ 功能在处理古典音乐时表现出“令人震惊的愚蠢”。他指出，尽管明确要求播放贝多芬《第七交响曲》的完整四个乐章，AI DJ 却反复只播放第二乐章（著名的 Allegretto），或打乱乐章顺序、混入不同指挥家和乐团的录音，甚至错误地播放了贝多芬《第三交响曲》。&lt;/p&gt;
+&lt;p&gt;问题根源在于 Spotify 的元数据系统完全围绕流行音乐设计，以“艺术家-专辑-歌曲”为单位，无法正确识别古典音乐中“作品-乐章”的层级结构。AI DJ 继承了这一缺陷，即使用户给出清晰指令也无法理解一部交响曲应包含多个按序演奏的乐章。&lt;/p&gt;
+&lt;p&gt;文章配图展示了 Spotify DJ 的入口界面。评论区讨论热烈（224 条评论），部分读者认为作者态度傲慢，但更多人认同其对 Spotify 古典音乐支持不力的批评，并指出这是商业决策（古典音乐市场小众）而非单纯的技术问题。也有评论强调，AI 的表现取决于工程师的提示词设计，而非 AI 本身无能。&lt;/p&gt;
+&lt;img src="SpotifyDJ.png" alt="Spotify DJ" width="540" height="66" /&gt;</div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">在服务器机柜中搭建水培系统：一次有趣的极客实验</h2>
+            <div class="meta">
+              <span>Sun, 15 Mar 2026 04:23:43 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47384352" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge optional">Optional</span>
+        </div>
+        <p class="reason">服务器机柜&#43;水培属极客DIY交叉领域，基础设施（global uninterested）与趣味实验模糊交叠，主题不明确且无编程工具/AI效率等关键词，故为optional</p>
+        <div class="body"><p>一位爱好者利用闲置的42U服务器机柜，成功搭建了一套“机架式水培系统”（rack-mount hydroponics），用于种植生菜和香草。该系统采用“潮汐式”（flood and drain，又称ebb and flow）水培法，通过定时泵送营养液淹没种植托盘来灌溉植物根系。</p><p>作者详细记录了整个DIY过程：使用Sterilite储物箱作为种植托盘和营养液储水箱，加装LED植物生长灯、潜水泵、气泵、定时控制器（通过cron任务控制PDU开关），并解决了诸如种植篮漂浮倾倒、藻类滋生等实际问题。尽管系统两次漏水，但整体运行超出预期，成功收获了多批生菜和香草。</p><img src="1.jpg" alt="two server cabinets" /><img src="2.jpg" alt="trays of lettuce" /><p>文章强调这并非严肃的农业指南，而是一次充满乐趣的探索。评论区也展开了热烈讨论：有用户分享了类似经历，也有观点指出垂直农场在全球范围内普遍面临成本高昂（如新加坡某农场生菜售价超14美元/磅）、能耗巨大且难以盈利的问题，认为传统农业在经济性上仍具优势。同时，不少读者表达了对农民和自然生态服务的更深敬意，认为人工模拟自然环境既困难又耗费资源。</p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">内核级反作弊系统的工作原理深度解析</h2>
+            <div class="meta">
+              <span>Sun, 15 Mar 2026 00:15:10 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47382791" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge critical">Critical</span>
+        </div>
+        <p class="reason">深度解析内核级反作弊系统，涉及底层Windows安全机制、内存扫描、PCIe DMA等高阶软件技术，属AI软件技术进展与编程效率改进经验的强相关延伸（如安全即开发效能保障），且技术深度极高，符合critical标准</p>
+        <div class="body"><p>本文深入剖析了现代游戏内核级反作弊系统（如BattlEye、EasyAntiCheat、Vanguard和FACEIT AC）的复杂架构与工作原理。文章指出，由于用户态（ring 3）的保护措施极易被拥有更高权限（如内核态 ring 0 或虚拟机监控器）的作弊软件绕过，反作弊技术被迫升级至内核层，从而引发了一场持续的技术军备竞赛。</p>
+<p>现代内核反作弊普遍采用三层架构：<b>内核驱动</b>（负责注册回调、拦截系统调用、扫描内存）、<b>用户态服务</b>（以SYSTEM权限运行，处理网络通信和封禁）以及<b>注入游戏的DLL</b>（执行游戏进程内的检查）。其中，Vanguard等系统通过在系统启动时加载驱动，获得了监控所有后续驱动加载的先发优势。</p>
+<p>文章详细解释了反作弊如何利用Windows内核提供的安全API，例如通过<code>ObRegisterCallbacks</code>来阻止外部进程获取对游戏进程的读写权限，从而防御内存修改。然而，这种高权限也带来了隐私和安全风险，社区评论对此展开了激烈讨论，质疑其必要性并担忧其滥用。同时，评论区也探讨了替代方案，如基于服务器端行为分析和统计异常检测的反作弊方法，认为这可能比侵入式内核驱动更有效且尊重用户。</p>
+<img src="/assets/img/posts/battleye-architecture.png" alt="BattlEye Architecture" /></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Ageless Linux：以故意违法挑战加州年龄验证法案的开源项目</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 22:10:26 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47381791" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge critical">Critical</span>
+        </div>
+        <p class="reason">开源项目（global interest）&#43; 主动挑战法规（加州年龄验证法案），体现开发者对数字权利与开源治理的实践，属编程工具发布/分享与开源项目双重高兴趣叠加</p>
+        <div class="body"><p>Ageless Linux 是一个基于 Debian 的操作系统发行版，其核心目标是公开、故意地违反加州《数字年龄保障法案》（AB 1043）。该法案要求操作系统提供商对用户进行年龄验证，但 Ageless Linux 认为这实质上是为科技巨头设立的“合规护城河”，会扼杀小型开源项目。</p>
+
+<p>项目方详细解读了法案中的关键定义，指出根据法律条文，不仅他们自己，连运行其转换脚本的普通用户和 Debian 等主流发行版都可能被归类为“操作系统提供商”，而 Debian 仓库中的每一个软件包（如 <code>cowsay</code>）都可能被视为需要年龄验证的“应用”。他们批评该法案将所有“用户”默认定义为儿童，并认为这种监管框架荒谬且不可行。</p>
+
+<p>社区评论对此反应两极。支持者赞赏其通过公民抗命来挑战恶法的勇气，认为这是保护开源生态免受过度监管的关键斗争。反对者则质疑其实际效果，认为此举可能给 Debian 等无辜项目带来法律风险，或批评其网站文案带有明显的 AI 生成痕迹。也有评论指出，若此法案失败，可能会导致更严苛的身份验证措施泛滥。</p>
+
+<p>Ageless Linux 计划在 2027 年向学校和图书馆分发低成本的预装设备，主动制造法律案件，以期在法庭上明确法案的具体适用范围。他们主张，真正的儿童安全应通过教育和清晰的人性化提示（如在 IRC 客户端显示“上网聊天前请咨询大人”）来实现，而非强制性的、可轻易绕过的年龄验证基础设施。</p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">用 LLM “润色”消息会破坏人际沟通中的真实连接</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 22:03:47 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47381736" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge critical">Critical</span>
+        </div>
+        <p class="reason">直击LLM在人际沟通中的真实影响，属AI软件技术进展与编程效率改进经验的交叉——尤其关乎开发者日常协作质量，且观点深刻、具现实警示性，符合critical</p>
+        <div class="body"><p>文章作者指出，当人们使用大语言模型（LLM）对原本发给自己的消息进行“润色”或“清理”时，会产生一种强烈的不适感。这种做法不仅模糊了对方真正想表达的意思——因为遣词造句本身就承载着意图，更重要的是，它剥夺了接收者通过对方独特的语言风格、语气、强调和省略等细微之处来理解其个性和建立认知的机会。</p><p>作者认为，人际交流中存在一种“社会握手”机制，即双方通过互动逐渐构建起对彼此的“隐性知识图谱”。例如，同样一句“我们需要谈谈”，来自不同的人会传递截然不同的情感和含义。而 LLM 生成的标准化文本则像一个“通用化器”，破坏了这种同步过程，阻碍了真实关系的建立。作者呼吁：请保留你的错误、不地道的习语或过于直白/华丽的措辞，因为这正是让对方理解并“与你同频”的关键。</p><p>Hacker News 上的讨论也反映了这一现象的普遍性。许多用户提到在 Slack、电子邮件甚至绩效评估中都观察到了 LLM 生成文本的泛滥，并批评其导致内容空洞、浪费读者时间，以及造成“努力不对等”（发送者轻松生成，接收者费力解读）。有评论者将其比作“武器化的心理治疗话术”，也有人担忧这会导致人类沟通能力的退化，最终演变成“你的聊天机器人与我的聊天机器人对话”的荒诞局面。</p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Han：基于韩文关键字的编程语言（Rust 编写）</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 21:27:33 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47381382" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge critical">Critical</span>
+        </div>
+        <p class="reason">基于韩文关键字的编程语言（Rust编写），完全匹配‘编程工具发布/分享’（global high interest）与‘开源项目’（global interest），且语言设计本身是编程效率改进的探索形式</p>
+        <div class="body"><img src="/xodn348/han/raw/main/assets/demo.png" alt="Han code example — Todo list with structs" width="600" /><p>Han（한）是一种用 Rust 编写的静态类型编译型编程语言，其所有关键字均使用韩文（Hangul）书写，例如 <code>함수</code>（函数）、<code>만약</code>（如果）、<code>반복</code>（循环）等。该语言具备完整的编译器工具链（词法分析 → 语法分析 → 抽象语法树 → 解释器 + LLVM IR 代码生成），并支持数组、结构体、闭包、模式匹配、异常处理、文件 I/O、模块导入、REPL 交互环境及基础 LSP 服务器。</p><p>作者受 AI 快速重构代码的启发，结合全球对韩语文化的兴趣，创建了 Han，旨在探索非英语编程语言的可能性。项目并非意在替代主流语言，而是作为技术实验和文化桥梁，为韩语学习者提供通过编程练习韩文读写的新途径。社区讨论涉及韩文在信息密度、输入效率、LLM 分词等方面的特性，并指出尽管韩文关键字在当前 LLM tokenization 下并无优势，但其可读性对母语者更友好。</p><p>项目地址：<a href="https://github.com/xodn348/han">https://github.com/xodn348/han</a></p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Anthropic 推出 Claude 非高峰时段双倍用量促销活动</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 20:08:54 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47380647" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge critical">Critical</span>
+        </div>
+        <p class="reason">Anthropic发布Claude非高峰时段双倍用量，属新AI模型发布公告（global high interest），直接面向开发者使用成本优化，是典型必看内容</p>
+        <div class="body"><p>Anthropic 宣布一项限时促销：2026 年 3 月 13 日至 27 日期间，Free、Pro、Max 和 Team 计划用户在美东时间早 8 点至下午 2 点（太平洋时间早 5 点至上午 11 点）之外的非高峰时段，将获得双倍的五小时用量额度。该额外用量不计入每周用量上限，且无需用户手动操作即可自动生效。</p><p>此优惠适用于 Claude 网页版、桌面端、移动端、Cowork、Claude Code 以及 Claude for Excel 和 PowerPoint。企业计划用户不参与此次活动。活动结束后，所有用量限制将恢复标准水平，不影响用户账单或订阅计划。</p><p>Hacker News 社区讨论指出，此举可能是为了通过经济激励引导用户将计算密集型任务（如代码生成）转移至服务器负载较低的时段，类似于电力公司的分时电价策略。有用户推测 Anthropic 或其他大模型公司正面临激烈竞争和快速增长带来的基础设施压力，因此希望通过此类措施优化资源利用率。另有评论提到，类似促销可能兼具用户增长目的，例如去年 12 月的活动促使部分用户升级至更高套餐。</p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">GIMP 3.2 发布：引入非破坏性图层与多项新功能</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 19:51:25 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47380465" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge recommended">Recommended</span>
+        </div>
+        <p class="reason">GIMP 3.2发布含非破坏性图层等新功能，属软件新功能（global interest），虽非核心编程工具，但作为主流开源图像软件重大更新，对开发者/设计师有实用价值</p>
+        <div class="body"><img src="https://www.gimp.org/news/2026/03/14/gimp-3-2-released/gimp-3.2-splash.jpg" alt="GIMP 3.2: splash screen by Sevenix" /><p>开源图像编辑器 GIMP 3.2 正式发布，带来一系列新特性和改进。核心更新包括引入<strong>非破坏性图层</strong>：用户可通过“链接图层（Link Layers）”嵌入外部图像，并自由缩放、旋转而不损失画质；同时新增<strong>矢量图层（Vector Layers）</strong>，允许使用路径工具创建可调整填充与描边的形状，并支持 SVG 导出及增强的 PDF 矢量导出功能。</p><p>其他亮点包括：MyPaint 画笔工具升级，新增 20 种笔刷并支持画布缩放/旋转自适应；新增“覆盖（Overwrite）”绘画模式，可直接覆盖颜色而不混合透明度；画布内文本编辑器支持移动窗口及常用快捷键（如 Ctrl+B 加粗）；文件格式方面，新增 DDS BC7 导出支持，并改进 PSD 图层样式导入。</p><p>用户体验亦有诸多优化，例如画笔缩略图可使用主题色预览、支持将图片拖拽至图像标签页打开、为“倾斜”和“翻转”工具添加快捷键、CMYK 色彩选择器显示总墨量覆盖率（Total Ink Coverage）以辅助软打样等。此外，还为脚本开发者新增了 GEGL 滤镜浏览器。</p><p>社区讨论中，有用户赞赏其未集成生成式 AI（GenAI）的克制态度，也有用户对新版 UI 的易用性提出疑问。开发者回应称，非破坏性编辑的 UI 是当前 GTK4 限制下的折衷方案，并透露未来版本将扩展该功能至所有图层类型。</p></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">面向创始人的实用营销指南：获取早期用户的策略与资源</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 19:35:40 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47380295" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge recommended">Recommended</span>
+        </div>
+        <p class="reason">面向创始人的营销指南，聚焦SaaS/Startup早期获客，属编程效率改进经验的延伸（提升产品落地效率），且资源实用性强，符合interest类别的推荐强度</p>
+        <div class="body"><p>本文是一个面向技术创始人（尤其是 SaaS/应用/初创公司）的实用营销资源集合，旨在帮助其获取前 10/100/1000 名用户。内容涵盖无预算推广、制定上市策略（Go-To-Market）等核心主题，并提供了大量具体策略和工具链接。</p>
+<p>主要板块包括：<strong>产品发布平台</strong>（如 Product Hunt、Hacker News 及多个软件目录和 Reddit 子版块）、<strong>社交媒体营销</strong>（如“公开构建”Building in Public 和社交聆听 Social Listening）、<strong>销售与冷启动</strong>（含理想客户画像 ICP 构建和冷邮件模板）、<strong>SEO 与 AI 搜索引擎优化</strong>（AEO/GEO）、<strong>Reddit 营销</strong>、<strong>邮件营销</strong>、<strong>内容营销</strong>、<strong>广告投放</strong>、<strong>网红合作</strong>、<strong>推荐与联盟计划</strong>，以及<strong>着陆页、定位与定价</strong>等关键环节的详细指南。</p>
+<p>Hacker News 社区对此展开了热烈讨论。部分评论赞同其资源的全面性，但也有诸多质疑：有用户<strong>强烈反对</strong>指南中可能暗示的在 Reddit 等平台进行伪装营销（spamming）的做法，认为这会污染网络环境；另有观点指出，在当前 AI 内容泛滥的背景下，传统的“广撒网”式发布效果甚微，<strong>真诚地融入目标用户社区</strong>才是更有效的长期策略。关于 SEO，社区意见也存在分歧，有评论认为对于消费者应用，SEO 应从早期就高度重视。</p>
+<img src="https://camo.githubusercontent.com/201ef269611db7eb6b5d08e9f756ab8980df3014b64492770bdf13a6ed924641/68747470733a2f2f6b6f2d66692e636f6d2f696d672f676974687562627574746f6e5f736d2e737667" alt="ko-fi" /></div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">MCP 并未消亡：澄清 CLI 与模型上下文协议的误解</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 19:32:13 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47380270" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge recommended">Recommended</span>
+        </div>
+        <p class="reason">澄清MCP与CLI误解，涉及模型上下文协议（新兴AI基础设施），属AI软件技术进展与编程工具生态演进，技术社区热点，符合global interest</p>
+        <div class="body">&lt;p&gt;近期社区热议“CLI 取代 MCP（模型上下文协议，Model Context Protocol）”，但文章指出这更多是受网红驱动的短暂风潮。作者认为，虽然 CLI 在特定场景（如使用 LLM 训练数据中已有的工具）确实能节省上下文令牌，但自定义 CLI 同样面临上下文膨胀问题，且缺乏结构化优势。&lt;/p&gt;
+&lt;p&gt;文章强调，MCP 的真正价值在于其企业级应用场景，特别是通过可流式 HTTP（而非本地 stdio）部署时：&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;中心化能力&lt;/strong&gt;：便于集成复杂后端（如带图查询的数据库），并为 GitHub Actions 等临时性运行环境提供稳定服务。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;安全与认证&lt;/strong&gt;：通过 OAuth 集中管理敏感 API 密钥，简化权限控制。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;遥测与可观测性&lt;/strong&gt;：集中收集工具使用情况、成功率等指标，助力团队优化。&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;标准化内容分发&lt;/strong&gt;：MCP 不仅包含工具（Tools），还支持提示（Prompts）和资源（Resources），可动态、即时地向全组织推送最新的技能文档和知识库。&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;社区评论也反映了这一分歧：部分开发者认为 MCP 过于复杂，而另一些人则强调其在团队协作和企业环境中带来的结构化、一致性和可观测性优势。文章结论是，MCP 并非万能，但对于寻求从“随意编码”转向“工程化智能体”的组织而言，它仍是不可或缺的基石。&lt;/p&gt;
+&lt;img src="/img/mcp/mcp-stdio-http.png" alt="Distinction between MCP over stdio and streamable HTTP" /&gt;
+&lt;img src="/img/mcp/copilot-agent-mcp.png" alt="Copilot Agent MCP configuration" /&gt;
+&lt;img src="/img/mcp/mcp-telemetry.png" alt="Datadog dashboard showing OTEL metrics" /&gt;
+&lt;img src="/img/mcp/prompts-resource-tools.png" alt="From the MCP specification page" /&gt;</div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">XML 作为廉价 DSL 在 IRS 税务估算器中的实践</h2>
+            <div class="meta">
+              <span>Sat, 14 Mar 2026 11:59:13 &#43;0000</span>
+              <a href="https://news.ycombinator.com/item?id=47375764" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge recommended">Recommended</span>
+        </div>
+        <p class="reason">XML在IRS税务估算器中的DSL实践，属软件新功能与科学前沿进展（税务算法工程化）交叉，XML作为廉价DSL亦关联编程效率改进经验，虽场景垂直但方法论普适，故recommended</p>
+        <div class="body"><p>美国国税局（IRS）近期开源了其新的<strong>税务预扣估算器</strong>（Tax Withholding Estimator, TWE），该项目使用 XML 作为核心的<strong>领域特定语言</strong>（DSL）来建模复杂的美国税法逻辑。文章作者作为项目工程师，论证了 XML 在现代软件开发中，尤其是在需要<strong>声明式规范</strong>（declarative specification）的场景下，依然具有强大优势。</p><p>TWE 的核心是“事实图”（Fact Graph）引擎，它通过两个 XML 配置文件驱动：一个是描述税法规则的“事实字典”（Fact Dictionary）。该字典将税务计算（如应缴税款、可退税抵免等）定义为相互依赖的“事实”（Fact）。例如，<code>/totalOwed</code>（总欠税额）被声明为 <code>/totalTax</code>（总税额）减去 <code>/totalPayments</code>（已缴税款）的结果。这种声明式方法与传统的命令式编程（如 JavaScript）形成鲜明对比，后者关注执行步骤和顺序，而前者只描述计算逻辑和依赖关系。</p><p>作者指出，XML 在此场景下优于 JSON 和 YAML。JSON 在表达任意嵌套的复杂逻辑时显得笨拙，需要大量样板代码来声明对象类型；而 XML 的标签天然地嵌入了“类型”信息，结构更清晰、更具表现力，并且支持注释和更友好的空白符处理。尽管 XML 被认为冗长，但其在提供<strong>可审计性</strong>和<strong>内省能力</strong>方面价值巨大——引擎可以随时解释任何计算结果是如何得出的，这对于处理包含数百个中间计算步骤的税法至关重要。</p><p>Hacker News 社区对此展开了热烈讨论。支持者认为 XML 配合 XSD 模式验证是保证数据结构正确性的可靠工具，并批评许多开发者因不愿学习复杂工具而放弃其优势。反对者则回忆了 XML 时代的痛苦，如繁琐的解析库（如 SAX）、围绕模式设计的无休止争论，以及 XSLT 等基于 XML 的 DSL 难以维护的问题。也有评论认为，与其发明新的 XML DSL，不如直接使用 Haskell、Lisp 等原生支持嵌入式 DSL 的通用编程语言。</p></div>
+      </article>
+      
+    </section>
+    
+  </main>
+</body>
+</html>

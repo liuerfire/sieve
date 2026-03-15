@@ -1,0 +1,58 @@
+{
+  "items": [
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.7",
+      "Title": "Superset Desktop 发布 v1.1.7 版本",
+      "Description": "\u003cp\u003e本次更新发布了 Superset Desktop 应用的 v1.1.7 版本。由于发布说明中未提供具体的改动日志，无法确定此版本包含哪些新功能、改进或修复。\u003c/p\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.6",
+      "Title": "Superset Desktop desktop-v1.1.6",
+      "Description": "文章内容为空，无法提供有效信息。",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.5",
+      "Title": "Superset Desktop desktop-v1.1.5",
+      "Description": "文章内容为空，无法提供有效信息。",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.4",
+      "Title": "Superset Desktop desktop-v1.1.4",
+      "Description": "文章内容为空，无法提供有效信息。",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.3",
+      "Title": "Superset Desktop 发布 v1.1.3 版本",
+      "Description": "\u003cp\u003e文章内容为空，无法提供具体更新日志或版本信息。\u003c/p\u003e",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.2",
+      "Title": "Superset Desktop v1.1.2",
+      "Description": "\u003cp\u003e此版本更新内容无法获取，详情请查阅官方发布页面。\u003c/p\u003e",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.1",
+      "Title": "Superset Desktop v1.1.1 发布",
+      "Description": "\u003cp\u003e文章内容为空，无法提供有效信息。\u003c/p\u003e",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.0",
+      "Title": "Superset Desktop 发布 v1.1.0 版本",
+      "Description": "\u003cp\u003e文章内容为空，无法提供具体更新详情。\u003c/p\u003e",
+      "Rejected": true
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.0.7",
+      "Title": "Superset Desktop 发布 v1.0.7 版本",
+      "Description": "\u003cp\u003e文章内容为空，无法提供具体更新日志。\u003c/p\u003e",
+      "Rejected": true
+    }
+  ]
+}

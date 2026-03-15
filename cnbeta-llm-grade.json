@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/game/1553574.htm",
+      "Level": "rejected",
+      "Reason": "文章主题为《我的世界》源码泄露及衍生游戏，属于游戏类内容，全局配置中游戏相关（如游戏主机、游戏引擎、3A游戏）均在avoid列表，且标题明确指向游戏，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553572.htm",
+      "Level": "recommended",
+      "Reason": "哈啰被315点名，涉及平台审核与管理问题，属于国内必读新闻范畴（global interest），且与AI无关、非avoid/uninterested主题，故为recommended"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/movie/1553570.htm",
+      "Level": "rejected",
+      "Reason": "主题为男演员收入排行，属娱乐明星相关内容，source avoid明确包含'娱乐明星日常'，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/game/1553568.htm",
+      "Level": "rejected",
+      "Reason": "PC游戏收入超越主机，核心主题为游戏产业分析，全局avoid含'游戏主机'，且属纯游戏经济话题，无AI/编程/技术改进关联，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/funny/1553566.htm",
+      "Level": "rejected",
+      "Reason": "狗咬坏CPU属奇闻轶事，source uninterested明确包含'奇闻轶事'，且无技术深度或AI/编程价值，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553564.htm",
+      "Level": "recommended",
+      "Reason": "电商平台欺诈发货属国内社会性消费问题，符合global interest中'国内必读新闻'，且非avoid/uninterested类目，故为recommended"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553562.htm",
+      "Level": "critical",
+      "Reason": "标题直指DeepSeek被污染，涉及AI大模型安全与数据污染，匹配global high interest中'新AI模型发布公告'及'AI软件技术进展'，且属重大行业风险事件，故为critical"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553560.htm",
+      "Level": "critical",
+      "Reason": "大模型遭投毒、AI洗脑成产业链，直接对应global high interest中'AI软件技术进展'及潜在安全风险，属高敏感高相关AI技术议题，故为critical"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553558.htm",
+      "Level": "critical",
+      "Reason": "315曝光AI大模型投毒，点名具体系统与公司，属AI安全事件实锤，高度契合global high interest中'新AI模型发布公告'和'AI软件技术进展'，故为critical"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553556.htm",
+      "Level": "recommended",
+      "Reason": "哈啰电动车被315点名，虽涉电动车但焦点在平台监管与蚂蚁集团关联，属国内科技公司治理新闻，匹配global interest中'国内必读新闻'，未触达avoid项，故为recommended"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553554.htm",
+      "Level": "rejected",
+      "Reason": "国产抗艾滋病药物获批，属健康医疗领域，global avoid虽未列'健康'，但source avoid含'健康贴士'，且全文无AI/编程/技术改进元素，主题偏离所有high/interest类目，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553552.htm",
+      "Level": "optional",
+      "Reason": "PCIe 8.0带宽发布，属硬件接口技术，global uninterested含'芯片技术'，但PCIe属通用高速总线，与AI训练/编程工具无直接关联，主题模糊且权重不高，故为optional"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/comic/1553550.htm",
+      "Level": "rejected",
+      "Reason": "中华小当家复活赛为动漫IP搞笑衍生，属娱乐/漫画内容，无技术、AI或编程要素，且不在任何interest类目中，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553548.htm",
+      "Level": "recommended",
+      "Reason": "直播间售假大牌属国内电商乱象，属'国内必读新闻'范畴，global interest覆盖，且非avoid项，故为recommended"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553546.htm",
+      "Level": "optional",
+      "Reason": "客服电话人性化问题属用户体验范畴，主题较泛，不明确属于编程效率、AI进展或必读新闻，亦非avoid，故为optional"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/science/1553544.htm",
+      "Level": "optional",
+      "Reason": "超薄生物降解地膜属农业科学应用，global interest含'科学前沿进展'，但农业材料与用户核心兴趣（编程/AI）关联弱，故为optional"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553542.htm",
+      "Level": "optional",
+      "Reason": "Intel预告第三代酷睿，属CPU新品动态，global uninterested含'芯片技术'，但酷睿属通用计算平台，可能支撑AI开发环境，关联性存疑，故为optional"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553540.htm",
+      "Level": "recommended",
+      "Reason": "伊朗点名微软亚马逊IBM等科技巨头，属国际科技公司地缘政治事件，匹配global interest中'国际必读新闻'及'AI软件技术进展'潜在影响，故为recommended"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/funny/1553538.htm",
+      "Level": "rejected",
+      "Reason": "车企人员敲键盘退车属奇闻轶事，source uninterested明确排除，且主题为汽车售后闹剧，global avoid含'汽车'，故为rejected"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/soft/1553536.htm",
+      "Level": "optional",
+      "Reason": "3DMark跑分测试RTX 5090，属显卡性能评测，虽涉软件但核心为游戏硬件，global avoid含'游戏主机'，且未提AI/编程工具，主题模糊，故为optional"
+    }
+  ]
+}

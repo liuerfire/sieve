@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-canary",
+      "Level": "rejected",
+      "Reason": "标题明确为 Canary 版本，Source avoid 明确包含 Canary Release，应排除"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.7",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.6",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.5",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.4",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.3",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.2",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.1",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.0",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.0.7",
+      "Level": "critical",
+      "Reason": "Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest"
+    }
+  ]
+}

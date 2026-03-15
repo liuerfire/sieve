@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Phoronix</title>
+    <description>Filtered content for phoronix</description>
+    <item>
+      <title>⭐⭐ Linux 7.0 引入更多 Rust 改进以应对新版 Rust 及提升构建可重现性</title>
+      <link>https://www.phoronix.com/news/Linux-7.0-rc4-More-Rust</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] 标题明确涉及Linux内核对Rust语言支持的改进，Rust在Source interest中被列为高兴趣项，且Linux内核开发属于编程工具发布/分享和开源项目范畴，符合Global high interest和Global interest双重强匹配。&lt;/small&gt;&lt;/p&gt;Linux 7.0 主线昨日合并了新一轮 Rust 相关更新，主要由 Miguel Ojeda 提交，旨在为即将发布的 Rust 1.95 和 1.96 做准备，并增强内核在启用 Rust 代码时的构建可重现性。关键变更包括：从 Rust 1.95.0 起重映射路径以避免绝对路径，从而提升构建可重现性并防止路径泄露；为兼容 Rust 1.96.0 允许使用 &#39;unused_features&#39; lint；以及直接将依赖信息输出至 &#39;$(depfile)&#39; 以弃用临时 &#39;.d&#39; 文件。此外，更新还修复了 &#39;kernel&#39; crate 在特定配置下的警告、抑制了 &#39;cpufreq&#39; 模块的误报 Clippy 警告，并移除了 &#39;pin-init&#39; crate 中一个不安全的属性，同时调整了相关令牌以确保未来 Rust 特性（如类型别名 Impl Trait, TAIT）下的安全性。这些代码已合入主线，将随 Linux 7.0-rc4 发布。</description>
+      <guid>https://www.phoronix.com/news/Linux-7.0-rc4-More-Rust</guid>
+      <pubDate>Sun, 15 Mar 2026 07:02:36 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ Linux 7.0-rc4 修复大型系统上的挂起与性能回退问题</title>
+      <link>https://www.phoronix.com/news/Linux-7.0-Sched-Fixes-Perf-Hang</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] 标题聚焦Linux 7.0调度器性能修复，属Linux桌面技术与内核优化，符合Source interest（Linux桌面技术）及Global interest（开源项目、软件新功能），但非Rust或新发行版等高优先级主题，故为recommended。&lt;/small&gt;&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=intel-xeon-6700e-ampere-altra&amp;amp;image=intel_srf_1_med&#34; alt=&#34;Large Sierra Forest CPU&#34; /&gt;&lt;br&gt;本周 Linux 7.0 合并窗口发布了两个紧急修复补丁集，分别解决调度器（scheduler）和 x86 架构中的严重问题。&lt;br&gt;&lt;br&gt;首先，Thomas Gleixner 主导修复了自去年 11 月 mm/cid 重写后引入的多个调度器问题。这些问题包括：并发 fork 导致的 CID 挂起、vfork()/CLONE_VM 场景下的 MMCID 错误引发的挂起、以及在大型系统上因使用 &lt;code&gt;for_each_process_thread()&lt;/code&gt; 遍历任务列表而导致的性能回退。新方案采用更高效的 &lt;code&gt;sched_mm_cid::node&lt;/code&gt; 链表替代原有计数逻辑，显著提升性能。&lt;br&gt;&lt;br&gt;其次，x86/urgent 补丁集修复了一个与挂起到内存（suspend-to-RAM, s2ram）相关的硬件兼容性问题。当固件在恢复时意外重新启用 x2apic 模式（而内核在启动时已禁用它），会导致内核继续使用 xAPIC 接口但硬件处于 x2APIC 模式，从而引发系统挂起。新补丁确保在 &lt;code&gt;lapic_resume()&lt;/code&gt; 中，若内核预期 x2apic 被禁用（&lt;code&gt;x2apic_mode = 0&lt;/code&gt;），则会强制将其关闭，避免此问题。&lt;br&gt;&lt;br&gt;这些修复预计将在今日合并，并随 Linux 7.0-rc4 版本发布。</description>
+      <guid>https://www.phoronix.com/news/Linux-7.0-Sched-Fixes-Perf-Hang</guid>
+      <pubDate>Sun, 15 Mar 2026 06:52:00 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐⭐ KDE Linux 新增对苹果 APFS 文件系统的支持，并修复 AMDGPU 严重冻结问题</title>
+      <link>https://www.phoronix.com/news/KDE-Linux-Adds-APFS</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] 标题含KDE Linux新增APFS支持，KDE在Source high interest中明确列出，且属新软件功能发布，同时契合Global high interest（编程工具发布/分享）和Source high interest（KDE），双重高权重匹配。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;KDE Linux 最新更新带来了多项改进，包括预装 KDE 备份软件 Kup，以及启用对苹果 APFS（Apple File System）文件系统的读写支持。该支持通过一个实验性的 DKMS 内核模块 &lt;code&gt;linux-apfs-rw-dkms&lt;/code&gt; 实现，旨在方便用户访问来自现代 macOS 系统的数据。&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=2025&amp;amp;image=kde_linux_0&#34; alt=&#34;KDE Linux&#34; /&gt;&lt;p&gt;此外，针对困扰 AMD GPU 用户数月之久的系统完全冻结问题（由页面翻转超时导致），KDE Linux 引入了一个内核启动参数 &lt;code&gt;amdgpu.dcdebugmask=0x10&lt;/code&gt; 作为临时解决方案。此方案通过禁用面板自刷新功能来避免冻结，代价是略微增加功耗，但可有效防止需要强制重启的情况。该问题已在上游报告（&lt;a href=&#34;https://gitlab.freedesktop.org/drm/amd/-/issues/4831&#34;&gt;Issue #4831&lt;/a&gt;），但尚无根本性修复。&lt;/p&gt;&lt;p&gt;本次更新还预装了更多 Flatpak 应用的语言包，并包含其他体验优化。用户可从 KDE.org 下载 KDE Linux。&lt;/p&gt;</description>
+      <guid>https://www.phoronix.com/news/KDE-Linux-Adds-APFS</guid>
+      <pubDate>Sun, 15 Mar 2026 06:39:00 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ 开源 GreenBoost 驱动通过系统内存与 NVMe 扩展 NVIDIA GPU 显存以运行更大 LLM</title>
+      <link>https://www.phoronix.com/news/Open-Source-GreenBoost-NVIDIA</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] 标题描述开源GreenBoost驱动增强NVIDIA GPU内存能力以支持大模型，涉及AI模型应用（Global high interest）与开源驱动开发（Global interest），但NVIDIA属非KDE/Firefox/Chrome等Source high interest项，且硬件驱动偏底层，故为recommended而非critical。&lt;/small&gt;&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=greenboost_tiers&#34; alt=&#34;GreenBoost memory tiers for CUDA&#34; /&gt;&lt;br /&gt;独立开发者 Ferran Duarri 发布了一个名为 GreenBoost 的开源 Linux 内核模块（GPLv2 许可），旨在通过系统 RAM 和 NVMe 存储扩展 NVIDIA 独立 GPU 的专用显存（vRAM），从而更轻松地运行大型语言模型（LLM）。该方案不替换 NVIDIA 官方驱动，而是作为补充：包含一个内核模块（&lt;code&gt;greenboost.ko&lt;/code&gt;）和一个用户态 CUDA shim 库（&lt;code&gt;libgreenboost_cuda.so&lt;/code&gt;），后者通过 &lt;code&gt;LD_PRELOAD&lt;/code&gt; 注入，透明地拦截 CUDA 内存分配调用。小内存请求直接交由原生 CUDA 处理，而大块内存（如超出显存的模型权重或 KV 缓存）则被重定向至内核模块分配的固定系统内存页，并通过 DMA-BUF 导出为 CUDA 可识别的设备内存。PCIe 4.0 x16 链路负责数据传输（约 32 GB/s），并通过 sysfs 接口实时监控使用情况。此外，shim 还巧妙地拦截了 &lt;code&gt;dlsym&lt;/code&gt; 调用，以确保像 Ollama 这类通过动态符号解析获取 GPU 信息的程序能正确识别扩展后的内存总量，避免因仅看到物理显存容量而将计算层卸载到 CPU。项目代码已托管于 GitLab。</description>
+      <guid>https://www.phoronix.com/news/Open-Source-GreenBoost-NVIDIA</guid>
+      <pubDate>Sat, 14 Mar 2026 20:17:00 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ GIMP 3.2 发布，带来多项功能改进</title>
+      <link>https://www.phoronix.com/news/GIMP-3.2-Released</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] GIMP是知名开源图像处理软件，新版本发布属于Global interest（开源项目、软件新功能），虽非Source high interest项，但符合全局兴趣，且无avoid/uninterested标签冲突。&lt;/small&gt;&lt;/p&gt;在备受期待的 GIMP 3.0 发布不到一年后，GIMP 3.2 于今日正式推出，作为首个基于 GIMP 3.0 基础的功能更新版本。此版本引入了非破坏性图层（non-destructive layers）支持、改进的 MyPaint 画笔工具、新增“覆盖”（Overwrite）绘画模式、SVG 导出功能，以及大量用户界面/用户体验（UI/UX）优化和其他细节增强，进一步巩固了其作为 Adobe Photoshop 主流开源替代品的地位。&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=gimp_32_rc3_med&#34; alt=&#34;GIMP 3.2&#34; /&gt; 开发团队此次在 GIMP 3.0 完成从 GTK2 到 GTK3 工具包迁移等重大重构后，成功实现了更快速的迭代周期。GIMP 3.2 为这款广受欢迎的 Linux 桌面图像处理软件带来了扎实的渐进式改进。用户可前往 &lt;a href=\&#34;https://www.gimp.org/\&#34;&gt;GIMP.org&lt;/a&gt; 下载最新版本并了解详情。</description>
+      <guid>https://www.phoronix.com/news/GIMP-3.2-Released</guid>
+      <pubDate>Sat, 14 Mar 2026 14:38:14 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐⭐ Debian 13.4 发布，包含数十项安全与常规修复</title>
+      <link>https://www.phoronix.com/news/Debian-13.4-Released</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] Debian新版本发布，Source high interest明确包含&#39;新发行版&#39;，且Debian属核心Linux发行版，契合Global high interest（编程工具发布/分享）和Global interest（开源项目），双重高权重。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;Debian 13.4（代号 Trixie）于今日发布，带来了大量安全更新和常规错误修复，并提供了更新后的安装介质。此次更新修复了 Apache HTTPD 网络服务器中的 HTTP/2 回归问题、GRUB 软件包对 ZFS 根文件系统的识别问题，并因 Glibc 更新而重建了多个软件包。&lt;/p&gt;&lt;p&gt;安全修复涵盖 Firefox、Chromium、Thunderbird、GIMP、OpenSSL、OpenJDK、PostgreSQL、Linux 内核等多个关键组件。&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=debian-13-benchmarks&amp;amp;image=debian_13_1_med&#34; alt=&#34;Debian 13 installer&#34; /&gt;&lt;p&gt;更多详情及下载请访问 &lt;a href=&#34;https://www.debian.org/&#34;&gt;Debian.org&lt;/a&gt;。&lt;/p&gt;</description>
+      <guid>https://www.phoronix.com/news/Debian-13.4-Released</guid>
+      <pubDate>Sat, 14 Mar 2026 11:58:01 -0400</pubDate>
+    </item>
+    <item>
+      <title>OpenRazer 3.12 发布，新增对多款雷蛇（Razer）新设备的 Linux 支持</title>
+      <link>https://www.phoronix.com/news/OpenRazer-3.12</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[optional] OpenRazer是Razer外设Linux驱动，属小众硬件支持，Source uninterested未列Razer但Source avoid含&#39;非主流硬件&#39;，而Global中无直接冲突；主题模糊性高，既非high interest项也未明确avoid，故为optional。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;OpenRazer 3.12 今日发布，这是面向 Linux 系统的独立维护开源驱动程序的最新版本。配合 Polychromatic 等图形界面工具，OpenRazer 可为雷蛇（Razer）游戏外设提供良好的使用体验。&lt;/p&gt;&lt;p&gt;此版本新增对以下设备的支持：&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Razer BlackWidow V4 Tenkeyless HyperSpeed&lt;/li&gt;&lt;li&gt;Razer Mouse Dock Pro&lt;/li&gt;&lt;li&gt;Razer Huntsman V3 Pro 8KHz&lt;/li&gt;&lt;li&gt;Razer Kraken Tournament Edition&lt;/li&gt;&lt;li&gt;Razer Huntsman V3 Pro Mini&lt;/li&gt;&lt;li&gt;Razer Tartarus Pro&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;此外，OpenRazer 3.12 还包含多项输入改进、各类设备专属错误修复，并为 Razer Pro Click V2 启用横向滚动功能，为 Razer Naga Epic Chroma 添加相对滚轮支持等。&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=razer-polychromatic-linux&amp;amp;image=openrazer_poly_4_med&#34; alt=&#34;OpenRazer drivers with Polychromatic UI&#34; /&gt;&lt;p&gt;更多详情及下载请见 &lt;a href=&#34;https://github.com/openrazer/openrazer&#34;&gt;GitHub 项目页面&lt;/a&gt;。&lt;/p&gt;</description>
+      <guid>https://www.phoronix.com/news/OpenRazer-3.12</guid>
+      <pubDate>Sat, 14 Mar 2026 09:54:06 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ Linux 7.1 将支持 AMD Ryzen AI NPU 功耗估算与实时利用率报告</title>
+      <link>https://www.phoronix.com/news/Linux-7.1-Ryzen-AI-NPU-Power</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] Linux 7.1支持AMD Ryzen AI NPU功耗报告，属Linux内核新功能（Global interest）与AI硬件接口（Global high interest中AI模型相关），但NPU属芯片子系统，Global avoid含&#39;芯片技术&#39;，因主要讲Linux内核支持而非芯片本身，权衡后为recommended。&lt;/small&gt;&lt;/p&gt;Linux 7.1 内核将通过 &lt;code&gt;drmmiscnext&lt;/code&gt; 补丁引入对 AMD Ryzen AI 神经处理单元（NPU）的多项增强功能。新版本新增了一个 ioctl 接口（&lt;code&gt;DRM_IOCTL_AMDXDNA_GET_INFO&lt;/code&gt;），允许用户空间读取 NPU 的实时功耗估算数据，该功能依托于 AMD PMF 平台驱动的更新。此外，Linux 7.1 还加入了 NPU 实时列利用率（column utilization）的报告机制，帮助用户评估 NPU 在不同 AI 工作负载下的繁忙程度。这些改进对于近期在 Linux 上运行大语言模型（LLM）的工具（如 Lemonade 100 和 FastFlowLM 0.9.35）尤为重要，使开发者和用户能更有效地监控和优化 NPU 性能。&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=ryzen_ai&#34; alt=&#34;AMD Ryzen AI badge&#34; /&gt;</description>
+      <guid>https://www.phoronix.com/news/Linux-7.1-Ryzen-AI-NPU-Power</guid>
+      <pubDate>Sat, 14 Mar 2026 07:06:33 -0400</pubDate>
+    </item>
+    <item>
+      <title>Google 采用 AutoFDO 优化 Android Linux 内核性能</title>
+      <link>https://www.phoronix.com/news/Android-Using-Linux-AutoFDO</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[optional] Android使用AutoFDO优化Linux内核性能，涉及Android（未在兴趣/避免列表显式出现）与内核优化；Android属移动OS，不在Global high/interest明确项中，也未被avoid，主题边界模糊，故为optional。&lt;/small&gt;&lt;/p&gt;Google 的 Android LLVM 工具链团队近日宣布，已在 Android 使用的 Linux 内核构建中引入 AutoFDO（自动反馈导向优化）技术。AutoFDO 是一种基于真实运行时性能剖析数据的编译器优化方法，能显著提升用户体验。在 Pixel 设备上的测试表明，启用 AutoFDO 后，冷启动应用时间缩短超过 4%，系统启动速度提升 2%，而 Binder 测试性能更是提高了高达 21%。&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=android_linux_autofdo&#34; alt=&#34;AutoFDO performance benchmarks from Google&#34; /&gt; 目前该优化已应用于 Android16-6.12 和 Android15-6.6 分支，Google 还计划将其扩展至更新的 GKI（通用内核镜像）版本，并支持除 AArch64 以外的其他架构。</description>
+      <guid>https://www.phoronix.com/news/Android-Using-Linux-AutoFDO</guid>
+      <pubDate>Sat, 14 Mar 2026 06:57:57 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐⭐ KDE Plasma 6.6.3 修复分数缩放下的直通扫描输出问题</title>
+      <link>https://www.phoronix.com/news/KDE-Plasma-6.6.3-Fract-Scan-Out</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] KDE Plasma 6.6.3修复分数缩放直扫输出，KDE在Source high interest中明确列出，且属KDE桌面技术关键更新，完全匹配Source high interest与Global interest（开源项目、软件新功能），为critical。&lt;/small&gt;&lt;/p&gt;&lt;html&gt;&lt;p&gt;KDE 开发团队在推进 Plasma 6.7 新功能的同时，继续为当前的 Plasma 6.6 稳定版系列提供修复和优化。本周的更新亮点包括：&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Plasma 6.7 的 &lt;code&gt;plasma-keyboard&lt;/code&gt; 模块新增长按按键输入额外字符的功能，类似于智能手机虚拟键盘的操作方式。&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=kde_extra_keys&#34; alt=&#34;KDE extra keys&#34; /&gt;&lt;/li&gt;&lt;li&gt;Plasma 6.7 支持从下载文件安装自定义声音主题。&lt;/li&gt;&lt;li&gt;插入 USB 打印机时，Plasma 6.7 将仅显示一条通知而非两条。&lt;/li&gt;&lt;li&gt;针对使用旧版 Electron 的应用在系统托盘图标设置上相互干扰的问题，Plasma 6.7 提供了临时解决方案（该问题已在新版 Electron 中修复）。&lt;/li&gt;&lt;li&gt;Plasma 6.6.3 优化了在启用分数缩放（fractional scaling）的屏幕上，全屏窗口使用直通扫描输出（direct scan-out）模式时的 CPU 和 GPU 负载。&lt;/li&gt;&lt;li&gt;Plasma 6.7 在多 GPU 系统中，即使其中一块 GPU 不支持 OpenGL 加速，也不会再阻止其他 GPU 提供 3D 加速功能。&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;更多详情可参阅 &lt;a href=&#34;https://plasma.kde.org/this-week-in-plasma/&#34;&gt;This Week in Plasma&lt;/a&gt;。&lt;/p&gt;&lt;/html&gt;</description>
+      <guid>https://www.phoronix.com/news/KDE-Plasma-6.6.3-Fract-Scan-Out</guid>
+      <pubDate>Sat, 14 Mar 2026 06:38:38 -0400</pubDate>
+    </item>
+    <item>
+      <title>Mesa 的 LLVMpipe 软件渲染器现已支持网格着色器</title>
+      <link>https://www.phoronix.com/news/LLVMpipe-Mesh-Shaders</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[optional] LLVMpipe实现Mesh Shader支持，属Mesa图形栈底层开发，Global中图形/Shader未明确兴趣，Source uninterested含&#39;Blender&#39;但未提图形API，主题专业性强且兴趣配置无直接支撑，亦未触发avoid，故为optional。&lt;/small&gt;&lt;/p&gt;Valve Linux 图形驱动团队的 Mike Blumenkrantz 为 Mesa 的 LLVMpipe 软件渲染器添加了对网格着色器（mesh shaders）的支持。这项功能源自五个月前的一项合并请求，经过完善后已并入 Mesa 26.1 版本。LLVMpipe 现在启用了 &lt;code&gt;GL_EXT_mesh_shader&lt;/code&gt; 扩展，该扩展是去年 OpenGL 推出的跨厂商解决方案，并于去年 10 月加入 OpenGL 注册表。此前，Mesa 26.0 已为 RadeonSI 驱动添加了网格着色器支持，如今 LLVMpipe 也已就绪。&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=llvmpipe_mesh_shader&#34; alt=&#34;LLVMpipe mesh shader&#34; /&gt;此外，此次合并还修正了一个疏漏：LLVMpipe 之前仅公开 GLSL 4.50，现在已正确公开 GLSL 4.60。Blumenkrantz 表示：“不确定之前为何缺失。”</description>
+      <guid>https://www.phoronix.com/news/LLVMpipe-Mesh-Shaders</guid>
+      <pubDate>Sat, 14 Mar 2026 06:33:58 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ GNOME OS 默认启用 KMSCON 替代内核 VT 控制台</title>
+      <link>https://www.phoronix.com/news/GNOME-OS-KMSCON</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] GNOME OS默认启用KMSCON，属Linux桌面环境演进，契合Source interest（Linux桌面技术）及Global interest（开源项目、软件新功能），虽GNOME未在Source high interest单列，但属同类生态，故为recommended。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;GNOME OS —— 这个基于 Linux、使用 OSTree 的 GNOME 桌面前沿参考发行版，现已默认启用 &lt;a href=&#34;https://en.wikipedia.org/wiki/Kmscon&#34;&gt;KMSCON&lt;/a&gt;，取代传统的 Linux 内核虚拟终端（VT）控制台。与 Fedora 计划类似（后者因故推迟至 Fedora 45 实现），KMSCON 作为用户空间程序，通过 KMS/DRM 接口提供更灵活的配置能力。&lt;/p&gt;&lt;p&gt;此变更已在「This Week in GNOME」中确认，并赶在即将发布的 GNOME 50 之前落地。同期更新还包括 GNOME 文件管理器（Nautilus）的功能改进、Papers 文档查看器对数字签名的支持、Libadwaita 1.9 的发布，以及 RussCon 0.9.15 的可用性。&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=vinyl&#34; alt=&#34;Vinyl music player&#34; /&gt;&lt;p&gt;本周还发布了另一款 GNOME 音乐播放器 Vinyl 的首个稳定版。该应用采用 Rust 语言编写，基于 Relm4 GUI 库开发，并已上架 Flathub。&lt;/p&gt;</description>
+      <guid>https://www.phoronix.com/news/GNOME-OS-KMSCON</guid>
+      <pubDate>Sat, 14 Mar 2026 06:20:46 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ Debian 推出 debaudit 源码包审计工具</title>
+      <link>https://www.phoronix.com/news/Debian-debaudit</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] debauit作为Debian源包审计工具发布，属Debian生态开源工具，契合Source high interest（新软件项目、新发行版关联工具）及Global high interest（编程工具发布/分享），故为recommended。&lt;/small&gt;&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=debaudit&#34; alt=&#34;Debaudit diagram&#34; /&gt;近日，Debian 宣布推出 debaudit，这是一套用于验证 Debian 源码包完整性与可复现性的新工具和服务，旨在加强软件供应链安全。debaudit 由 upstream2orig、git2dsc 和 git2orig 三个组件构成：upstream2orig 用于验证 Debian 中的上游 tarball 是否忠实于原始上游源代码；git2dsc 负责核对 Vcs-Git 仓库中的源码包是否与 Debian 归档中的源码包一致；git2orig 则确保从仓库生成的原始 tarball 与归档中的版本相匹配。该项目官网 &lt;a href=&#34;https://debaudit.debian.net&#34;&gt;debaudit.debian.net&lt;/a&gt; 强调，确保 Debian 源码与其上游或版本控制源头一致，是保障软件供应链安全和实现可复现构建的基础，能有效防止软件在打包过程中被恶意篡改。相关公告已在 debian-devel-announce 邮件列表发布。</description>
+      <guid>https://www.phoronix.com/news/Debian-debaudit</guid>
+      <pubDate>Fri, 13 Mar 2026 17:48:21 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐⭐ Linux 内核 API 规范框架结束 RFC 阶段，进入正式提交流程</title>
+      <link>https://www.phoronix.com/news/Kernel-API-Spec-Framework</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] Linux内核API规范框架推进，属Linux内核基础设施建设，契合Global high interest（编程工具发布/分享、开源项目）及Source interest（Linux桌面技术依赖稳定内核API），且为开发者工具类，故为critical。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;经过五轮带有“征求意见（RFC）”标记的评审后，Linux 内核 API 规范框架（Kernel API Specification Framework）的最新补丁系列已移除 RFC 标记并正式提交。该框架旨在以人类可读和机器可解析的形式，更好地记录内核 API。&lt;/p&gt;&lt;p&gt;据补丁系列的作者 Sasha Levin 介绍，此提案引入了一套机制来文档化内核 API，以解决长期以来内核与用户空间程序之间接口稳定性维护的难题。尽管内核承诺永不破坏用户空间，但由于缺乏机器可读的 API 规范，系统调用（system calls）和 IOCTL 接口仍时有损坏。新的规范可以详细记录参数类型、有效范围、约束条件和对齐要求，并明确返回值语义（包括成功条件和错误代码的含义）。此外，执行上下文要求、所需能力（capabilities）、锁约束、信号处理行为及副作用等均可被形式化地指定。&lt;/p&gt;&lt;p&gt;这些规范与所描述的代码共存，既便于人类阅读，也能被机器解析。在启用 &lt;code&gt;CONFIG_KAPI_RUNTIME_CHECKS&lt;/code&gt; 配置选项时，可在运行时进行验证；也可通过 debugfs 导出供用户空间工具使用；还能从 vmlinux 或源代码中提取。这为静态分析工具在编译时验证用户空间 API 使用、基于形式化规范生成测试、一致性错误处理验证、自动化文档生成以及内核接口的形式化验证提供了可能。&lt;/p&gt;&lt;p&gt;该实现包含一个核心框架，用于在 ELF 节中存储规范数据，并集成了 kerneldoc 以支持内联规范书写，同时提供了 debugfs 接口用于运行时查询。项目还包含一个基于 Rust 的提取工具（&lt;code&gt;tools/kapi&lt;/code&gt;），支持输出 JSON、RST 和纯文本格式。目前，已为四个基础文件系统调用（&lt;code&gt;sys_open&lt;/code&gt;、&lt;code&gt;sys_close&lt;/code&gt;、&lt;code&gt;sys_read&lt;/code&gt;、&lt;code&gt;sys_write&lt;/code&gt;）提供了示例规范。此次提交还包括一个包含 38 项测试的 KUnit 测试套件和一个包含 29 项以上 TAP 测试的运行时验证自测程序。&lt;/p&gt;&lt;p&gt;本次更新的补丁除了移除 RFC 标记外，还基于 Linux 7.0-rc1 进行了重定基（rebase），并改进了 KUnit 测试覆盖率、简化了示例规范，并完善了运行时验证自测。&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=2026&amp;amp;image=kernel_api_spec&#34; alt=&#34;Kernel API Specification Framework&#34; /&gt;</description>
+      <guid>https://www.phoronix.com/news/Kernel-API-Spec-Framework</guid>
+      <pubDate>Fri, 13 Mar 2026 12:18:47 -0400</pubDate>
+    </item>
+    <item>
+      <title>⭐ Linux 6.12 至 7.0 内核中 EXT4 与 XFS 文件系统性能基准测试</title>
+      <link>https://www.phoronix.com/review/linux-612-linux-70-xfs-ext4</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[recommended] Linux文件系统基准测试，属内核性能验证，契合Global interest（开源项目、软件新功能）及Source interest（Linux桌面技术需稳定文件系统），但非high interest项，故为recommended。&lt;/small&gt;&lt;/p&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=linux-612-linux-70-xfs-ext4&amp;amp;image=linux_7_ssd_1_med&#34; alt=&#34;Solidigm PCIe Gen 5 NVMe SSD&#34; /&gt;&lt;br&gt;本文回顾了从 Linux 6.12 LTS（2024 年 11 月发布）到即将推出的 Linux 7.0 内核中，EXT4 与 XFS 两种主流文件系统的性能演变。测试基于 AMD EPYC 9745（Zen 5 架构）服务器平台，配备 Solidigm D7-PS1010 PCIe 5.0 NVMe SSD，并使用 Ubuntu Mainline Kernel PPA 提供的内核版本以确保可复现性。所有测试均采用各自文件系统的默认挂载选项。&lt;br&gt;&lt;img src=&#34;//www.phoronix.net/image.php?id=linux-612-linux-70-xfs-ext4&amp;amp;image=linux_7_ssd_2_med&#34; alt=&#34;Linux file-system benchmarking with NVMe SSD&#34; /&gt;&lt;br&gt;此前的 Linux 7.0 基准测试已表明 XFS 在上游 Linux 文件系统性能中处于领先地位。应部分支持者要求，本文进一步提供了过去一年半以来各内核版本中 EXT4 和 XFS 的详细历史性能数据。文章还预告将单独发布一篇关于 Btrfs 文件系统在同期内核中性能表现的对比分析。</description>
+      <guid>https://www.phoronix.com/review/linux-612-linux-70-xfs-ext4</guid>
+      <pubDate>Fri, 13 Mar 2026 10:00:00 -0400</pubDate>
+    </item>
+  </channel>
+</rss>

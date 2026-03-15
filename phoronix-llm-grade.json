@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-rc4-More-Rust",
+      "Level": "critical",
+      "Reason": "标题明确涉及Linux内核对Rust语言支持的改进，Rust在Source interest中被列为高兴趣项，且Linux内核开发属于编程工具发布/分享和开源项目范畴，符合Global high interest和Global interest双重强匹配。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-Sched-Fixes-Perf-Hang",
+      "Level": "recommended",
+      "Reason": "标题聚焦Linux 7.0调度器性能修复，属Linux桌面技术与内核优化，符合Source interest（Linux桌面技术）及Global interest（开源项目、软件新功能），但非Rust或新发行版等高优先级主题，故为recommended。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/KDE-Linux-Adds-APFS",
+      "Level": "critical",
+      "Reason": "标题含KDE Linux新增APFS支持，KDE在Source high interest中明确列出，且属新软件功能发布，同时契合Global high interest（编程工具发布/分享）和Source high interest（KDE），双重高权重匹配。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/SuperTux-0.7-Released",
+      "Level": "rejected",
+      "Reason": "SuperTux是开源2D平台游戏，虽属开源项目，但游戏类内容在Global avoid中明确列出（3A游戏、游戏引擎等），且Source uninterested未覆盖但全局avoid权重最高，主题本质为游戏，应排除。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Open-Source-GreenBoost-NVIDIA",
+      "Level": "recommended",
+      "Reason": "标题描述开源GreenBoost驱动增强NVIDIA GPU内存能力以支持大模型，涉及AI模型应用（Global high interest）与开源驱动开发（Global interest），但NVIDIA属非KDE/Firefox/Chrome等Source high interest项，且硬件驱动偏底层，故为recommended而非critical。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/GIMP-3.2-Released",
+      "Level": "recommended",
+      "Reason": "GIMP是知名开源图像处理软件，新版本发布属于Global interest（开源项目、软件新功能），虽非Source high interest项，但符合全局兴趣，且无avoid/uninterested标签冲突。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Debian-13.4-Released",
+      "Level": "critical",
+      "Reason": "Debian新版本发布，Source high interest明确包含'新发行版'，且Debian属核心Linux发行版，契合Global high interest（编程工具发布/分享）和Global interest（开源项目），双重高权重。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Snapdragon-X-Elite-Ubuntu-26.04",
+      "Level": "rejected",
+      "Reason": "标题聚焦Snapdragon X Elite芯片在Ubuntu上的测试，芯片相关（Snapdragon）、硬件平台（AI Laptop）均落入Source avoid（最新款芯片相关、非主流硬件）和Global avoid（芯片技术）双重禁止范围，应排除。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/OpenRazer-3.12",
+      "Level": "optional",
+      "Reason": "OpenRazer是Razer外设Linux驱动，属小众硬件支持，Source uninterested未列Razer但Source avoid含'非主流硬件'，而Global中无直接冲突；主题模糊性高，既非high interest项也未明确avoid，故为optional。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.1-Ryzen-AI-NPU-Power",
+      "Level": "recommended",
+      "Reason": "Linux 7.1支持AMD Ryzen AI NPU功耗报告，属Linux内核新功能（Global interest）与AI硬件接口（Global high interest中AI模型相关），但NPU属芯片子系统，Global avoid含'芯片技术'，因主要讲Linux内核支持而非芯片本身，权衡后为recommended。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Android-Using-Linux-AutoFDO",
+      "Level": "optional",
+      "Reason": "Android使用AutoFDO优化Linux内核性能，涉及Android（未在兴趣/避免列表显式出现）与内核优化；Android属移动OS，不在Global high/interest明确项中，也未被avoid，主题边界模糊，故为optional。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/KDE-Plasma-6.6.3-Fract-Scan-Out",
+      "Level": "critical",
+      "Reason": "KDE Plasma 6.6.3修复分数缩放直扫输出，KDE在Source high interest中明确列出，且属KDE桌面技术关键更新，完全匹配Source high interest与Global interest（开源项目、软件新功能），为critical。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/LLVMpipe-Mesh-Shaders",
+      "Level": "optional",
+      "Reason": "LLVMpipe实现Mesh Shader支持，属Mesa图形栈底层开发，Global中图形/Shader未明确兴趣，Source uninterested含'Blender'但未提图形API，主题专业性强且兴趣配置无直接支撑，亦未触发avoid，故为optional。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/GNOME-OS-KMSCON",
+      "Level": "recommended",
+      "Reason": "GNOME OS默认启用KMSCON，属Linux桌面环境演进，契合Source interest（Linux桌面技术）及Global interest（开源项目、软件新功能），虽GNOME未在Source high interest单列，但属同类生态，故为recommended。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Debian-debaudit",
+      "Level": "recommended",
+      "Reason": "debauit作为Debian源包审计工具发布，属Debian生态开源工具，契合Source high interest（新软件项目、新发行版关联工具）及Global high interest（编程工具发布/分享），故为recommended。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/NVIDIA-595.44.03-Linux",
+      "Level": "rejected",
+      "Reason": "NVIDIA闭源驱动更新，NVIDIA显卡在Source uninterested中未列，但Source avoid含'非主流硬件'，且Global avoid含'芯片技术'，驱动更新本质服务硬件，主题落入avoid范围，应排除。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Intel-Panther-Lake-C-States",
+      "Level": "rejected",
+      "Reason": "Intel Panther Lake调优，属最新款芯片（Panther Lake）相关，Source avoid明确禁止'最新款芯片相关'，Global avoid含'芯片技术'，双重高权重avoid，应排除。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Kernel-API-Spec-Framework",
+      "Level": "critical",
+      "Reason": "Linux内核API规范框架推进，属Linux内核基础设施建设，契合Global high interest（编程工具发布/分享、开源项目）及Source interest（Linux桌面技术依赖稳定内核API），且为开发者工具类，故为critical。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/review/linux-612-linux-70-xfs-ext4",
+      "Level": "recommended",
+      "Reason": "Linux文件系统基准测试，属内核性能验证，契合Global interest（开源项目、软件新功能）及Source interest（Linux桌面技术需稳定文件系统），但非high interest项，故为recommended。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Intel-Xe-VM-BIND-DECOMPRESS",
+      "Level": "rejected",
+      "Reason": "Intel Xe驱动引入VM_BIND DECOMPRESS，属Intel最新GPU驱动开发，'Intel Nova Lake P'为新款芯片，触发Source avoid（最新款芯片相关）及Global avoid（芯片技术），应排除。"
+    }
+  ]
+}

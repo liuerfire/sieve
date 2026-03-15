@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Superset Releases</title>
+    <description>Filtered content for superset-releases</description>
+    <item>
+      <title>⭐⭐ Superset Desktop 发布 v1.1.7 版本</title>
+      <link>https://github.com/superset-sh/superset/releases/tag/desktop-v1.1.7</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[critical] Desktop Release，Source high interest；且 Superset Desktop 是编程工具发布，Global high interest&lt;/small&gt;&lt;/p&gt;&lt;p&gt;本次更新发布了 Superset Desktop 应用的 v1.1.7 版本。由于发布说明中未提供具体的改动日志，无法确定此版本包含哪些新功能、改进或修复。&lt;/p&gt;</description>
+      <guid>tag:github.com,2008:Repository/1080370450/desktop-v1.1.7</guid>
+      <pubDate>2026-03-13T16:53:16Z</pubDate>
+    </item>
+  </channel>
+</rss>

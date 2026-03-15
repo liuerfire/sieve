@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.76",
+      "Level": "critical",
+      "Reason": "Claude Code 是 Anthropic 官方的 AI 编程辅助工具，v2.1.76 属于其版本发布，匹配用户全局高兴趣'编程工具发布/分享'，且来源上下文明确聚焦开发辅助，无 Windows 或安全等用户不关心内容。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.75",
+      "Level": "critical",
+      "Reason": "同属 Claude Code 工具版本迭代，属于编程工具发布范畴，符合用户高兴趣；摘要虽空，但标题格式与上下文一致，可推断为常规功能更新，非用户规避类内容。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.74",
+      "Level": "critical",
+      "Reason": "Claude Code 版本号连续发布，代表编程工具持续演进，直接对应'编程工具发布/分享'这一高兴趣项；无迹象表明含 Windows 或安全等用户不关心主题。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.73",
+      "Level": "critical",
+      "Reason": "版本发布本质未变，仍属用户高度关注的 AI 编程辅助工具更新，符合'编程工具发布/分享'和'编程效率改进经验'双重高兴趣维度。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.72",
+      "Level": "critical",
+      "Reason": "连续小版本更新，反映工具活跃演进，主题明确为 AI 编程辅助，完全契合用户核心高兴趣领域，无冲突配置。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.71",
+      "Level": "critical",
+      "Reason": "作为 Claude Code 的标准版本发布，属于用户明确高兴趣的'编程工具发布/分享'，且来源上下文排除了用户不关心的平台与安全分支。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.70",
+      "Level": "critical",
+      "Reason": "版本序列延续，主题稳定为 AI 编程辅助工具更新，符合高兴趣定义；无任何元数据或上下文暗示涉及 avoid/uninterested 类别。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.69",
+      "Level": "critical",
+      "Reason": "同系列工具版本，核心价值在于提升编程效率，直接命中'编程效率改进经验'和'编程工具发布/分享'两个高兴趣点。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.68",
+      "Level": "critical",
+      "Reason": "Claude Code 作为 Anthropic 官方开发辅助 CLI 工具，其每个版本发布都构成对用户高价值信息，主题清晰、无歧义、无规避要素。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.66",
+      "Level": "critical",
+      "Reason": "虽跳过 v2.1.67，但版本号本身表明是同一工具主线演进，仍属编程工具发布范畴，且无证据指向用户避免或不感兴趣的主题。"
+    }
+  ]
+}

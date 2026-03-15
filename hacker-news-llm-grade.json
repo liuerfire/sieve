@@ -1,0 +1,69 @@
+{
+  "items": [
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47386908",
+      "Level": "rejected",
+      "Reason": "标题探讨社会心理学/代际现象，属于人文社科范畴，不在任何高兴趣或兴趣列表中，且不属于避免类，故为rejected"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47385272",
+      "Level": "recommended",
+      "Reason": "讨论AI在音乐理解上的局限，属AI软件技术进展（global interest），作者背景为经典计算机科普作家，增强可信度与技术深度，但非核心AI模型发布，故非critical"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47384352",
+      "Level": "optional",
+      "Reason": "服务器机柜+水培属极客DIY交叉领域，基础设施（global uninterested）与趣味实验模糊交叠，主题不明确且无编程工具/AI效率等关键词，故为optional"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47382791",
+      "Level": "critical",
+      "Reason": "深度解析内核级反作弊系统，涉及底层Windows安全机制、内存扫描、PCIe DMA等高阶软件技术，属AI软件技术进展与编程效率改进经验的强相关延伸（如安全即开发效能保障），且技术深度极高，符合critical标准"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47381791",
+      "Level": "critical",
+      "Reason": "开源项目（global interest）+ 主动挑战法规（加州年龄验证法案），体现开发者对数字权利与开源治理的实践，属编程工具发布/分享与开源项目双重高兴趣叠加"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47381736",
+      "Level": "critical",
+      "Reason": "直击LLM在人际沟通中的真实影响，属AI软件技术进展与编程效率改进经验的交叉——尤其关乎开发者日常协作质量，且观点深刻、具现实警示性，符合critical"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47381382",
+      "Level": "critical",
+      "Reason": "基于韩文关键字的编程语言（Rust编写），完全匹配‘编程工具发布/分享’（global high interest）与‘开源项目’（global interest），且语言设计本身是编程效率改进的探索形式"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47380647",
+      "Level": "critical",
+      "Reason": "Anthropic发布Claude非高峰时段双倍用量，属新AI模型发布公告（global high interest），直接面向开发者使用成本优化，是典型必看内容"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47380465",
+      "Level": "recommended",
+      "Reason": "GIMP 3.2发布含非破坏性图层等新功能，属软件新功能（global interest），虽非核心编程工具，但作为主流开源图像软件重大更新，对开发者/设计师有实用价值"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47380295",
+      "Level": "recommended",
+      "Reason": "面向创始人的营销指南，聚焦SaaS/Startup早期获客，属编程效率改进经验的延伸（提升产品落地效率），且资源实用性强，符合interest类别的推荐强度"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47380270",
+      "Level": "recommended",
+      "Reason": "澄清MCP与CLI误解，涉及模型上下文协议（新兴AI基础设施），属AI软件技术进展与编程工具生态演进，技术社区热点，符合global interest"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47376767",
+      "Level": "rejected",
+      "Reason": "蒙大拿州《计算权法案》属地方立法新闻，非国内/国际必读新闻（global interest仅限‘必读’），且无技术细节或开发者影响说明，落入历史/旧闻或政策泛泛范畴，global uninterested中‘历史/旧闻’覆盖之"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47375764",
+      "Level": "recommended",
+      "Reason": "XML在IRS税务估算器中的DSL实践，属软件新功能与科学前沿进展（税务算法工程化）交叉，XML作为廉价DSL亦关联编程效率改进经验，虽场景垂直但方法论普适，故recommended"
+    }
+  ]
+}
