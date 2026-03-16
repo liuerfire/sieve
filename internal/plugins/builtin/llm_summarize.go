@@ -41,7 +41,7 @@ func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 	writtenSummaries := make([]llm.SummaryResult, 0, len(items))
 	out := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
-		if item.Level == types.LevelRejected {
+		if item.Level == types.LevelAvoid {
 			out = append(out, item)
 			continue
 		}
@@ -76,7 +76,7 @@ func (LLMSummarizePlugin) ProcessItems(ctx context.Context, items []types.FeedIt
 			return nil, fmt.Errorf("summary guid mismatch")
 		}
 		if result.Rejected {
-			item.Level = types.LevelRejected
+			item.Level = types.LevelAvoid
 			out = append(out, item)
 			continue
 		}

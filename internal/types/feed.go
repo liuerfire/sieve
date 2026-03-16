@@ -3,11 +3,11 @@ package types
 type FeedLevel string
 
 const (
-	LevelCritical    FeedLevel = "critical"
-	LevelRecommended FeedLevel = "recommended"
-	LevelOptional    FeedLevel = "optional"
-	LevelRejected    FeedLevel = "rejected"
-	LevelUnknown     FeedLevel = "unknown"
+	LevelHighInterest FeedLevel = "high_interest"
+	LevelInterest     FeedLevel = "interest"
+	LevelUninterested FeedLevel = "uninterested"
+	LevelAvoid        FeedLevel = "avoid"
+	LevelUnknown      FeedLevel = "unknown"
 )
 
 type FeedItem struct {

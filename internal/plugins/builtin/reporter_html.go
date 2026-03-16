@@ -25,13 +25,13 @@ type reporterHTMLOptions struct {
 }
 
 type htmlPageData struct {
-	Title       string
-	SourceName  string
-	Visible     int
-	Critical    int
-	Recommended int
-	Optional    int
-	Items       []htmlItem
+	Title        string
+	SourceName   string
+	Visible      int
+	HighInterest int
+	Interest     int
+	Uninterested int
+	Items        []htmlItem
 }
 
 type htmlItem struct {
@@ -58,9 +58,9 @@ var reporterHTMLTemplate = template.Must(template.New("reporter-html").Parse(`<!
       --muted: #6c6258;
       --line: rgba(71, 56, 38, 0.12);
       --shadow: 0 20px 50px rgba(48, 35, 22, 0.12);
-      --critical: #9f2f22;
-      --recommended: #b56a00;
-      --optional: #2d6a4f;
+      --high-interest: #9f2f22;
+      --interest: #b56a00;
+      --uninterested: #2d6a4f;
       --accent: #d8c3a5;
     }
     * { box-sizing: border-box; }
@@ -173,9 +173,9 @@ var reporterHTMLTemplate = template.Must(template.New("reporter-html").Parse(`<!
       text-transform: uppercase;
       font-family: "Avenir Next", "Segoe UI", sans-serif;
     }
-    .badge.critical { background: var(--critical); }
-    .badge.recommended { background: var(--recommended); }
-    .badge.optional { background: var(--optional); }
+    .badge.high_interest { background: var(--high-interest); }
+    .badge.interest { background: var(--interest); }
+    .badge.uninterested { background: var(--uninterested); }
     .reason {
       margin: 0 0 16px;
       padding: 12px 14px;
@@ -223,9 +223,9 @@ var reporterHTMLTemplate = template.Must(template.New("reporter-html").Parse(`<!
       <p class="summary">A direct browser view of the latest visible items, with summaries and grading reasons.</p>
       <div class="stats">
         <div class="stat"><strong>{{ .Visible }}</strong><span>Visible Items</span></div>
-        <div class="stat"><strong>{{ .Critical }}</strong><span>Critical</span></div>
-        <div class="stat"><strong>{{ .Recommended }}</strong><span>Recommended</span></div>
-        <div class="stat"><strong>{{ .Optional }}</strong><span>Optional</span></div>
+        <div class="stat"><strong>{{ .HighInterest }}</strong><span>High Interest</span></div>
+        <div class="stat"><strong>{{ .Interest }}</strong><span>Interest</span></div>
+        <div class="stat"><strong>{{ .Uninterested }}</strong><span>Uninterested</span></div>
       </div>
     </section>
     {{ if .Items }}
@@ -298,19 +298,19 @@ func buildHTMLPageData(items []types.FeedItem, opts reporterHTMLOptions) htmlPag
 		page.SourceName = opts.Title
 	}
 	for _, item := range items {
-		if item.Level == types.LevelRejected {
+		if item.Level == types.LevelAvoid {
 			continue
 		}
 		page.Visible++
 		switch item.Level {
-		case types.LevelCritical:
-			page.Critical++
-		case types.LevelRecommended:
-			page.Recommended++
-		case types.LevelOptional, types.LevelUnknown, "":
-			page.Optional++
+		case types.LevelHighInterest:
+			page.HighInterest++
+		case types.LevelInterest:
+			page.Interest++
+		case types.LevelUninterested, types.LevelUnknown, "":
+			page.Uninterested++
 		default:
-			page.Optional++
+			page.Uninterested++
 		}
 		page.Items = append(page.Items, htmlItem{
 			Title:       item.Title,
@@ -327,21 +327,21 @@ func buildHTMLPageData(items []types.FeedItem, opts reporterHTMLOptions) htmlPag
 
 func normalizeHTMLLevel(level types.FeedLevel) types.FeedLevel {
 	switch level {
-	case types.LevelCritical, types.LevelRecommended:
+	case types.LevelHighInterest, types.LevelInterest:
 		return level
 	default:
-		return types.LevelOptional
+		return types.LevelUninterested
 	}
 }
 
 func badgeLabel(level types.FeedLevel) string {
 	switch level {
-	case types.LevelCritical:
-		return "Critical"
-	case types.LevelRecommended:
-		return "Recommended"
+	case types.LevelHighInterest:
+		return "High Interest"
+	case types.LevelInterest:
+		return "Interest"
 	default:
-		return "Optional"
+		return "Uninterested"
 	}
 }
 

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -51,7 +52,7 @@ func TestCreateProvider_RequiresExpectedAPIKey(t *testing.T) {
 
 func TestStaticProvider_GradeAndSummarize(t *testing.T) {
 	provider := staticProvider{
-		gradeResults: []GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
+		gradeResults: []GradeResult{{GUID: "g1", Level: "high_interest", Reason: "fit"}},
 		summaryResult: SummaryResult{
 			GUID:        "g1",
 			Title:       "summary title",
@@ -64,7 +65,7 @@ func TestStaticProvider_GradeAndSummarize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Grade: %v", err)
 	}
-	if len(grades) != 1 || grades[0].Level != "critical" {
+	if len(grades) != 1 || grades[0].Level != "high_interest" {
 		t.Fatalf("unexpected grades: %#v", grades)
 	}
 
@@ -102,7 +103,7 @@ func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 					"tool_calls": [{
 						"function": {
 							"name": "write_grade_results",
-							"arguments": "{\"items\":[{\"guid\":\"g1\",\"level\":\"critical\",\"reason\":\"fit\"}]}"
+							"arguments": "{\"items\":[{\"guid\":\"g1\",\"level\":\"high_interest\",\"reason\":\"fit\"}]}"
 						}
 					}]
 				}
@@ -131,7 +132,7 @@ func TestQwenProvider_GradeUsesChatCompletions(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Grade: %v", err)
 	}
-	if len(results) != 1 || results[0].GUID != "g1" || results[0].Level != "critical" {
+	if len(results) != 1 || results[0].GUID != "g1" || results[0].Level != "high_interest" {
 		t.Fatalf("unexpected grade results: %#v", results)
 	}
 	if requestBody["model"] != "qwen-plus" {
@@ -280,6 +281,19 @@ func TestQwenProvider_GradeReturnsErrorForUnexpectedToolCall(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected tool call name mismatch to fail")
+	}
+}
+
+func TestBuildGradePrompt_DisallowsInterestTaxonomyAsOutput(t *testing.T) {
+	prompt := buildGradePrompt(GradeRequest{
+		Items: []GradeItem{{GUID: "g1", Title: "Title", Meta: "Meta"}},
+	})
+
+	if !strings.Contains(prompt, "\"level\":\"high_interest|interest|uninterested|avoid\"") {
+		t.Fatalf("expected prompt to advertise new level taxonomy, got %q", prompt)
+	}
+	if strings.Contains(prompt, "critical|recommended|optional|rejected") {
+		t.Fatalf("expected prompt to drop old level taxonomy, got %q", prompt)
 	}
 }
 

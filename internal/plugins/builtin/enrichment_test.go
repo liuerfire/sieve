@@ -69,24 +69,24 @@ func TestFetchContent_FiltersImagesAndCapturesText(t *testing.T) {
 	}
 }
 
-func TestReporterRSS_FormatsStarsAndExcludesRejected(t *testing.T) {
+func TestReporterRSS_FormatsStarsAndExcludesAvoid(t *testing.T) {
 	items := []types.FeedItem{
 		types.FeedItem{
-			Title:       "Critical",
+			Title:       "High Interest",
 			Link:        "https://example.com/critical",
 			PubDate:     "2026-03-11T12:00:00Z",
 			Description: "Body",
 			GUID:        "critical-guid",
-			Level:       types.LevelCritical,
+			Level:       "high_interest",
 			Reason:      "Must read",
 		}.WithDefaults(),
 		types.FeedItem{
-			Title:       "Rejected",
+			Title:       "Avoid",
 			Link:        "https://example.com/rejected",
 			PubDate:     "2026-03-11T12:00:00Z",
 			Description: "Skip",
 			GUID:        "rejected-guid",
-			Level:       types.LevelRejected,
+			Level:       "avoid",
 			Reason:      "Nope",
 		}.WithDefaults(),
 	}
@@ -95,10 +95,10 @@ func TestReporterRSS_FormatsStarsAndExcludesRejected(t *testing.T) {
 	if len(formatted) != 1 {
 		t.Fatalf("expected 1 formatted item, got %d", len(formatted))
 	}
-	if formatted[0].Title != "⭐⭐ Critical" {
+	if formatted[0].Title != "⭐⭐ High Interest" {
 		t.Fatalf("unexpected title %q", formatted[0].Title)
 	}
-	if !strings.Contains(formatted[0].Description, "[critical] Must read") {
+	if !strings.Contains(formatted[0].Description, "[high_interest] Must read") {
 		t.Fatalf("unexpected description %q", formatted[0].Description)
 	}
 }
@@ -133,7 +133,7 @@ func TestReporterRSS_AppendsExistingItemsAndLimitsTo50(t *testing.T) {
 			PubDate:     "2026-03-11T12:00:00Z",
 			Description: "new",
 			GUID:        "new-guid",
-			Level:       types.LevelRecommended,
+			Level:       "interest",
 			Reason:      "Worth it",
 		}.WithDefaults(),
 	}

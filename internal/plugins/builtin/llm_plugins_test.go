@@ -94,14 +94,14 @@ func TestLLMGrade_AppliesValidatedResults(t *testing.T) {
 		SourceName: "source",
 		LLM: func(string) (llm.Provider, error) {
 			return &staticProvider{
-				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
+				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "high_interest", Reason: "fit"}},
 			}, nil
 		},
 	})
 	if err != nil {
 		t.Fatalf("ProcessItems: %v", err)
 	}
-	if got[0].Level != types.LevelCritical || got[0].Reason != "fit" {
+	if got[0].Level != "high_interest" || got[0].Reason != "fit" {
 		t.Fatalf("unexpected graded item: %#v", got[0])
 	}
 	data, err := os.ReadFile(filepath.Join(dir, "output", "source-llm-grade.json"))
@@ -134,12 +134,69 @@ func TestLLMGrade_RejectsUnknownLevel(t *testing.T) {
 		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 		LLM: func(string) (llm.Provider, error) {
 			return &staticProvider{
-				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "recommend", Reason: "fit"}},
+				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
 			}, nil
 		},
 	})
 	if err == nil {
 		t.Fatal("expected invalid LLM level to return an error")
+	}
+}
+
+func TestLLMGrade_NormalizesInterestTaxonomyLevels(t *testing.T) {
+	items := []types.FeedItem{
+		types.FeedItem{
+			Title: "A",
+			GUID:  "g1",
+			Extra: map[string]any{"meta": "desc"},
+		}.WithDefaults(),
+		types.FeedItem{
+			Title: "B",
+			GUID:  "g2",
+			Extra: map[string]any{"meta": "desc"},
+		}.WithDefaults(),
+		types.FeedItem{
+			Title: "C",
+			GUID:  "g3",
+			Extra: map[string]any{"meta": "desc"},
+		}.WithDefaults(),
+		types.FeedItem{
+			Title: "D",
+			GUID:  "g4",
+			Extra: map[string]any{"meta": "desc"},
+		}.WithDefaults(),
+	}
+
+	got, err := LLMGradePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{
+		Name: "builtin/llm-grade",
+	}, plugins.Context{
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		LLM: func(string) (llm.Provider, error) {
+			return &staticProvider{
+				gradeResults: []llm.GradeResult{
+					{GUID: "g1", Level: "high_interest", Reason: "must read"},
+					{GUID: "g2", Level: "interest", Reason: "worth reading"},
+					{GUID: "g3", Level: "uninterested", Reason: "low priority"},
+					{GUID: "g4", Level: "avoid", Reason: "skip"},
+				},
+			}, nil
+		},
+	})
+	if err != nil {
+		t.Fatalf("ProcessItems: %v", err)
+	}
+
+	if got[0].Level != "high_interest" {
+		t.Fatalf("expected high_interest, got %#v", got[0])
+	}
+	if got[1].Level != "interest" {
+		t.Fatalf("expected interest, got %#v", got[1])
+	}
+	if got[2].Level != "uninterested" {
+		t.Fatalf("expected uninterested, got %#v", got[2])
+	}
+	if got[3].Level != "avoid" {
+		t.Fatalf("expected avoid, got %#v", got[3])
 	}
 }
 
@@ -219,8 +276,8 @@ func TestLLMSummarize_RejectedSummaryMarksItemRejected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ProcessItems: %v", err)
 	}
-	if got[0].Level != types.LevelRejected {
-		t.Fatalf("expected rejected item, got %#v", got[0])
+	if got[0].Level != "avoid" {
+		t.Fatalf("expected avoid item, got %#v", got[0])
 	}
 }
 
@@ -242,7 +299,7 @@ func TestLLMGrade_DryRunDoesNotWriteOutput(t *testing.T) {
 		IsDryRun:   true,
 		LLM: func(string) (llm.Provider, error) {
 			return &staticProvider{
-				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "critical", Reason: "fit"}},
+				gradeResults: []llm.GradeResult{{GUID: "g1", Level: "high_interest", Reason: "fit"}},
 			}, nil
 		},
 	})

@@ -119,16 +119,16 @@ func TestDeduplicate_MarksProcessedItemsRejected(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
-	if got[0].Level == types.LevelRejected || got[1].Level == types.LevelRejected {
-		t.Fatal("expected first pass items to remain non-rejected")
+	if got[0].Level == "avoid" || got[1].Level == "avoid" {
+		t.Fatal("expected first pass items to remain non-avoid")
 	}
 
 	got, err = DeduplicatePlugin{}.ProcessItems(context.Background(), items, config.PluginEntry{Name: "builtin/deduplicate"}, testRunContext("source"))
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
-	if got[0].Level != types.LevelRejected || got[1].Level != types.LevelRejected {
-		t.Fatalf("expected both items to be rejected on second pass, got %#v", got)
+	if got[0].Level != "avoid" || got[1].Level != "avoid" {
+		t.Fatalf("expected both items to be avoid on second pass, got %#v", got)
 	}
 }
 
@@ -157,7 +157,7 @@ func TestDeduplicate_DryRunReturnsOriginalItems(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
-	if got[0].Level == types.LevelRejected {
+	if got[0].Level == "avoid" {
 		t.Fatalf("expected dry-run item to remain visible, got %#v", got[0])
 	}
 }
@@ -221,7 +221,7 @@ func TestDeduplicate_DoesNotTreatEmptyGUIDAsDuplicate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ProcessItems returned error: %v", err)
 	}
-	if got[0].Level == types.LevelRejected || got[1].Level == types.LevelRejected {
+	if got[0].Level == "avoid" || got[1].Level == "avoid" {
 		t.Fatalf("expected empty-guid items to remain visible, got %#v", got)
 	}
 }
@@ -340,15 +340,15 @@ func TestReporterHTML_WritesVisibleItemsOnly(t *testing.T) {
 			Link:        "https://example.com/a",
 			GUID:        "a",
 			Description: "<p>Summary body</p>",
-			Level:       types.LevelCritical,
+			Level:       "high_interest",
 			Reason:      "Strong match",
 		}.WithDefaults(),
 		types.FeedItem{
-			Title:       "Rejected item",
+			Title:       "Avoid item",
 			Link:        "https://example.com/b",
 			GUID:        "b",
 			Description: "<p>Should not appear</p>",
-			Level:       types.LevelRejected,
+			Level:       "avoid",
 			Reason:      "No match",
 		}.WithDefaults(),
 	}, config.PluginEntry{
@@ -371,13 +371,13 @@ func TestReporterHTML_WritesVisibleItemsOnly(t *testing.T) {
 		t.Fatalf("ReadFile: %v", err)
 	}
 	output := string(data)
-	for _, want := range []string{"Test Feed", "Visible item", "Summary body", "Strong match", "Critical", "Open original"} {
+	for _, want := range []string{"Test Feed", "Visible item", "Summary body", "Strong match", "High Interest", "Open original"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("expected html output to contain %q, got %s", want, output)
 		}
 	}
-	if strings.Contains(output, "Rejected item") {
-		t.Fatalf("expected rejected item to be omitted, got %s", output)
+	if strings.Contains(output, "Avoid item") {
+		t.Fatalf("expected avoid item to be omitted, got %s", output)
 	}
 	if !strings.Contains(logs.String(), "wrote html output") {
 		t.Fatalf("expected html reporter log, got %s", logs.String())

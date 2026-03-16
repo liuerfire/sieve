@@ -146,8 +146,8 @@ func TestRunWorkflow_LogsProgressAndSummary(t *testing.T) {
 		collectResult: plugins.CollectResult{
 			Title: "Collected Title",
 			Items: []types.FeedItem{
-				types.FeedItem{Title: "visible", Level: types.LevelRecommended}.WithDefaults(),
-				types.FeedItem{Title: "hidden", Level: types.LevelRejected}.WithDefaults(),
+				types.FeedItem{Title: "visible", Level: "interest"}.WithDefaults(),
+				types.FeedItem{Title: "hidden", Level: "avoid"}.WithDefaults(),
 			},
 		},
 	})

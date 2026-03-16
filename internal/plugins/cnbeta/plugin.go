@@ -20,7 +20,7 @@ func (Plugin) ProcessItems(ctx context.Context, items []types.FeedItem, _ config
 	client := httpx.NewClient()
 	result := make([]types.FeedItem, 0, len(items))
 	for _, item := range items {
-		if item.Level == types.LevelRejected || item.Link == "" {
+		if item.Level == types.LevelAvoid || item.Link == "" {
 			result = append(result, item)
 			continue
 		}

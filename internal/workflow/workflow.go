@@ -105,15 +105,15 @@ func Run(ctx context.Context, params Params) error {
 	}
 
 	visibleCount := 0
-	rejectedCount := 0
+	avoidCount := 0
 	for _, item := range processed {
-		if item.Level == types.LevelRejected {
-			rejectedCount++
+		if item.Level == types.LevelAvoid {
+			avoidCount++
 			continue
 		}
 		visibleCount++
 	}
-	logInfo(params.Logger, "processing completed", "source", params.SourceName, "items", len(processed), "visible", visibleCount, "rejected", rejectedCount)
+	logInfo(params.Logger, "processing completed", "source", params.SourceName, "items", len(processed), "visible", visibleCount, "avoid", avoidCount)
 
 	reportTitle := params.SourceConfig.Title
 	if reportTitle == "" {
@@ -132,7 +132,7 @@ func Run(ctx context.Context, params Params) error {
 		}
 	}
 
-	logInfo(params.Logger, "workflow completed", "source", params.SourceName, "items", len(processed), "visible", visibleCount, "rejected", rejectedCount, "title", reportTitle)
+	logInfo(params.Logger, "workflow completed", "source", params.SourceName, "items", len(processed), "visible", visibleCount, "avoid", avoidCount, "title", reportTitle)
 
 	return nil
 }

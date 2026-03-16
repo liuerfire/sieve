@@ -43,7 +43,7 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 	toGrade := make([]types.FeedItem, 0)
 	reqItems := make([]llm.GradeItem, 0)
 	for _, item := range items {
-		if item.Level == types.LevelRejected {
+		if item.Level == types.LevelAvoid {
 			continue
 		}
 		toGrade = append(toGrade, item)
@@ -89,7 +89,7 @@ func (LLMGradePlugin) ProcessItems(ctx context.Context, items []types.FeedItem, 
 			return nil, fmt.Errorf("invalid grade result")
 		}
 		switch types.FeedLevel(result.Level) {
-		case types.LevelCritical, types.LevelRecommended, types.LevelOptional, types.LevelRejected:
+		case types.LevelHighInterest, types.LevelInterest, types.LevelUninterested, types.LevelAvoid:
 		default:
 			return nil, fmt.Errorf("invalid grade level %q", result.Level)
 		}

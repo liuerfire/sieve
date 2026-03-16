@@ -50,10 +50,10 @@ Configuration uses a JSON file:
 - `sources[]` with string or object plugin entries
 
 Item levels in the rewrite runtime:
-1. `critical` (⭐⭐)
-2. `recommended` (⭐)
-3. `optional`
-4. `rejected`
+1. `high_interest` (⭐⭐)
+2. `interest` (⭐)
+3. `uninterested`
+4. `avoid`
 
 ## Technical Conventions
 

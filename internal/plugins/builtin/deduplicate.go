@@ -54,7 +54,7 @@ func (DeduplicatePlugin) ProcessItems(_ context.Context, items []types.FeedItem,
 			result = append(result, item)
 			continue
 		}
-		item.Level = types.LevelRejected
+		item.Level = types.LevelAvoid
 		result = append(result, item)
 	}
 	return result, nil

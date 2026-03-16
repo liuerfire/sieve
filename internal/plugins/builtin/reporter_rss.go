@@ -53,14 +53,14 @@ type rssGUID struct {
 func FormatRSSItems(items []types.FeedItem, showReason bool) []rssItem {
 	result := make([]rssItem, 0, len(items))
 	for _, item := range items {
-		if item.Level == types.LevelRejected {
+		if item.Level == types.LevelAvoid {
 			continue
 		}
 		title := item.Title
 		switch item.Level {
-		case types.LevelCritical:
+		case types.LevelHighInterest:
 			title = "⭐⭐ " + title
-		case types.LevelRecommended:
+		case types.LevelInterest:
 			title = "⭐ " + title
 		}
 		note := ""
