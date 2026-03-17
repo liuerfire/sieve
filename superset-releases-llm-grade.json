@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.2.0",
+      "Level": "high_interest",
+      "Reason": "标题明确为 Desktop Release，符合 Source high interest 配置；同时属于编程工具发布/分享，匹配 Global high interest。主题高度聚焦用户核心兴趣。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-canary",
+      "Level": "avoid",
+      "Reason": "标题含 'Canary'，Source avoid 明确列出 Canary Release；虽属桌面应用，但来源配置中 avoid 权重高于 high interest 的 Desktop，故整体判定为 avoid。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.7",
+      "Level": "high_interest",
+      "Reason": "版本号发布，属于 Desktop Release 类型，符合 Source high interest；同时是编程工具发布，匹配 Global high interest。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.6",
+      "Level": "high_interest",
+      "Reason": "同上，为 Desktop Release 版本发布，双重高兴趣匹配。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.5",
+      "Level": "high_interest",
+      "Reason": "同上，Desktop Release 版本发布，符合 Source 和 Global high interest。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.4",
+      "Level": "high_interest",
+      "Reason": "同上，Desktop Release 版本发布，主题明确且高度相关。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.3",
+      "Level": "high_interest",
+      "Reason": "同上，Desktop Release 版本发布，完全契合用户兴趣。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.2",
+      "Level": "high_interest",
+      "Reason": "同上，Desktop Release 版本发布，无歧义、强相关。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.1",
+      "Level": "high_interest",
+      "Reason": "同上，Desktop Release 版本发布，符合所有高兴趣条件。"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/1080370450/desktop-v1.1.0",
+      "Level": "high_interest",
+      "Reason": "同上，首个 1.1.x 大版本发布，属于 Desktop Release，兼具 Global high interest（编程工具发布）和 Source high interest。"
+    }
+  ]
+}

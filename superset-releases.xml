@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Superset Releases</title>
+    <description>Filtered content for superset-releases</description>
+    <item>
+      <title>⭐⭐ Superset Desktop 发布 v1.1.5 版本</title>
+      <link>https://github.com/superset-sh/superset/releases/tag/desktop-v1.1.5</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[high_interest] 同上，Desktop Release 版本发布，符合 Source 和 Global high interest。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;本次更新发布了 Superset Desktop 应用的 v1.1.5 版本。由于发布说明中未提供具体的改动日志，无法详述此版本包含的功能改进、UI 变更或问题修复等细节。&lt;/p&gt;</description>
+      <guid>tag:github.com,2008:Repository/1080370450/desktop-v1.1.5</guid>
+      <pubDate>2026-03-10T20:33:19Z</pubDate>
+    </item>
+    <item>
+      <title>⭐⭐ Superset Desktop 发布 v1.1.0 版本</title>
+      <link>https://github.com/superset-sh/superset/releases/tag/desktop-v1.1.0</link>
+      <description>&lt;p&gt;&lt;small style=&#34;opacity: 0.7;&#34;&gt;[high_interest] 同上，首个 1.1.x 大版本发布，属于 Desktop Release，兼具 Global high interest（编程工具发布）和 Source high interest。&lt;/small&gt;&lt;/p&gt;&lt;p&gt;Superset Desktop 是一个桌面终端应用，用于同时运行多个 CLI 编码代理（如 Claude Code），每个任务在独立的 git worktree 中隔离，并提供内置 diff 查看器等功能。&lt;/p&gt;&lt;p&gt;本次 v1.1.0 版本的具体更新内容未在提供的信息中详述，建议查阅官方发布日志以了解与 UI、交互及终端功能相关的改进。&lt;/p&gt;</description>
+      <guid>tag:github.com,2008:Repository/1080370450/desktop-v1.1.0</guid>
+      <pubDate>2026-03-07T18:20:53Z</pubDate>
+    </item>
+  </channel>
+</rss>

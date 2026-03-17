@@ -1,0 +1,106 @@
+{
+  "items": [
+    {
+      "GUID": "https://www.phoronix.com/news/Mesa-AMDGPU-PS5-Patches",
+      "Title": "Mesa 与 AMDGPU 驱动新增对索尼 PS5 GPU 的支持补丁",
+      "Description": "开源开发者 Andy Nguyen 近期成功将 Linux 移植到索尼 PlayStation 5（PS5），并开始向上游提交相关补丁。PS5 采用定制的 AMD SoC，其 GPU 基于多代 IP 混合设计，CPU 则源自 Zen 2 架构。为使其兼容开源 AMD 图形驱动栈，Nguyen 提交了多项关键补丁：Mesa 26.1-devel 已合并一项更新，将 GFX1013 GPU 系列扩展至 AMD ADDRLIB 库，其中隐含支持 PS5 GPU；此外，他还向 AMDGPU 内核驱动提交了识别设备 ID 为 0x13da 的“Cyan Skillfish”GPU 的补丁（即 PS5 GPU），目前该补丁尚未被纳入任何开发分支；另一项针对 AMDGPU 显示核心（Display Core, DC）的修复补丁则已获采纳，用于解决 PS5 上运行 Linux 时的显示问题，并将进入主线 Linux 内核。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=ps5_linux\" alt=\"Ubuntu Linux on the Sony PS5\" /\u003e 更多关于此 PS5 Linux 移植项目的详情及演示视频，可参阅 \u003ca href=\"https://www.phoronix.com/news/Mesa-AMDGPU-PS5-Patches\"\u003e相关讨论串\u003c/a\u003e。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/ARM-NEON-CRC64-6x",
+      "Title": "ARM NEON 加速 CRC64 优化实现近 6 倍性能提升",
+      "Description": "开源开发者 Demian Shulhan 向 Linux 内核邮件列表提交了一个针对 ARM64 架构的 CRC64-NVMe 优化实现，利用 NEON 的多项式乘法长指令（PMULL）显著提升性能。该优化旨在缓解 NVMe 等存储子系统中的校验瓶颈，在 Cortex-A72 SoC 上测试显示，处理 4096 字节数据时吞吐量从通用实现的约 268 MB/s 提升至约 1556 MB/s，接近 6 倍加速。\u003cbr /\u003e\u003cbr /\u003e此实现使用 C 语言内联函数（arm_neon.h）而非汇编代码，以提高可读性和可维护性，并包含多项优化措施：在 scoped_ksimd() 中采用 4KB 分块处理以避免大缓冲区导致的抢占延迟；通过 vld1q_u64() 预加载折叠常量以减少寄存器溢出；仅在数据长度大于等于 128 字节时启用 PMULL 路径（此为性能拐点）；并在大端系统上安全回退到通用实现。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=arm64_crc64_6x\" alt=\"benchmark results of NEON CRC64 implementation\" /\u003e\u003cbr /\u003e\u003cbr /\u003e值得注意的是，这一仅百余行代码的优化补丁直到近期才出现，目前该补丁已在 Linux 内核邮件列表中接受审查。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Meta-Renewing-jemalloc",
+      "Title": "Meta 重启对 jemalloc 内存分配器的投资",
+      "Description": "\u003cp\u003eMeta 宣布将重新加大对开源内存分配器 jemalloc 的投入。jemalloc 因其在高性能计算（HPC）、服务器及桌面应用（如 Firefox）中展现出的优异性能、可扩展性、低内存占用和碎片化而广受认可。Meta（及其前身 Facebook）近二十年来一直在其基础设施中使用 jemalloc，并在过去十多年持续投资于其开发与维护。\u003c/p\u003e\u003cp\u003e然而，近年来 jemalloc 的进展放缓。Meta 在其工程博客中承认，过去一些追求短期收益的决策偏离了项目长期坚持的核心工程原则，累积的技术债务阻碍了发展。为此，Meta 已与社区及项目创始人 Jason Evans 进行深入交流，并决定改变策略，致力于偿还技术债务，重建长期发展路线图。\u003c/p\u003e\u003cp\u003e未来的工作重点包括：重构代码库以降低维护负担、完善巨页分配器（HPA）模式以更好地利用 Linux 的透明巨页（Transparent Hugepages）、提升内存效率，以及深化对 AArch64 CPU 的优化。\u003c/p\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=intel-xeon6-mrdimm-ddr5\u0026amp;image=mrdimm_8800_1_med\" alt=\"MRDIMM memory modules\" /\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Glibc-Faster-cosh-x86-64-FMA",
+      "Title": "GNU C 库为 x86_64 平台引入 FMA 优化的 cosh 函数，性能提升约 35%",
+      "Description": "GNU C 库（glibc）近日合并了一项针对现代 x86_64 处理器的性能优化：Linaro 工程师 Adhemerval Zanella 提交了使用融合乘加（FMA）指令优化的双曲余弦函数 \u003ccode\u003ecosh()\u003c/code\u003e 实现。在面向 x86_64-v3 微架构特性级别构建时，该优化可带来约 35% 的性能提升，显著优于现有的 SSE2 版本。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=glibc_cosh_1\" alt=\"glibc cosh FMA optimization\" /\u003e 此次更新是 glibc 持续利用现代 x86_64 指令集能力的一部分，相关代码已通过\u003ca href=\"https://sourceware.org/pipermail/libc-alpha/2026-March/171559.html\"\u003e此补丁\u003c/a\u003e合入主干。同日合并的其他补丁还涉及来自 CORE-MATH 项目的 \u003ccode\u003etanh\u003c/code\u003e 和 \u003ccode\u003esinh\u003c/code\u003e 函数优化，但其效果因目标 CPU 架构不同而表现不一。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=glibc_cosh_2\" alt=\"glibc CORE-MATH change performance benchmark\" /\u003e 这些改进将包含在计划于今年 8 月发布的 glibc 2.44 版本中。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/FFmpeg-8.1-Released",
+      "Title": "FFmpeg 8.1 发布：新增实验性 xHE-AAC MPS212 支持与更多 Vulkan 加速功能",
+      "Description": "\u003cimg src=\"//www.phoronix.net/image.php?id=2022\u0026amp;image=ffmpeg\" alt=\"FFmpeg logo\" /\u003eFFmpeg 8.1 作为这一广泛使用的开源多媒体库的最新稳定版本，带来了多项重要更新。新版本增强了对 Vulkan API 的支持，包括使用计算着色器（compute shaders）实现 Apple ProRes 的 Vulkan 加速、DPX（Digital Picture Exchange）格式的 Vulkan 硬件加速、Vulkan 计算编解码优化，以及 Vulkan 软件缩放（swscale）支持。\u003cbr/\u003e\u003cbr/\u003e此外，FFmpeg 8.1 引入了对 JPEG-XS 格式的初步支持，包含解析器、通过 libsvtjpegxs 库实现的编解码功能，以及比特流的复用与解复用。其他更新还包括 Direct3D 12 AV1 编码器支持、EXIF 元数据解析、FFmpeg 命令行工具对分块 HEIF（tiled HEIF）的支持，以及实验性的 xHE-AAC MPS212 音频解码支持。Khronos 博客也同步发布了关于 FFmpeg 利用 Vulkan 计算着色器为未被 Vulkan Video 扩展覆盖的编解码器提供硬件加速的详细介绍。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-sched-ext-SCX-ENQ-IMMED",
+      "Title": "Linux 7.1 将为 sched_ext 调度器新增 SCX_ENQ_IMMED 标志以提升任务调度精度",
+      "Description": "Linux 内核的可扩展调度器类 sched_ext（用于通过 BPF 程序实现自定义 CPU 调度策略）将在即将发布的 Linux 7.1 中引入新的 SCX_ENQ_IMMED 标志。该标志由资深内核开发者 Tejun Heo 提出，用于控制任务入队行为：当任务被标记为 IMMED 时，若能立即执行，则直接加入本地分发队列（Dispatch Queue, DSQ）并运行；否则将重新交还给 BPF 调度器处理，而不会滞留在本地 DSQ 中排队或被更高优先级任务抢占 CPU。此举旨在防止任务在本地队列中堆积，从而实现更精确的调度延迟控制，并支持多个子调度器之间更灵活地共享 CPU 资源。该补丁现已合并至 sched_ext 的“for-7.1”开发分支，预计将在下月的 Linux 7.1 合并窗口中正式提交。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/review/fedora-44-beta",
+      "Title": "Fedora Workstation 44 Beta 在 AMD Ryzen AI Max Framework 桌面平台上的基准测试",
+      "Description": "\u003cimg src=\"//www.phoronix.net/image.php?id=fedora-44-beta\u0026amp;image=fedora_44_1_med\" alt=\"Fedora Workstation 44 Beta\" /\u003e\u003cbr\u003e自 Fedora 44 Beta 发布以来，Phoronix 对搭载 AMD Ryzen AI Max+ 395 “Strix Halo” 处理器的 Framework 桌面进行了多轮基准测试，对比了 Fedora Workstation 43（初始版与更新后版本）和 Fedora Workstation 44 Beta 的性能表现。测试在相同硬件上通过干净安装各系统版本完成。\u003cbr\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=fedora-44-beta\u0026amp;image=fedora_44_2_med\" alt=\"Fedora 44 with GCC 16 compiler\" /\u003e\u003cbr\u003e由于 Fedora 43 已通过更新采用了与 Fedora 44 Beta 相同的 Linux v6.19 内核，因此升级带来的部分性能优势被削弱。尽管如此，从 Fedora 43 升级到 44 Beta 仍观察到一些有趣的性能变化。Fedora 44 的一大亮点是率先采用尚未正式发布稳定版的 GCC 16 编译器，延续了其在主流发行版中率先集成最新开发工具的传统。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/PowerVR-Vulkan-Does-Zink",
+      "Title": "Imagination 开源 PowerVR Vulkan 驱动现已良好支持 Zink OpenGL",
+      "Description": "\u003cp\u003e过去几年，Imagination Technologies 一直致力于开发上游开源的 DRM 内核图形驱动和 Mesa 中的 PowerVR Vulkan 驱动。其 Mesa 开发重点始终放在 PowerVR Vulkan 驱动上，并计划通过通用的 OpenGL-on-Vulkan 实现 \u003ca href=\"https://docs.mesa3d.org/drivers/zink.html\"\u003eZink\u003c/a\u003e 来提供 OpenGL 支持。随着即将于今年第二季度中发布的 Mesa 26.1，这一目标已顺利实现。\u003c/p\u003e\u003cp\u003e近几个月来，PowerVR Vulkan 驱动已补齐了 Zink 所需的所有 Vulkan 功能。最后一个关键环节是扩展 Zink 以支持 Mesa 的“仅渲染内核模式设置”（KMSRO）框架。此前，Zink 仅支持 GPU 和显示控制器由同一内核驱动管理的设备，而 Imagination 仅提供 GPU IP，其显示控制器由 SoC 厂商实现，因此不在此列。\u003c/p\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=powervr_zink\" alt=\"PowerVR running Zink\" /\u003e\u003cp\u003eImagination 在其官方博客上宣布了这一里程碑。未来，他们还将继续推进该开源驱动栈对 Vulkan 1.2 和 OpenGL ES 的合规性。此举不仅完善了 PowerVR 在 Linux 上的开源图形生态，也为其他硬件厂商提供了参考——随着 Vulkan 的普及，越来越多的厂商可能会采用“仅 Vulkan 驱动 + Zink 提供 OpenGL 兼容”的模式。\u003c/p\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Lenovo-Go-S-HID-Linux-7.1",
+      "Title": "联想 Legion Go 系列 HID 驱动即将加入 Linux 7.1",
+      "Description": "Derek Clark 为提升联想 Legion Go 掌机在 Linux 系统下的支持所开展的工作持续推进。最新成果是专为 Legion Go 和 Go S 系列开发的 HID（Human Interface Device）驱动程序，已确定将随 Linux 7.1 内核发布。这两个新驱动（分别为“hid-lenovo-go-s”和“hid-lenovo-go”）使用户能在 Linux 主线内核中访问并配置掌机控制器的多项功能，包括震动与触觉反馈、校准设置、RGB 灯光控制以及触控板属性等。\u003cimg src=\"//www.phoronix.net/image.php?id=2025\u0026amp;image=legion_go_steamos_med\" alt=\"Lenovo Legion Go handheld\" /\u003e这些设置通过 sysfs 接口向用户空间开放，其中 LED 控制使用了标准的 LEDs class，而 USB 相关设置则通过 /sys/bus/usb/devices/ 接口进行管理。该驱动经过数月开发，已于上周合并至 HID 子系统的 for-next Git 分支，等待四月开启的 Linux 7.1 合并窗口。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.1-Retiring-UDP-Lite",
+      "Title": "Linux 7.1 将移除 UDP-Lite 协议支持以提升网络性能",
+      "Description": "\u003cp\u003e即将发布的 Linux 7.1 内核将正式移除对 UDP-Lite（轻量级用户数据报协议）的支持。UDP-Lite 允许对数据包进行部分校验和，即使数据包部分损坏也能交付给应用程序。该协议自 Linux 2.6.20 起被支持，但多年来已基本无人使用。\u003c/p\u003e\u003cp\u003eGoogle 工程师 Kuniyuki Iwashima 主导了此次移除工作。他指出，自 2016 年起就存在一个空指针解引用漏洞，直到 2023 年才被 syzbot（自动化内核测试工具）发现。由于该漏洞与普通 UDP 共享内存阈值，若 UDP-Lite 被实际应用则极易触发，但多年来仅有 syzbot 报告过此问题，这表明 UDP-Lite 已长期处于未使用状态。2023 年修复该漏洞后，内核便加入了弃用通知，并计划于 2025 年移除。如今进入 2026 年且无任何用户反馈，移除时机已成熟。\u003c/p\u003e\u003cp\u003e移除 UDP-Lite 不仅能清理陈旧的网络代码，还能为常规 UDP 用户带来显著的性能提升。通过删除 UDP 快速路径中大量针对 UDP-Lite 的条件判断，在 AMD EPYC 7B12 处理器上进行的 udp_rr 基准测试（20,000 个流）显示，每秒数据包处理能力（pps）提升了约 10%（从 13.3 Mpps 提升至 14.7 Mpps）。即使在启用 FDO（反馈驱动优化）的情况下，性能提升也达到了约 3%。此项变更已合并至 net-next 分支，将随 Linux 7.1 正式发布。\u003c/p\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=retire_udp_lite\" alt=\"Linux retiring UDP-Lite\" /\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Mesa-26.1-RADV-Four-Year-Opt",
+      "Title": "RADV 驱动实现搁置四年的优化：提升裁剪性能",
+      "Description": "\u003cfigure\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=radv_long_time\" alt=\"RADV long time optimization merged\" /\u003e\u003c/figure\u003e\u003cp\u003e一项早在 2022 年 5 月由 Valve Linux 图形团队的 Timur Kristof 提出的优化建议，近日终于被合并进 Mesa 26.1 的 RADV（Radeon Vulkan）驱动中。该优化涉及将 RadeonSI 中已有的 \u003ccode\u003esi_emit_guardband\u003c/code\u003e 实现移植到 RADV，通过正确设置 \u003ccode\u003ePA_SU_HARDWARE_SCREEN_OFFSET\u003c/code\u003e 寄存器来改善裁剪（clipping）性能（而非剔除 culling）。\u003c/p\u003e\u003cp\u003e这项工作由同属 Valve 团队的 Samuel Pitoiset 完成，并已于上周合入主线。尽管 \u003ccode\u003ePA_SU_HARDWARE_SCREEN_OFFSET\u003c/code\u003e 寄存器在 AMD GPU 上已存在超过 16 年，但此前 RADV 一直未加以利用。目前相关 issue 和合并请求中均未提供具体的性能提升数据。\u003c/p\u003e\u003cfigure\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=pa_su_hw_screen_offset\" alt=\"PA_SU_HARDWARE_SCREEN_OFFSET documentation\" /\u003e\u003c/figure\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/More-AMDGPU-For-Linux-7.1",
+      "Title": "AMD 为 Linux 7.1 准备更多图形驱动更新",
+      "Description": "AMD 已向 DRM-Next 提交了新一轮 AMDGPU 内核图形驱动更新，为即将于四月开启合并窗口的 Linux 7.1 做准备。此次更新包含多项修复和新功能支持，包括针对新一代 RDNA4 架构变体 AMD GFX/GC 12.1 的支持、IP 自动发现机制更新、Display Core Next 4.2 和 PSP 15 固件更新，以及多个面向未来硬件的新 IP 模块支持，其中 LSDMA 7.1 IP 首次被启用。\u003cbr\u003e\u003cbr\u003e值得注意的是，本次提交还加入了在主显示平面（primary planes）上启用 NV12/P010 格式支持，并在叠加平面（overlay planes）上启用色彩编码与色域范围控制的功能。这些改进属于近期 Phoronix 报道过的、由 Claude Code AI 辅助开发的 AMD Linux 色彩管理优化工作的一部分。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=drm_csc\" alt=\"AMD Color management work\" /\u003e\u003cbr\u003e\u003cbr\u003e完整的 AMDGPU/AMDKFD 驱动补丁列表可在相关拉取请求中查阅。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-rc4-Released",
+      "Title": "Linux 7.0-rc4 发布：修复挂起问题与性能回归",
+      "Description": "Linux 7.0-rc4 已于今日发布，距离 7.0 稳定版正式推出约剩一个月。此版本包含多项关键修复：解决了自 Linux 6.19 起存在于 mm/cid 调度器代码中的挂起问题和至少一个性能回归；为 AMDGPU 驱动修复了 RDNA4 架构 GPU（如用于 Llama.cpp/AI 计算）在运行计算负载后空闲功耗异常的问题；cpupower 的 systemd 服务文件现已支持设置能效偏好（EPP）；同时为未来 Rust 语言版本的集成做了准备。\u003cbr\u003e\u003cbr\u003eLinus Torvalds 在发布公告中提到，尽管初期看起来平静，但本周后期大量补丁集中提交，导致 rc4 比往常略大。他推测这可能与“新主版本号”带来的心理效应有关，开发者积极性更高。不过，所有变更仍以小型、分散的修复为主，整体风险较低。\u003cbr\u003e\u003cbr\u003eLinux 7.0 预计将于四月中旬发布，并将成为 Ubuntu 26.04 LTS、Fedora 44 等 2026 年上半年主流 Linux 发行版的核心。\u003cimg src=\"//www.phoronix.net/image.php?id=2026\u0026amp;image=linux_70_rc4\" alt=\"Linux 7.0-rc4\" /\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Bcachefs-1.37-Released",
+      "Title": "Bcachefs 1.37 发布：支持 Linux 7.0，纠删码功能稳定并新增子命令",
+      "Description": "\u003cp\u003eBcachefs 1.37 已正式发布，这是该下一代写时复制（Copy-on-Write）文件系统的最新功能版本。本次更新最重要的变化是其\u003cstrong\u003e纠删码（Erasure Coding）\u003c/strong\u003e功能现已标记为稳定。该功能作为一种数据冗余机制，可用于错误检测与纠正（EDAC），其作用类似于 RAID 实现，经过数年开发和近两年的持续优化，现已移除实验性标签，核心功能宣告完成。\u003c/p\u003e\u003cp\u003e其他主要改进包括：支持自动从 flush/FUA 支持不良的设备中恢复、加快非正常关机后的恢复速度、提升多设备文件系统的性能，以及将日志回滚（journal rewind）功能标记为安全可用，文件系统可自动追踪安全回滚的边界。\u003c/p\u003e\u003cp\u003e新版本还引入了多个新的子命令，如 \u003ccode\u003esubvolume list\u003c/code\u003e、\u003ccode\u003elist-snapshots\u003c/code\u003e 和 \u003ccode\u003ereflink-option-propagate\u003c/code\u003e，并更新了长达约 100 页的《操作原理》（Principles of Operation, PoO）文档。此外，Bcachefs 1.37 现已兼容最新的 Linux 7.0 内核，并持续推进其用户空间工具向 Rust 编程语言的迁移工作。更多详情可参阅 \u003ca href=\\\"https://github.com/koverstreet/bcachefs-tools\\\"\u003eBcachefs-tools 仓库\u003c/a\u003e。\u003c/p\u003e\u003cimg src=\\\"//www.phoronix.net/image.php?id=bcachefs-linux-2019\u0026amp;image=bcachefs_linux_2019_med\\\" alt=\\\"bcachefs testing\\\" /\u003e",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-rc4-More-Rust",
+      "Title": "Linux 7.0 引入更多 Rust 相关改进，提升构建可复现性",
+      "Description": "Linux 7.0 主线昨日合并了新一轮 Rust 相关更新，主要由 Miguel Ojeda 提交，旨在为即将发布的 Rust 1.95 和 1.96 做准备，并增强内核在启用 Rust 代码时的构建可复现性。\u003cbr\u003e\u003cbr\u003e针对 Rust 1.95.0，新补丁通过重映射路径避免使用绝对路径，从而提升构建可复现性、防止泄露本地路径信息，并确保路径形式统一。与此前尝试不同，此次方案特意避免重映射调试信息，以兼容依赖源码路径的外部工具。此外，为适配 Rust 1.96.0，内核将允许使用 'unused_features' lint（尽管实际收益有限）。其他改进包括：直接将依赖信息写入 '$(depfile)' 以取代临时 '.d' 文件；修复 'kernel' crate 中在未启用 CONFIG_BLOCK 时的警告；抑制 'cpufreq' 模块中的误报 Clippy 警告；以及在 'pin-init' crate 中移除一个不安全的属性 '#[disable_initialized_field_access]'，暂时放弃对 'repr(packed)' 结构体的支持，并强调字段访问器对内存安全的关键作用。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-Sched-Fixes-Perf-Hang",
+      "Title": "Linux 7.0-rc4 修复大型系统挂起与性能回退问题",
+      "Description": "本周 Linux 内核调度器（scheduler）的“sched/urgent”紧急更新合并了多项关键修复，主要解决自去年 11 月 mm/cid 重写后引入的问题。这些问题包括在大型系统上启动 VSOCK 监听套接字时可能触发的内核挂起、软锁定（soft lockups）、RCU 停滞和超时。\u003cbr /\u003e\u003cbr /\u003eThomas Gleixner 主导了相关修复工作，提交的补丁集解决了多个并发场景下的竞态条件，例如：修复因并发 fork 导致的 CID 挂起、修正 vfork()/CLONE_VM 中的 MMCID 错误，并移除了一个低效且不稳定的任务遍历逻辑（for_each_process_thread()），代之以更高效的 sched_mm_cid::node 链表，从而显著改善了大型系统的性能。\u003cbr /\u003e\u003cbr /\u003e\u003cimg src=\"//www.phoronix.net/image.php?id=intel-xeon-6700e-ampere-altra\u0026amp;image=intel_srf_1_med\" alt=\"Large Sierra Forest CPU\" /\u003e\u003cbr /\u003e\u003cbr /\u003e此外，另一个独立的挂起问题也通过 x86/urgent 更新得到修复：在挂起到内存（suspend-to-RAM）后，某些固件会意外重新启用 x2apic 硬件模式，而内核仍使用 xapic 接口，导致系统挂起。新补丁确保在恢复时，若内核预期 x2apic 被禁用（x2apic_mode = 0），则会主动将其关闭，避免此问题。\u003cbr /\u003e\u003cbr /\u003e这些修复预计将在 Linux 7.0-rc4 发布前合并。",
+      "Rejected": false
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/KDE-Linux-Adds-APFS",
+      "Title": "KDE Linux 新增 APFS 文件系统支持并修复 AMDGPU 冻结问题",
+      "Description": "\u003cimg src=\"//www.phoronix.net/image.php?id=2025\u0026amp;image=kde_linux_0\" alt=\"KDE Linux\" /\u003e\u003cbr\u003eKDE Linux 近期迎来多项更新，包括预装 KDE 备份工具 Kup，以及通过安装 \u003ccode\u003elinux-apfs-rw-dkms\u003c/code\u003e 包提供对苹果 APFS（Apple File System）文件系统的读写支持。该支持依赖于一个仍处于实验阶段的 DKMS 内核模块，尤其写入功能尚不稳定，但为需要访问现代 macOS 设备数据的用户提供了便利。\u003cbr\u003e\u003cbr\u003e此外，针对困扰 AMD GPU 用户数月之久的系统完全冻结问题（由页面翻转超时引发），KDE Linux 引入了一项内核启动参数 \u003ccode\u003eamdgpu.dcdebugmask=0x10\u003c/code\u003e 作为临时解决方案。此参数会禁用面板自刷新（Panel Self-Refresh），虽会导致功耗略有增加，但可有效避免系统无响应和强制重启。相关问题已在上游追踪（\u003ca href=\"https://gitlab.freedesktop.org/drm/amd/-/issues/4831\"\u003eissue #4831\u003c/a\u003e）。其他改进还包括为 Flatpak 应用预装更多语言包。",
+      "Rejected": false
+    }
+  ]
+}

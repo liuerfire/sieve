@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553822.htm",
+      "Level": "avoid",
+      "Reason": "标题讲特斯拉新款Roadster汽车发布，属于全局avoid中的'汽车'类别"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553820.htm",
+      "Level": "uninterested",
+      "Reason": "标题涉及云服务器促销，属于基础设施类，全局uninterested"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553818.htm",
+      "Level": "uninterested",
+      "Reason": "标题关于出租车计价器，属行业运营细节，不在高兴趣或兴趣范围内，且非技术核心内容"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553816.htm",
+      "Level": "high_interest",
+      "Reason": "AI数据中心降温问题，涉及AI基础设施与液冷技术，紧扣'AI软件技术进展'（global interest）和'编程效率改进经验'隐含的算力支撑需求，且液冷属前沿工程实践，符合high_interest中'编程效率改进经验'的延伸场景"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553814.htm",
+      "Level": "avoid",
+      "Reason": "华莱士广告相关，属娱乐化营销内容，无技术价值，且'健康贴士'在source avoid中，'便秘'属健康暗示"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553812.htm",
+      "Level": "uninterested",
+      "Reason": "国产笔记本CPU造假事件，主题偏向芯片技术（global uninterested）与行业诚信问题，非AI/编程工具/效率改进等高兴趣方向"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/movie/1553810.htm",
+      "Level": "avoid",
+      "Reason": "李英爱重返拍摄地，属娱乐明星日常，source avoid明确列出"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/science/1553808.htm",
+      "Level": "interest",
+      "Reason": "中国科学家揭示宇宙小红点，属科学前沿进展，global interest明确包含'科学前沿进展'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553806.htm",
+      "Level": "uninterested",
+      "Reason": "宝宝巴士推送低俗广告被罚，属应用治理事件，不涉及技术进展、工具发布或AI，仅泛泛提及APP，兴趣度低"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553804.htm",
+      "Level": "uninterested",
+      "Reason": "存储芯片罢工，属芯片技术与行业动态，global uninterested明确包含'芯片技术'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553802.htm",
+      "Level": "uninterested",
+      "Reason": "NVIDIA Vera CPU对标Intel/AMD，属芯片技术范畴，global uninterested明确包含'芯片技术'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553800.htm",
+      "Level": "interest",
+      "Reason": "Windows记事本测试原生图片支持，属软件新功能（global interest），且提升文本编辑器能力，贴近编程工具使用体验"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553798.htm",
+      "Level": "high_interest",
+      "Reason": "微软推动基于Electron的AI应用开发，直接契合'编程工具发布/分享'、'AI软件技术进展'及'编程效率改进经验'三项global high interest"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/comic/1553796.htm",
+      "Level": "avoid",
+      "Reason": "动漫导演去世消息，属人物传记与娱乐新闻，global avoid明确包含'人物传记'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553794.htm",
+      "Level": "uninterested",
+      "Reason": "存储芯片短缺持续至2030年，属芯片技术与行业预测，global uninterested明确包含'芯片技术'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/music/1553792.htm",
+      "Level": "avoid",
+      "Reason": "周杰伦新专辑发布，属娱乐明星日常，source avoid明确列出"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553790.htm",
+      "Level": "interest",
+      "Reason": "Android平板与折叠屏Chrome书签栏更新，属软件新功能（global interest），提升开发者与用户多端一致性体验"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553788.htm",
+      "Level": "high_interest",
+      "Reason": "NVIDIA Groq 3 LPU发布，含SRAM缓存与带宽突破，属新AI模型相关硬件支撑，紧密关联'新AI模型发布公告'这一global high interest项"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/tech/1553786.htm",
+      "Level": "uninterested",
+      "Reason": "百岁老人教智能手机，属奇闻轶事与非技术人员视角，source uninterested明确包含'非技术人员的观点'和'奇闻轶事'"
+    },
+    {
+      "GUID": "https://www.cnbeta.com.tw/articles/movie/1553784.htm",
+      "Level": "avoid",
+      "Reason": "迪士尼雪宝机器人，属娱乐+机器人噱头，无AI模型、编程工具或技术原理披露，落入source avoid的娱乐化范畴"
+    }
+  ]
+}

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>cnBeta.com - 中文业界资讯站</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: rgba(255, 252, 246, 0.86);
+      --ink: #1e1a16;
+      --muted: #6c6258;
+      --line: rgba(71, 56, 38, 0.12);
+      --shadow: 0 20px 50px rgba(48, 35, 22, 0.12);
+      --high-interest: #9f2f22;
+      --interest: #b56a00;
+      --uninterested: #2d6a4f;
+      --accent: #d8c3a5;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(226, 205, 173, 0.9), transparent 34%),
+        radial-gradient(circle at top right, rgba(179, 208, 210, 0.7), transparent 28%),
+        linear-gradient(180deg, #fbf7f1 0%, var(--bg) 100%);
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+    a { color: inherit; }
+    .shell {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 36px 0 80px;
+    }
+    .hero {
+      padding: 28px;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      margin: 0 0 12px;
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 68px);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      max-width: 12ch;
+    }
+    .summary {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      max-width: 60ch;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .stat {
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.52);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .stat strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+    .items {
+      display: grid;
+      gap: 18px;
+      margin-top: 22px;
+    }
+    .card {
+      padding: 24px;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .cardhead {
+      display: flex;
+      gap: 14px;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 10px;
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      font-size: 14px;
+    }
+    .title {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 1.04;
+      letter-spacing: -0.03em;
+    }
+    .badge {
+      padding: 8px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      color: white;
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .badge.high_interest { background: var(--high-interest); }
+    .badge.interest { background: var(--interest); }
+    .badge.uninterested { background: var(--uninterested); }
+    .reason {
+      margin: 0 0 16px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--accent);
+      background: rgba(216, 195, 165, 0.18);
+      color: var(--muted);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    .body {
+      font-size: 17px;
+      line-height: 1.75;
+    }
+    .body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 18px auto;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      box-shadow: 0 14px 30px rgba(31, 20, 10, 0.1);
+    }
+    .body p:first-child { margin-top: 0; }
+    .empty {
+      margin-top: 22px;
+      padding: 36px 28px;
+      border: 1px dashed var(--line);
+      border-radius: 24px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.36);
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+    }
+    @media (max-width: 720px) {
+      .shell { width: min(100vw - 20px, 1120px); padding-top: 18px; }
+      .hero, .card { padding: 18px; border-radius: 20px; }
+      .cardhead { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <p class="eyebrow">cnbeta</p>
+      <h1>cnBeta.com - 中文业界资讯站</h1>
+      <p class="summary">A direct browser view of the latest visible items, with summaries and grading reasons.</p>
+      <div class="stats">
+        <div class="stat"><strong>14</strong><span>Visible Items</span></div>
+        <div class="stat"><strong>3</strong><span>High Interest</span></div>
+        <div class="stat"><strong>3</strong><span>Interest</span></div>
+        <div class="stat"><strong>8</strong><span>Uninterested</span></div>
+      </div>
+    </section>
+    
+    <section class="items">
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">华纳云香港机房促销：香港云服务器19元/月 CN2低至900元/月 买3个月送1个月</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 09:12:03 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553820.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">标题涉及云服务器促销，属于基础设施类，全局uninterested</p>
+        <div class="body">
+                                                
+                                                <p>华纳云，一家老牌的香港本土IDC，致力于为用户提供稳定、高速、安全的网络体验。现重磅推出香港机房限时促销，香港云服务器年付低至236元，折后约19元/月！香港cn2服务器买3个月送1个月，折后低至900元/月，配置性价比非常高，更有多种线路优化，有需要的朋友可以关注下。</p>                
+                        <div class="article-global"></div>                            <p>点击直达：<a href="https://www.hncloud.com/activity/activity_2026spring.html">华纳云官网</a></p><p><strong>香港云服务器促销：</strong></p><p>本次促销的香港机房云服务器提供多种线路选择，CN2GIA/大陆优化/国际线路，支持按固定带宽计费和按固定流量计费，灵活性强，可以自选CPU/内存/带宽/流量，<strong>年付2折起</strong>！</p><table border="1" cellspacing="0" cellpadding="0" width="784"><tbody><tr class="firstRow"><td width="201" valign="top"><p>实例</p></td><td width="206" valign="top"><p>带宽@流量</p></td><td width="112" valign="top"><p>月付</p></td><td width="191" valign="top"><p>年付</p></td><td width="74" valign="top"><p>购买</p></td></tr><tr><td width="201" valign="top"><p>1核1G/50G SSD</p></td><td width="206" valign="top"><p>200M优化@800G </p></td><td width="112" valign="top"><p>59元</p></td><td width="191" valign="top"><p>236元，≈19元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>1核1G/50G SSD</p></td><td width="206" valign="top"><p>500M国际带宽@1000G </p></td><td width="112" valign="top"><p>49元</p></td><td width="191" valign="top"><p>280元，，≈23元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>2核2G/50G SSD</p></td><td width="206" valign="top"><p>200M优化@800G </p></td><td width="112" valign="top"><p>89.7元</p></td><td width="191" valign="top"><p>708元，≈59元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>2核4G/50G SSD</p></td><td width="206" valign="top"><p>5M  CN2@不限流</p></td><td width="112" valign="top"><p>159元</p></td><td width="191" valign="top"><p>954元，≈80元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>2核4G/50G SSD</p></td><td width="206" valign="top"><p>200M优化@1600G </p></td><td width="112" valign="top"><p>155元</p></td><td width="191" valign="top"><p>1224元，≈102元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>4核8G/50G SSD</p></td><td width="206" valign="top"><p>5M  CN2@不限流</p></td><td width="112" valign="top"><p>244元</p></td><td width="191" valign="top"><p>1464元，≈122元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>4核8G/50G SSD</p></td><td width="206" valign="top"><p>200M优化@1600G</p></td><td width="112" valign="top"><p>219.6元</p></td><td width="191" valign="top"><p>1734元，≈144元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="201" valign="top"><p>8核16G/50G SSD</p></td><td width="206" valign="top"><p>5M  CN2@不限流</p></td><td width="112" valign="top"><p>424元</p></td><td width="191" valign="top"><p>2544元，≈212元/月</p></td><td width="74" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr></tbody></table><p><strong> </strong></p><p><strong>香港服务器促销：</strong></p><p>物理服务器官方提供的配置很多，但只有4款配置享受<strong>买三个月送一个月</strong>的超值活动，折后<strong>低至900元/月，</strong>性价比还是非常不错的<strong>，</strong>也支持免费测试。</p><table border="1" cellspacing="0" cellpadding="0" width="766"><tbody><tr class="firstRow"><td width="128" valign="top"><p>CPU</p></td><td width="76" valign="top"><p>内存</p></td><td width="76" valign="top"><p>硬盘</p></td><td width="127" valign="top"><p>带宽</p></td><td width="102" valign="top"><p>月付</p></td><td width="181" valign="top"><p>季付(4个月)</p></td><td width="75" valign="top"><p>购买</p></td></tr><tr><td width="128" valign="top"><p>E5-2660</p></td><td width="76" valign="top"><p>16G</p></td><td width="76" valign="top"><p>500G</p></td><td width="127" valign="top"><p>10M  CN2</p></td><td width="102" valign="top"><p>1200元</p></td><td width="181" valign="top"><p>3600元，≈900元/月</p></td><td width="75" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="128" valign="top"><p>Gold  6138</p></td><td width="76" valign="top"><p>16G</p></td><td width="76" valign="top"><p>500G</p></td><td width="127" valign="top"><p>10M  CN2</p></td><td width="102" valign="top"><p>1400元</p></td><td width="181" valign="top"><p>4200元，≈1050元/月</p></td><td width="75" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="128" valign="top"><p>E5-2660</p></td><td width="76" valign="top"><p>16G</p></td><td width="76" valign="top"><p>500G</p></td><td width="127" valign="top"><p>50M优化</p></td><td width="102" valign="top"><p>1488元</p></td><td width="181" valign="top"><p>4464元，≈1116元/月</p></td><td width="75" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="128" valign="top"><p>E5-2660</p></td><td width="76" valign="top"><p>32G</p></td><td width="76" valign="top"><p>500G</p></td><td width="127" valign="top"><p>100M优化</p></td><td width="102" valign="top"><p>3788元</p></td><td width="181" valign="top"><p>11364元，≈2841元/月</p></td><td width="75" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr></tbody></table><p><strong>香港高防服务器促销：</strong></p><p>华纳云的香港高防服务器作为刚需性产品，基本上很少做活动了，这次竟然罕见的给了优惠，性价比非常高的主要有两款，20G和150G防御，价格也是非常美丽，移动方向直连清洗，配的双向CN2 GIA带宽。</p><table border="1" cellspacing="0" cellpadding="0" width="769"><tbody><tr class="firstRow"><td width="114" valign="top"><p>CPU</p></td><td width="110" valign="top"><p>内存</p></td><td width="110" valign="top"><p>硬盘</p></td><td width="127" valign="top"><p>带宽</p></td><td width="92" valign="top"><p>防御</p></td><td width="138" valign="top"><p>月付</p></td><td width="77" valign="top"><p>购买</p></td></tr><tr><td width="114" valign="top"><p>E5-2660</p></td><td width="110" valign="top"><p>32G</p></td><td width="110" valign="top"><p>500G</p></td><td width="127" valign="top"><p>10M  CN2</p></td><td width="92" valign="top"><p>20G</p></td><td width="138" valign="top"><p>1288元</p></td><td width="77" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr><tr><td width="114" valign="top"><p>E5-2660*2</p></td><td width="110" valign="top"><p>64G</p></td><td width="110" valign="top"><p>500G</p></td><td width="127" valign="top"><p>20M  CN2</p></td><td width="92" valign="top"><p>150G</p></td><td width="138" valign="top"><p>6888元</p></td><td width="77" valign="top"><p><a href="https://www.hncloud.com/activity/activity_2026spring.html">链接</a></p></td></tr></tbody></table><p>注意：华纳云官网提供相应的测试IP，如果不确定的话，可以提前测试下，看看具体的性能怎么样，再决定是否购买。我们往期也出过一些测评文章，感兴趣的可以看看。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">1辆出租车4个计价器引关注 官方回应：拼车时单独计费 打车更便宜</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 09:03:46 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553818.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">标题关于出租车计价器，属行业运营细节，不在高兴趣或兴趣范围内，且非技术核心内容</p>
+        <div class="body">
+                                                
+                                                <p>近日，有网友在社交平台发帖称，自己去四川康定旅游时，发现1辆出租车上竟然有4个计价器，惊呆了。网友分享的照片显示，这4个计价器整合在一个屏幕中，<strong>分别对应4名乘客，如果中途有乘客上车的话，就点击对应的计价器。</strong></p>                
+                        <div class="article-global"></div>                            <p>并且，相较于其它城市，康定出租车的起步价更便宜，仅4元，后续里程费为1.2元/km。</p><p><a href="//img1.mydrivers.com/img/20260317/288c2b45d0bc40969740cdddcffd2aa7.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/c173612d0237ca6.png"/></a></p><p>针对“一辆出租车四个计价器”的情况，康定市交通运输局一名工作人员向媒体证实，当地出租车确实安装了支持合乘计费的设备。“康定城区允许出租车合乘，相关运营方案很早以前就已报主管部门同意了。”</p><p>该工作人员介绍，乘客上车打表，<strong>分表计价有折扣优惠。“白天起步价为4元，乘客合乘后会自动计算折扣费用，乘客按各自计价器显示金额支付。”</strong></p><p>此事引起网友热议，“同是第一次见，这里的出租车司机跑一趟，相当于别地跑四趟”、“康定本地只有一条主干道，出租车拼车的话很容易，不容易多绕路”、“适合跑景区、市区等固定线路的出租车，建议其它地方也推广”。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">AI数据中心降温成问题 谷歌洽购中国液冷系统</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 08:33:53 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553816.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge high_interest">High Interest</span>
+        </div>
+        <p class="reason">AI数据中心降温问题，涉及AI基础设施与液冷技术，紧扣&#39;AI软件技术进展&#39;（global interest）和&#39;编程效率改进经验&#39;隐含的算力支撑需求，且液冷属前沿工程实践，符合high_interest中&#39;编程效率改进经验&#39;的延伸场景</p>
+        <div class="body">
+                                                
+                                                <p>3月17日，据路透社报道，知情人士称，Google公司的一支采购团队访问了中国内地，与深圳英维克科技和其他中国内地公司洽谈，拟采购数据中心液冷设备。液冷系统在设备周围或上方循环水或其他液体，在AI数据中心中已变得至关重要，因为高密度计算产生的热量超过了传统风冷系统所能处理的范围。</p>                
+                        <div class="article-global"></div>                            <p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/725f5af2952b0a1.webp"/><br/></p><p style="text-align: center;">Google</p><p>知情人士称，这支采购团队来自Google台湾业务，<strong>他们在本月造访了内地，反映出液冷系统零部件供应紧张。Google团队在访问内地期间已与英维克会面，还计划与至少另一家中国公司接洽。</strong></p><p>这些洽谈凸显出，全球AI数据中心基础设施建设竞赛不仅导致先进芯片供应紧张，也使得较低价值设备供应吃紧，同时表明中国供应商在全球数据中心发展中扮演的角色日益重要。</p><p>根据摩根大通的一份报告，<strong>受英伟达以及部署定制AI芯片的云服务提供商需求的推动，全球AI服务器液冷系统市场规模预计将从去年的89亿美元激增至2026年的逾170亿美元。</strong></p><p>截至发稿，Google、英维克尚未就此置评。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">国产笔记本CPU造假 AMD官方声明：毫不知情</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 08:26:26 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553812.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">国产笔记本CPU造假事件，主题偏向芯片技术（global uninterested）与行业诚信问题，非AI/编程工具/效率改进等高兴趣方向</p>
+        <div class="body">
+                                                
+                                                <p>近日，国产厂商驰为笔记本CPU造假事件引发广泛关注和热议，一直有三款产品号称采用AMD 锐龙5 7430U处理器，但其实是更早的锐龙5 5500U。对此，驰为官方一直闪烁其词，香港代理商汉科则已决定全面召回涉事产品，安排退款。</p>                
+                        <div class="article-global"></div>                            <p>针对此事，<strong>AMD官方也发布了一份官方声明，称已关注到驰为擅自虚标的报道，AMD“从未就上述行为给予任何形式的授权、确认或默许，亦未参与相关产品的标注或宣传决策，对此事毫不知情。”</strong></p><p>AMD同时强调，AMD对产品型号的命名、使用及标注有明确且严格的管理规范，任何未经AMD授权的型号使用或不实标注行为，将严重扰乱正常的市场秩序。</p><p>AMD保留依法追责的权利。</p><p><strong>AMD官方声明原文——</strong></p><p>我司近日关注到据称驰为擅自将 AMD 锐龙 5 5500U 产品虚标为锐龙 5 7430U的媒体报道。我司从未就上述行为给予任何形式的授权、确认或默许，亦未参与相关产品的标注或宣传决策，对此事毫不知情。</p><p>AMD对产品型号的命名、使用及标注有明确且严格的管理规范。任何未经我司授权的型号使用或不实标注行为，将严重扰乱正常的市场秩序，并可能对消费者造成误导。</p><p>AMD一贯高度重视产品信息的真实性与透明度，坚决维护公平有序的市场环境及用户合法权益。我司已对此事予以严正关注，并保留依法追究相关方法律责任的权利。</p><p><a href="//img1.mydrivers.com/img/20260317/f231500b16554e6aa31b0f2730b48069.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/f853ed53aa4ea63.jpg"/></a></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">宇宙深处小红点的秘密 被中国科学家揭开了</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:46:42 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/science/1553808.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge interest">Interest</span>
+        </div>
+        <p class="reason">中国科学家揭示宇宙小红点，属科学前沿进展，global interest明确包含&#39;科学前沿进展&#39;</p>
+        <div class="body">
+                                                
+                                                <p>詹姆斯·韦布空间望远镜在宇宙深空发现一批神秘的小红点天体，其极端偏红的特征长期困扰天文学界。<strong>华中科技大学吴庆文教授团队在《自然?天文学》发表最新成果，成功破解这一宇宙谜题</strong>，为理解早期星系与黑洞演化提供关键答案。</p>                
+                        <div class="article-global"></div>                            <p>小红点是宇宙早期极为致密的明亮天体，体积远小于普通星系，颜色却异常偏红。传统观点认为，红色来自星际尘埃的红化效应，但观测显示这些天体尘埃含量极低，原有理论难以成立。</p><p>吴庆文团队提出全新解释，小红点本身就呈现红色，与尘埃无关。</p><p><a href="//img1.mydrivers.com/img/20260317/c133ca6c-c227-472d-8113-f92016d5e6d9.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/2df0b75ea0f2e09.png"/></a></p><p>小红点星系极其致密，比普通星系小上千倍</p><p>该团队解释到：星系中心超大质量黑洞的吸积盘分为内外两区，内区温度上万摄氏度，辐射偏蓝；<strong>外区在引力不稳定与湍流加热下，温度维持在2000至4000摄氏度，辐射波长落在可见光到近红外波段，呈现出极红的特征。</strong></p><p>内外盘辐射叠加形成独特的V字形光谱结构，与韦布望远镜观测数据高度吻合。</p><p><a href="//img1.mydrivers.com/img/20260317/4eaea629-abd9-417a-ad0b-b08331203c31.jpg" target="_blank"><img alt="宇宙深处小红点的秘密 被中国科学家揭开了" h="336" src="https://img1.mydrivers.com/img/20260317/4eaea629-abd9-417a-ad0b-b08331203c31.jpg" w="600"/></a></p><p>这一机制不仅完美解释小红点的红色来源，也揭示其可能是星系与黑洞协同演化的早期形态，随着星系不断成长，最终会逐步演变为普通星系。</p><p>该成果突破传统认知，为人类探索宇宙早期结构形成提供了全新视角，也让中国在深空天体物理研究领域再获重要突破。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">宝宝巴士APP推送低俗广告被罚30万 没收违法所得3.68元</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:46:31 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553806.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">宝宝巴士推送低俗广告被罚，属应用治理事件，不涉及技术进展、工具发布或AI，仅泛泛提及APP，兴趣度低</p>
+        <div class="body">
+                                                
+                                                <p>去年10月，有网友反映称，宝宝巴士App进入后会跳出成人广告，点击广告后会出现擦边视频，引发家长担忧。随后，宝宝巴士发布声明：针对内部审核出现的问题，公司已对审核负责人进行严肃处理，决不姑息；完善对公司广告合作方的审核机制，严格筛选正能量的广告合作方，决不允许类似事件再次发生；针对广告合作方无法监控的广告，宝宝巴士立即组建研发团队着手研发广告强制拦截功能，对其实施强制拦截。</p>                
+                        <div class="article-global"></div>                            <p><a href="//img1.mydrivers.com/img/20260317/19e4e88b279c41d5bb694d8f5a9cef73.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/2e2992428c44d39.png"/></a></p><p>近日，这一事件迎来监管处罚结果。<strong>天眼查天眼风险信息显示，宝宝巴士（福建）网络科技有限公司因发布低俗广告，被福州市仓山区市场监督管理局罚款30万，没收违法所得3.68元。</strong></p><p><a href="//img1.mydrivers.com/img/20260317/daae25b0177e457dbe0300813c705bf2.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/ca16d39da4d333d.png"/></a></p><p>宝宝巴士（福建）网络科技有限公司成立于2013年2月，法定代表人为唐光宇，注册资本4490万人民币，经营范围包括动漫游戏开发、数字文化创意软件开发、数字内容制作服务等。股东信息显示，该公司由宝宝巴士股份有限公司全资持股。</p><p>据企业官网介绍，宝宝巴士(BabyBus)是专注打造儿童启蒙数字产品的原创品牌，累计服务全球7亿家庭用户。</p><p><a href="//img1.mydrivers.com/img/20260317/0b0f95cf17dc49af90fefe640b59ba31.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/fd938b579792572.png"/></a></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">存储芯片供应即将暴雷？三星史上最大规模罢工已迫在眉睫</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:41:58 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553804.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">存储芯片罢工，属芯片技术与行业动态，global uninterested明确包含&#39;芯片技术&#39;</p>
+        <div class="body">
+                                                
+                                                <p>在全球芯片短缺愈演愈烈之际，韩国三星电子公司的劳资纠纷可能给这场“芯片荒”再添一把火。据三星最大的工会组织“全国三星电子工会（NSEU）”威胁称，该公司正就三星史上最大规模的罢工计划进行投票——一旦本周三投票通过，将在5月中断芯片生产，这可能给三星公司带来数百亿美元的损失。</p>                
+                        <div class="article-global"></div>                            <p><a href="https://static.cnbetacdn.com/article/2026/0226/e735b442ffa1a39.jpg" target="_blank"></a><a href="https://static.cnbetacdn.com/article/2025/1214/7068217f1e81c12.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2025/1214/7068217f1e81c12.jpg"/></a></p><p>三星作为全球最大的存储芯片制造商，如果其发生罢工事件，可能会对三星半导体业务造成重大冲击，并加剧全球半导体供应的瓶颈问题，从而抑制从汽车、电脑到智能手机等行业的半导体供应。</p><p><strong>三星史上最大规模罢工迫在眉睫</strong></p><p>本月早些时间，全国三星电子工会（NSEU）正式启动为其十天的罢工投票程序，投票结果将于本周三出炉。</p><p>这场投票标志着三星工会与三星集团长达八个月的薪酬谈判最终破裂，并为可能发生的三星历史上最大规模罢工铺平道路。</p><p>三星韩国员工总数为12.5万人，其中约9万名已加入NSEU工会，并且都将参与此次投票。</p><p>据工会负责人Choi Seung-ho表示，如果工人与集团未能达成协议，他们计划从5月2日开始进行18天的罢工，<strong>这可能会对三星位于首尔南部平泽的半导体工厂的约一半产量造成影响。</strong></p><p>“我预计会存在生产中断的情况，”Choi Seung-ho表示。</p><p>据韩国芯片行业人士透露，三星的存储生产线的确存在停工可能——一旦停工，重启生产线可能需要长达两个月的时间，造成的损失可能高达数百亿美元。</p><p>一位三星集团高管表示，哪怕仅仅是一次罢工导致的生产中断，都可能损害与客户的信任关系，并需要数年时间才能恢复。</p><p><strong>问题的根本在薪酬</strong></p><p>三星员工们之所以闹罢工，主要原因还是对于薪资待遇的不满。</p><p>三星工会负责人表示，三星的主要竞争对手——韩国芯片制造商SK海力士于去年9 月接受其工会提出的薪酬改革要求，这导致三星员工与SK海力士员工之间存在的薪酬差距愈来愈大，这让三星员工们愈发感到不满。</p><p>“芯片行业正在蓬勃发展，但这些收益并未惠及我们，这就是我们抗争的原因。”三星工会负责人直言。</p><p>根据SK海力士的最新薪酬改革计划，该公司提高了奖金上限，并将公司10%的营业利润用于设立奖金池。</p><p>三星工会表示，根据三星当前的薪资制度，一名三星芯片部门员工（基本工资为7600万韩元，约合人民币35万元）在2025年将获得3800万韩元（约合人民币17.5万元）的绩效奖金，这还不到同样薪酬水平的SK海力士员工应得奖金的三分之一。</p><p>而且，以当前芯片行业蓬勃发展的态势来看，如果三星现行的奖金制度继续实行，今年这一薪酬差距将会进一步拉大。</p><p>三星工会负责人表示：“如果我们是行业老大，就应该得到与老大同等的待遇。”</p><p>他还提到，除了SK海力士，特斯拉也在通过优厚的条件吸引芯片设计人才。今年2月，特斯拉CEO埃隆·马斯克曾公开“求贤”，鼓励韩国芯片行业的员工申请特斯拉的工作，因为特斯拉正大力进军用于自动驾驶汽车和仿人机器人的人工智能芯片领域。</p><p>“只有提高薪酬，才能将激励员工更加努力工作，从而提升三星的竞争力。”工会负责人表示。</p><p><strong>公司高管与工会的矛盾</strong></p><p>在薪酬差距加大的背景下，在过去的三个月里，已有超过100名三星工会成员离开了三星公司，跳槽到同行企业。</p><p>三星工会负责人表示，他们希望三星能够实施类似SK海力士的改革计划：<strong>争取将三星员工的基本工资提高7%，取消奖金上限，并引入基于营业利润的奖金池制度</strong>。</p><p>但三星高管们似乎仍不愿意将薪酬待遇提的这么高。</p><p>本月月初，三星向员工发出内部备忘录称，公司试图通过提出“前所未有的”薪酬方案来达成2026年的工资协议，其提议包括6.2%的加薪，以及对存储芯片部门员工发放特别奖金等。据消息人士透露，<strong>三星高管们坚决表示不愿取消奖金上限。</strong></p><p>三星发言人表示：“由于半导体业务的利润会因市场状况而出现大幅波动，三星会以平衡的方式将营业利润分配到未来投资、股东回报和员工薪酬上。”</p><p>据韩国尚武大学（Sangmyung University）的工商管理教授Seo Ji-yong评价，三星是从2020年才开始引入工会制度，因此该集团长期以来一直未曾面临工会带来的风险，不像其他韩国大型工业集团（如现代汽车）那样，这导致其在管理劳资关系方面缺乏经验和专业知识。</p><p>他直言：“如果三星管理层固步自封，无视工会的要求，这些争端可能会给三星的盈利增长势头泼冷水。”</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">NVIDIA 88核心Vera CPU开卖：第一次正面叫板Intel、AMD</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:41:56 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553802.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">NVIDIA Vera CPU对标Intel/AMD，属芯片技术范畴，global uninterested明确包含&#39;芯片技术&#39;</p>
+        <div class="body">
+                                                
+                                                <p>NVIDIA GPU可以说天下无敌，CPU就比较低调了，一直扮演辅助配角，但从现在开始就不是了！<strong>GTC 2026大会上，NVIDIA公布了下一代数据中心CPU Vera的更多细节，并宣布它公开对外销售，正面向Intel、AMD等发起了挑战。</strong></p>                
+                        <div class="article-global"></div>                            <p><a href="//img1.mydrivers.com/img/20260317/8307b1c69c054457a2c99d17ed1d5427.png" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/7da3dd8e8b4c2e3.png"/></a></p><p>Vera CPU代<strong>号“Olympus”(奥利巴斯)</strong>，底层架构是<strong>基于ARMv9.2-A指令集的自研设计</strong>，而上代Grace还是公版内核。</p><p>流水线包括10发射的指令解码单元、每时钟周期2次分支预测的神经分支预测器、定制的图数据库分析预取引擎等。</p><p><strong>单颗88个核心，支持176线程，还有162MB三级缓存，而上代Grace为72核心144线程。</strong></p><p><a href="//img1.mydrivers.com/img/20260317/1cca9c66777a4e6d9005d4405ec5f864.png" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/b7321f6e535726b.png"/></a></p><p>NVIDIA声称，<strong>Vera IPC性能对比上代Grace大幅提升了1.5倍，结合创新的高带宽设计，性能相比标准CPU高出50％，号称拥有当前最快的单线程性能。</strong></p><p>同时，它采用了<strong>空间多线程技术(spatial multi-threading)</strong>，不对执行单元、缓存和寄存器文件等关键部件进行时间片轮转(time-slicing)，而是对流水线中的各类组件进行物理隔离，避免与同一核心上运行的其他线程争抢资源。</p><p>这与传统同步多线程(SMT)的时间片轮转、线程轮流使用资源的做法截然不同。</p><p>空间多线程技术可以在执行单元空闲时，从其他线程拉取指令，从而提升指令级并行度(ILP)、吞吐量与性能可预测性，确保资源得到充分利用。</p><p>简单地说，<strong>它可以两个线程在单个核心上真正同时运行，而传统SMT的本质仍是轮流执行，这对多用户并发环境尤为有利。</strong></p><p>基于这一技术，Vera的全部88个核心都放置在于单一域内，不会像x86处理器那样出现非一致内存访问(NUMA)而大幅增加延迟，对延迟、可预测性、带宽、编程易用性等都意义重大。</p><p><a href="//img1.mydrivers.com/img/20260317/abe436178213444ebf1a85acd3ce1e68.png" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/6e1db98f4753516.png"/></a></p><p>NVIDIA没有披露其中的更多细节，但是Vera搭载了新一代的SCF(可扩展一致性互连)，基于上代Grace中的CMN-700一致性网格网络改进而来，但是考虑到Arm已经升级到了最新的Neoverse CMN S3网格，Vera大概率用的就是它，或者定制版本。</p><p>基于这种互连设计，Grace支持的网格内存吞吐量为546GB/s，平均每个核心7.6GB/s。</p><p>Vera直接翻倍到了1.2 TB/s，平均每个核心接近14GB/s，尤其是网络负载不均衡时，单个核心最高可以获得80GB/s。</p><p>此外，Vera还搭载了<strong>NVLink-C2C互联接口，吞吐量最高1.8TB/s，是上代的两倍</strong>，并相当于PCIe 6.0整整七倍，并支持双路配置，当然也支持PCIe 6.0、CLX 3.1。</p><p><a href="//img1.mydrivers.com/img/20260317/6aab5988a6d745f9ab1e2fded952e017.png" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/c5a8ac81525264e.png"/></a></p><p>根据NVIDIA官方数据，<strong>在脚本执行、编译、数据分析、图分析、高性能计算等场景中，Vera的性能相比上代Grace提升了1.8-2.2倍。</strong></p><p><a href="//img1.mydrivers.com/img/20260317/36264935d6e64569a7f4a109c27aa265.jpg" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/63b1f687d15fac0.jpg"/></a></p><p>NVIDIA同时发布了<strong>全新Vera CPU机架设计，单个机柜集成256颗液冷散热CPU，总计45056个线程，同时还有74颗Bluefield-4 DPU、ConnectX SuperNIC网卡，配备最多400TB LPDDR5内存，带宽300TB/s。</strong></p><p>NVIDIA声称，它支持22500个可彼此独立运行工的并发CPU环境。</p><p>Meta已宣布将引入Vera CPU机架方案，NVIDIA生成也会向阿里巴巴、甲骨文、Coreweave、Nebius等超大规模云厂商提供。</p><p>Vera CPU现已全面量产，计划今年下半年开始交付。</p><p><strong>这标志着，经过Grace的积累和沉淀，NVIDIA Vera开始正式进入CPU直销市场，不但在传统领域与Intel、AMD直接竞争，同时与全球超大规模云厂商所用的各类定制Arm处理器展开角逐。</strong></p><p><a href="//img1.mydrivers.com/img/20260317/e786e7589e2b4695a92b718fba5d4b6f.png" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/c26814e9d2f0837.png"/></a></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Windows记事本告别纯文本 正测试原生图片支持</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:41:40 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553800.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge interest">Interest</span>
+        </div>
+        <p class="reason">Windows记事本测试原生图片支持，属软件新功能（global interest），且提升文本编辑器能力，贴近编程工具使用体验</p>
+        <div class="body">
+                                                
+                                                <p>作为Windows系统中历史最悠久的组件之一，记事本长久以来一直被视为纯文本处理的代名词，然而这一印象即将被彻底颠覆。<strong>据报道，微软正在向预览体验成员发送邮件，邀请测试带有插入图片功能的记事本。</strong></p>                
+                        <div class="article-global"></div>                            <p><a href="//img1.mydrivers.com/img/20260317/da0d722c-515c-4c15-8fb2-a39327311328.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/e4e0fab4d23acea.jpg"/></a></p><p>此前，该功能已在Windows Insider测试渠道的新功能介绍弹窗中，出现在工具栏按钮位置。</p><p><a href="//img1.mydrivers.com/img/20260317/2f7f66f5-07e1-4a0c-81c0-d8d3e8d75af2.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/3f96789be47516c.jpg"/></a></p><p>微软内部人士确认，该功能已开发数月，旨在填补写字板退役后留下的格式编辑空白，<strong>与Word等不同，记事本的图片支持保持轻量特性，资源占用极低，对系统性能影响微乎其微。</strong></p><p><a href="//img1.mydrivers.com/img/20260317/837cf7ea-1208-405f-9c8a-fe6f824f4d82.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/9d0ae126d8a3cc1.jpg"/></a></p><p>这并非记事本近期的唯一改进，在写字板退出历史舞台后，微软持续为其加入新功能，包括完整Markdown语法支持、AI写作工具的流式响应优化。</p><p>以及通过工具栏或快捷键快速插入表格等，所有新功能均可在设置中自由开关。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">微软希望开发者能在 Windows 11 上构建基于 Electron 的 AI 应用</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:40:29 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553798.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge high_interest">High Interest</span>
+        </div>
+        <p class="reason">微软推动基于Electron的AI应用开发，直接契合&#39;编程工具发布/分享&#39;、&#39;AI软件技术进展&#39;及&#39;编程效率改进经验&#39;三项global high interest</p>
+        <div class="body">
+                                                
+                                                <p>虽然Electron架构因高内存占用一直被玩家诟病，甚至连JavaScript创始人也曾警告过“过度依赖Web UX而忽视原生体验”的风险，但微软似乎并不打算在Windows 11中做出妥协。</p>                
+                        <div class="article-global"></div>                            <p style="text-align: center;"><iframe width="640" height="480" src="//www.windowslatest.com/wp-content/uploads/2026/03/Electron-Windows-apps.mp4?_=1" frameborder="0"></iframe></p><p>近日微软在社交平台喊话Electron开发者，鼓励其为Windows 11应用集成端侧AI功能，同时推出配套培训项目，教授如何利用Windows本地AI构建Electron应用。</p><p>微软目前将Windows 11定位为“AI操作系统”，其战略核心是让Windows成为运行AI代理和应用的理想平台。</p><p>但由于众多流行软件均基于Electron构建，微软意识到无法要求开发者全盘转向原生开发，转而采取了深度集成的策略。</p><p><img src="https://static.cnbetacdn.com/article/2026/0317/32574440ff34dc7.jpg" title="" alt="Discord-Windows-app-RAM-usage.jpg"/><img src="https://static.cnbetacdn.com/article/2026/0317/e24ad532ee9433c.jpg" title="" alt="New-Chromium-based-WhatsApp-consumes-more-RAM-than-UWP-WhatsApp.jpg"/></p><p>在最新的技术文档中，微软强调Electron应用现在可以直接调用Windows 11内置的文本生成、摘要提取、OCR识别和图像描述等AI功能。</p><p>为了降低门槛，微软宣称开发者“无需编译单行原生代码”，即可通过JavaScript无缝接入这些系统级AI特性。</p><p>由于Electron应用通常会打包一个Chromium实例，其对内存的占用众所周知，随着更多AI负载集成进这些应用，本就有限的R内存资源可能面临更大的挑战。</p><p><img src="https://static.cnbetacdn.com/article/2026/0317/4d3b8d517631bd6.jpg"/></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">芯荒难解 SK集团董事长：存储芯片短缺或持续至2030年</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 07:38:54 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553794.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">存储芯片短缺持续至2030年，属芯片技术与行业预测，global uninterested明确包含&#39;芯片技术&#39;</p>
+        <div class="body">
+                                                
+                                                <p>当地时间周二（3月17日），韩国SK集团董事长崔泰源在美国加州圣何塞举行的英伟达GTC大会上表示，<strong>由于芯片生产存在系统性瓶颈，他预计全球内存芯片短缺的情况很可能会持续到2030 年。</strong>与此同时，他预计DRAM、NAND和 HBM等各类存储芯片的价格将持续上涨，涨势可能会持续较长时间。</p>                
+                        <div class="article-global"></div>                            <p><strong>芯片短缺将持续数年</strong></p><p>上个月，崔泰源在参加于美国华盛顿特区举行的“跨太平洋对话”（TPD）会议时就曾指出，当前人工智能存储芯片的短缺率已经超过了30%。</p><p>而在本周参加英伟达GTC大会时，崔泰源再次对记者表示，由于市场对人工智能的需求增加，半导体芯片短缺的情况可能会持续下去。</p><p>他特别指出，他认为芯片短缺的情况可能会持续到2030年，即从现在起的四年之后。</p><p>SK海力士是全球最大的内存芯片制造商之一,也是英伟达公司HBM芯片的关键供应商。</p><p>崔泰源表示，人工智能行业对HBM的超大需求正在造成晶圆短缺，公司需要更多时间——至少四到五年——来增加晶圆产能。</p><p>他还提到，SK海力士的首席执行官可能会宣布稳定DRAM芯片价格的措施。</p><p>此外，崔泰源还透露，SK海力士正在考虑在美上市发行美国存托凭证（ADR），以扩大其全球投资者群体。行业分析师认为，如果SK海力士通过ADR在美股市场上市，这将有助于重新评估该公司的价值。</p><p><strong>GTC大会提振韩国芯片股</strong></p><p>值得一提的是，本周二上午，受到英伟达GTC大会的提振，韩国半导体股票表现强劲。</p><p>在GTC大会上，英伟达CEO黄仁勋预测，2026年Blackwel 芯片和Vera Rubin芯片的需求量将分别达到5000亿美元和1万亿美元，从而消除了人们对人工智能需求放缓的担忧。</p><p>黄仁勋还发布了“Grok3 LPU”，这是首款采用三星去年12月收购的Grok技术的芯片。他宣布该芯片由三星电子生产，预计将于今年下半年开始出货。</p><p>受此影响，三星电子股价周二早间大涨超4%，SK海力士股价大涨超2.5%，早间一度重回100万韩元大关——这是自2月27日以来，时隔11个交易日该公司股价再次突破百万韩元大关。</p><p><a href="//img1.mydrivers.com/img/20260317/7a522ec639d844c3afe0fa7419a24030.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/6098ca379b8f570.jpg"/></a></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">Android平板与折叠屏版Chrome推出书签栏 体验更接近桌面端</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 06:54:58 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553790.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge interest">Interest</span>
+        </div>
+        <p class="reason">Android平板与折叠屏Chrome书签栏更新，属软件新功能（global interest），提升开发者与用户多端一致性体验</p>
+        <div class="body">
+                                                
+                                                <p>Google近日开始为运行Android系统的平板电脑和折叠屏设备推送 Chrome 
+更新，在这些大屏设备上加入类似桌面版的书签栏功能。更新后，浏览器地址栏（Omnibox）下方将出现一条横跨全宽的书签栏，显示网站图标以及对应站点名称，同时支持显示书签文件夹并可在栏内直接展开。</p>                
+                        <div class="article-global"></div>                            <p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/cddeaad69c60d0a.jpg"/></p><p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/c061e041b2fc155.jpg"/></p><p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/19809986dc10d58.jpg"/></p><p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/e2e1900f44dce68.jpg"/></p><p>在书签栏最右侧，界面提供了一个向右的箭头按钮，用于查看当前栏位放不下的其他书签或文件夹；用户也可以通过“All bookmarks”（全部书签）入口，打开原有的全屏书签管理界面。长按书签则会弹出包含完整 URL 的提示，便于用户查看和确认具体链接。</p><p>整体而言，这一改动旨在让大屏Android设备上的 Chrome 操作体验更接近桌面浏览器，提升多标签、多站点切换时的效率。用户可以通过“设置 &gt; 外观 &gt; 显示书签栏”手动开启该功能，系统会在屏幕较窄（如手机）时自动隐藏书签栏，以避免占用有限显示空间。</p><p>该功能正随Android平台的 Chrome 146 版本逐步推送，如果用户暂时尚未在“外观”菜单中看到相关选项，可以通过在应用信息页中“强行停止” Chrome 后重新启动的方式尝试刷新界面。这一更新延续了Google近期在 Chrome 上针对不同平台持续优化体验的节奏，包括此前宣布面向 ARM64 Linux 设备推出 Chrome 及调整更新节奏等举措。</p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">NVIDIA创造全新Groq 3 LPU：500MB SRAM高速缓存 7倍带宽碾压HBM4</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 06:52:39 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553788.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge high_interest">High Interest</span>
+        </div>
+        <p class="reason">NVIDIA Groq 3 LPU发布，含SRAM缓存与带宽突破，属新AI模型相关硬件支撑，紧密关联&#39;新AI模型发布公告&#39;这一global high interest项</p>
+        <div class="body">
+                                                
+                                                <p>CPU、GPU、NPU、VPU、DPU、TPU、PPU、IPU……之后，XPU家族再添新成员！<strong>NVIDIA创造了全新的“LPU”，意思是“Language Processing Unit”，即语言处理单元。</strong></p>                
+                        <div class="article-global"></div>                            <p>它是一款<strong>专用的AI推理加速芯片</strong>，基于NVIDIA去年收购的Groq，专攻低延迟解码与交互式推理，与主打训练和通用计算的GPU形成互补，共同支撑AI从训练到落地的全流程。</p><p>NVIDIA Rubin Vera平台之前就已经包含六种不同芯片：<strong>Rubin GPU加速器、Vera CPU处理器、Bluefield 4 DPU数据处理单元、ConnectX 9智能网卡、NVLink 6纵向扩展交换机、Spectrum-X横向扩展交换机。</strong></p><p>如今，Groq 3 LPU又加入了这一大家庭。</p><p><a href="//img1.mydrivers.com/img/20260317/0998e7851b334c5dba3403b219225e67.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/cd9eaea5e43303e.jpg"/></a></p><p><a href="//img1.mydrivers.com/img/20260317/da21f497-2b0c-499c-b146-00be22ccfd7d.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/6ba8b8676a732c3.jpg"/></a></p><p><strong>Groq 3 LPU集成了980亿个晶体管，结构很简单就是多达500MB SRAM(静态随机存取存储器)</strong>，也就是CPU、GPU上管用的缓存单元。</p><p><strong>虽然它在容量上远不及288GB HBM4，但是可提供150TB/s的惊人带宽，远远超过HBM4 22TB/s 7倍之多。</strong></p><p>要知道，AI解码操作是极度渴求带宽的，Groq 3恰好可以完美满足，而且延迟要低得多。</p><p>同时，Groq 3 LPU的FP8精度算力达到了1.2PFlops(每秒1200万亿次)。</p><p><a href="//img1.mydrivers.com/img/20260317/80a98f03c51e4670ac131c82f3ef80f5.jpg" style="text-align: -webkit-center;" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/d079a9d34aebb4e.jpg"/></a></p><p>基于此，<strong>NVIDIA打造了Groq 3 LPX机架，包括256颗Groq 3 LPU，缓存总容量达128GB SRAM，带宽则是可怕的40PB/s。</strong></p><p>机架之间通过640TB/s带宽的专用纵向扩展接口连接起来，整体AI推理算力达到<strong>315PFlops(每秒31.5亿亿次)。</strong></p><p>Groq LPX定位是Rubin Vera平台的协处理器，可以加速AI模型每一层的每个token处理，提升解码性能。</p><p>它还为多智能体系统做好了准备，这被视为AI的下一个前沿领域，需要在对万亿参数模型进行推理、处理百万token上下文窗口的同时，保持交互性能。</p><p>Rubin GPU结合Groq LPU，将把当下每秒100个token的吞吐量，<strong>推向每秒1500个token甚至更多</strong>，从而完美支撑AI智能体交互场景。</p><p><a href="//img1.mydrivers.com/img/20260317/d5897fb8ad41424ab8c0787c9ecb05fd.jpg" target="_blank"><img src="https://static.cnbetacdn.com/article/2026/0317/4085763cc59315e.jpg"/></a></p>                        </div>
+      </article>
+      
+      <article class="card">
+        <div class="cardhead">
+          <div>
+            <h2 class="title">102岁“电脑达人”在悉尼社区教老人玩转智能手机与Windows</h2>
+            <div class="meta">
+              <span>Tue, 17 Mar 2026 05:34:26 GMT</span>
+              <a href="https://www.cnbeta.com.tw/articles/tech/1553786.htm" target="_blank" rel="noreferrer">Open original</a>
+            </div>
+          </div>
+          <span class="badge uninterested">Uninterested</span>
+        </div>
+        <p class="reason">百岁老人教智能手机，属奇闻轶事与非技术人员视角，source uninterested明确包含&#39;非技术人员的观点&#39;和&#39;奇闻轶事&#39;</p>
+        <div class="body">
+                                                
+                                                <p>在悉尼北岸图拉穆拉一处不起眼的社区中心里，一块投影幕布照亮了一个颇具反差感的场景：102 岁的迪恩·西姆斯（Dean 
+Simes）站在讲台前，正向一群白发苍苍的学员讲解 WhatsApp 通知的结构和 Excel 
+公式的逻辑。这位被认为可能是澳大利亚最年长的科技导师，正在亲手帮助同龄人跟上数字时代的步伐。</p>                
+                        <div class="article-global"></div>                            <p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/9b73600e8e8a5ed.jpg"/></p><p>西姆斯是“Computer Pals”俱乐部的负责人，这个完全由志愿者运营的组织，专门帮助老年人提升数字素养。在他的带领下，课程内容从如何操作 Windows 11，到如何分辨正规链接和恶意链接，一应俱全。他的权威感并非来自年龄或怀旧，而源于一种持续的好奇心——正是这种好奇，促使他在晚年从采矿业跨入计算机教育领域。</p><p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/dbcdf1648fd4f01.webp"/></p><p>Computer Pals 成立于 2000 年，当时微软的 Windows XP 刚刚面世。如今，西姆斯已经能在各种软件环境中授课，有时还会将 AI 生成的课程大纲投射在屏幕上。课堂强调动手实践：像 94 岁的学员维拉·拉斯特（Vera Last）及其丈夫迈克尔这样的学生，会亲自尝试在Android手机上安装和设置应用，而不是只是坐着看演示。西姆斯常对他们说：“别人给你演示的时候，别只是看。要在监督下自己动手做，回家后再一遍一遍练习。”</p><p>这种方法与非正式学习领域的研究不谋而合：重复练习有助于强化神经通路，尤其是在工作记忆随着年龄增长而衰退的阶段。西姆斯自身的经历就是这一原则的写照。他在上世纪 80 年代担任顾问时第一次接触电脑，却直到 80 多岁才买下人生第一台二手电脑。</p><p>起初让他挫败的设备，很快变成了激发兴趣的对象。为真正弄懂系统、界面和硬件，他报读了一门为期三年的 TAFE 课程系统学习。完成学业后，他又将掌握的知识向外延展，开始帮助他人攀登同一座技术“高坡”。</p><p>如今作为 Computer Pals 的主席，西姆斯一边负责管理俱乐部的设备与课程安排，一边不断引入新主题。最近，他增加了关于 AI 搜索引擎的课程，他认为这些工具“前景光明但远称不上完美”。在课堂上，他反复提醒学生提问要具体：“如果你随便问一个大而化之的问题，很可能掉进信息‘兔子洞’，看了一堆和你真正需求毫不相干的内容。”</p><p style="text-align: center;"><img src="https://static.cnbetacdn.com/article/2026/0317/c851da4a2d7a8f6.jpg"/></p><p>与西姆斯个人经历同步演进的，还有关于“数字老龄化”的研究。一些数字素养倡导者指出，那些在新技术环境中长大的年轻人往往更愿意亲手尝试，但真正决定一个人能否适应科技的，更多是心态而非出生年份。“年龄和数字，其实都是一种社会构建，”专家在接受媒体采访时表示，“关键在于你的心态。”她同时强调，任何使用互联网的人，都需要理解技术背后的心理影响以及潜在风险，而不仅仅是学会操作。</p><p>库灵盖市议会近日授予西姆斯“年度本地市民”称号，以表彰他在帮助老年人保持数字连接方面作出的贡献。市长克里斯汀·凯伊称他是“所有科技问题的首选求助对象”，并赞扬 Computer Pals 是一个“极好的社区组织”，让老年人有机会接触数字技术并学习新技能。</p><p>在俱乐部之外，西姆斯的生活同样有条不紊、目的明确：他定期打桥牌、去健身房保持肌肉力量，会与六个子女聚会，也依然坚持自己开车在悉尼各处穿梭。这些身心并重的日常，与神经科学关于认知维持的发现高度契合——将体力活动、社交互动与脑力挑战结合在一起的生活方式，有助于减缓与年龄相关的衰退，而西姆斯似乎正用自己的状态验证这一点。</p><p>他坦言，总有一天会把俱乐部交给更年轻的人接手，但现在还不到时候。“这可能也是让我不至于变成‘沙发土豆’的原因吧，”他说。总会有下一位学员需要帮助，总会有下一张线上表格需要一起填写，或下一款通讯应用需要一起摸索。至少在目前，这位澳大利亚最高龄的“技术支持”仍然忙着排除的，不只是电脑问题，更是整整一代老年人的数字焦虑。</p>                        </div>
+      </article>
+      
+    </section>
+    
+  </main>
+</body>
+</html>

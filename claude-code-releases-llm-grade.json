@@ -1,0 +1,54 @@
+{
+  "items": [
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.77",
+      "Level": "high_interest",
+      "Reason": "Claude Code 是 Anthropic 官方的 AI 编程命令行工具，v2.1.77 属于其新版本发布，符合用户全局高兴趣项‘编程工具发布/分享’和‘编程效率改进经验’"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.76",
+      "Level": "high_interest",
+      "Reason": "同属 Claude Code 新版本迭代，属于编程工具发布范畴，与用户核心兴趣高度一致"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.75",
+      "Level": "high_interest",
+      "Reason": "Claude Code 版本更新，直接对应‘编程工具发布/分享’这一高兴趣主题"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.74",
+      "Level": "high_interest",
+      "Reason": "持续的 Claude Code 版本发布，属于用户明确高兴趣的‘编程工具发布/分享’类别"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.73",
+      "Level": "high_interest",
+      "Reason": "Claude Code 小版本更新，本质是编程辅助工具演进，契合‘编程效率改进经验’"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.72",
+      "Level": "high_interest",
+      "Reason": "版本号递减但仍属近期发布序列，代表工具持续优化，符合高兴趣定义"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.71",
+      "Level": "high_interest",
+      "Reason": "Claude Code 迭代版本，聚焦开发者效率提升，完全匹配用户高兴趣主题"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.70",
+      "Level": "high_interest",
+      "Reason": "属于 Anthropic 官方 AI 编程工具的常规更新，满足‘编程工具发布/分享’核心兴趣"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.69",
+      "Level": "high_interest",
+      "Reason": "虽为更早版本，但仍在活跃发布周期内，仍属编程工具实质性更新，应归为高兴趣"
+    },
+    {
+      "GUID": "tag:github.com,2008:Repository/937253475/v2.1.68",
+      "Level": "high_interest",
+      "Reason": "Claude Code 工具链版本演进，直接服务编程效率，与用户最关注的‘编程效率改进经验’强相关"
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47408703",
+      "Level": "high_interest",
+      "Reason": "标题明确指向AI驱动的编程工具新功能（Kagi翻译新增'领英体'输出），属于'编程工具发布/分享'和'新AI模型发布公告'双重高兴趣范畴，摘要进一步确认其AI能力与实用性。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47404796",
+      "Level": "high_interest",
+      "Reason": "标题点明是面向可信编码与形式化证明的开源智能体，且专为Lean 4设计，精准匹配'编程工具发布/分享'和'开源项目'两类高/中兴趣；Lean作为定理证明领域核心工具，其智能体属前沿编程效率改进。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47402640",
+      "Level": "interest",
+      "Reason": "jemalloc属内存分配器，归类于基础设施，而全局配置中'基础设施'为uninterested；但Meta重申承诺涉及软件性能优化与长期维护，与'编程效率改进经验'有一定关联，故降级为interest而非avoid。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47401879",
+      "Level": "uninterested",
+      "Reason": "'小众网络'概念模糊，未明确指向技术、编程或AI等兴趣主题，摘要仅泛称'更活跃'，缺乏具体技术内涵，无法匹配任何高/中兴趣项，也不触发avoid项，故判uninterested。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47401809",
+      "Level": "avoid",
+      "Reason": "主题为美国医疗系统浪费分析，属行业分析与社会议题，不在任何兴趣列表中，且'行业公司/人物'为global uninterested，医疗属典型行业领域，整体无技术/编程/AI关联，应避免。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47400060",
+      "Level": "uninterested",
+      "Reason": "就业市场可视化工具基于BLS数据，属经济/社会数据分析应用，非编程工具、AI模型或软件技术进展；虽用到AI暴露度分析，但标题与摘要未体现技术深度或开发者价值，兴趣不明确。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47398534",
+      "Level": "high_interest",
+      "Reason": "本地托管语音助手实践，强调HomeAssistant、llama.cpp、Ollama等开源AI栈，完全契合'编程工具发布/分享'、'AI软件技术进展'及'开源项目'三类兴趣，且突出'可靠'与'愉悦'体验，属高效开发实践。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47397574",
+      "Level": "interest",
+      "Reason": "FreeBSD个人反思涉及系统设计、稳定性与社区，虽属操作系统（基础设施类），但作者视角聚焦二十年工程哲学与实践影响，与'编程效率改进经验'有隐含关联，且未触达avoid项，故判interest。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47396264",
+      "Level": "avoid",
+      "Reason": "Starlink Mini作为家庭网络备用方案，核心是卫星通信硬件服务，属'航空'与'基础设施'交叉领域，二者均在global avoid/uninterested列表中（航空明确avoid），技术细节未体现编程或AI，应避开。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47394022",
+      "Level": "high_interest",
+      "Reason": "标题直指'利用大语言模型（LLM）编写软件'，是典型的'编程效率改进经验'与'新AI模型发布公告'应用场景，高度契合全局high_interest项，摘要缺失不影响主题判断。"
+    },
+    {
+      "GUID": "https://news.ycombinator.com/item?id=47391803",
+      "Level": "high_interest",
+      "Reason": "探讨与大语言模型协作的疲劳感，属AI编程实践中的真实挑战反思，直接关联'编程效率改进经验'与'AI软件技术进展'，是开发者高相关性内容，符合high_interest。"
+    }
+  ]
+}

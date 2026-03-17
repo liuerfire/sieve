@@ -1,0 +1,104 @@
+{
+  "items": [
+    {
+      "GUID": "https://www.phoronix.com/news/Intel-Binary-Optimization-Tool",
+      "Level": "avoid",
+      "Reason": "标题提及Intel Binary Optimization Tool，属于芯片相关工具，且Intel为硬件厂商，全局avoid含'芯片技术'，来源avoid含'最新款芯片相关'，双重规避。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Mesa-AMDGPU-PS5-Patches",
+      "Level": "uninterested",
+      "Reason": "涉及AMDGPU驱动对PS5 GPU的支持，PS5属游戏主机，全局avoid含'游戏主机'，来源uninterested含'AMD显卡'，双重负面信号。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/ARM-NEON-CRC64-6x",
+      "Level": "uninterested",
+      "Reason": "ARM NEON优化属底层指令集与性能提升，贴近芯片技术与基础设施，全局uninterested含'芯片技术'和'基础设施'，无正向兴趣匹配。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Meta-Renewing-jemalloc",
+      "Level": "interest",
+      "Reason": "jemalloc是内存分配器，属系统级编程工具，与'编程工具发布/分享'及'编程效率改进经验'高度相关，全局high_interest覆盖；虽非新发布，但Meta重投属重要进展。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Ubuntu-Integrate-DOCA-OFED",
+      "Level": "avoid",
+      "Reason": "NVIDIA DOCA-OFED属网络加速与硬件驱动栈，关联'非主流硬件'（来源avoid）及'基础设施'（全局uninterested），且NVIDIA驱动集成常涉闭源/性能评测倾向，触发多重规避。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Glibc-Faster-cosh-x86-64-FMA",
+      "Level": "interest",
+      "Reason": "glibc数学函数优化属底层软件性能改进，直接对应'编程效率改进经验'（全局high_interest）和'软件新功能'（全局interest），是开发者关注的实用优化。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/FFmpeg-8.1-Released",
+      "Level": "interest",
+      "Reason": "FFmpeg 8.1发布属开源多媒体框架新版本，符合'开源项目'（全局interest）与'软件新功能'（全局interest），且含Vulkan加速等现代技术演进。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-sched-ext-SCX-ENQ-IMMED",
+      "Level": "interest",
+      "Reason": "Linux调度扩展新特性属操作系统核心改进，契合'Linux桌面技术'（来源interest）及'AI软件技术进展/科学前沿进展'（全局interest），是系统程序员关注重点。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/review/fedora-44-beta",
+      "Level": "high_interest",
+      "Reason": "Fedora Workstation 44 Beta属新发行版，来源high_interest明确包含'新发行版'，且Fedora为Linux桌面主流发行版，完全匹配高兴趣来源配置。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/PowerVR-Vulkan-Does-Zink",
+      "Level": "uninterested",
+      "Reason": "PowerVR Vulkan驱动与Zink交互属小众GPU生态适配，PowerVR属非主流硬件（来源avoid），Zink虽属开源图形栈但上下文偏硬件绑定，整体缺乏全局或来源正向兴趣锚点。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Intel-Linux-7.1-UHBR-DP-Prep",
+      "Level": "avoid",
+      "Reason": "Intel显卡驱动准备UHBR DP隧道，属Intel硬件专属支持，触发全局avoid'芯片技术'及来源avoid'非主流硬件'（Intel核显在Linux生态中相对非主流）与'最新款芯片相关'。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Lenovo-Go-S-HID-Linux-7.1",
+      "Level": "uninterested",
+      "Reason": "Lenovo Legion Go HID驱动属特定游戏设备支持，Legion Go为游戏掌机，落入全局avoid'游戏主机'范畴；虽为Linux驱动，但设备本身是规避类主题。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.1-Retiring-UDP-Lite",
+      "Level": "interest",
+      "Reason": "Linux内核移除UDP-Lite属协议栈清理与性能优化，符合'Linux桌面技术'（来源interest）及'编程效率改进经验'（全局high_interest），属系统级正向演进。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Mesa-26.1-RADV-Four-Year-Opt",
+      "Level": "interest",
+      "Reason": "RADV驱动长期缺失优化落地，属开源图形驱动重要改进，契合'开源项目'（全局interest）及'Linux桌面技术'（来源interest），是桌面Linux用户关心内容。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/More-AMDGPU-For-Linux-7.1",
+      "Level": "uninterested",
+      "Reason": "AMDGPU驱动更新属显卡驱动范畴，来源uninterested明确包含'AMD显卡'，虽Linux内核集成属系统改进，但主题重心在硬件适配，负向权重更高。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-rc4-Released",
+      "Level": "interest",
+      "Reason": "Linux 7.0-rc4发布属内核新版本迭代，符合'开源项目'（全局interest）及'软件新功能'（全局interest），且含性能修复，具实用性。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Bcachefs-1.37-Released",
+      "Level": "interest",
+      "Reason": "Bcachefs文件系统新版本发布，属重要的开源存储项目，匹配'开源项目'（全局interest）及'软件新功能'（全局interest），是Linux系统开发者关注点。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-rc4-More-Rust",
+      "Level": "high_interest",
+      "Reason": "Linux内核集成Rust支持属重大技术演进，直接匹配'新AI模型发布公告'（全局high_interest）的广义AI基础设施延伸，且Rust是安全系统编程代表，契合'编程工具发布/分享'与'编程效率改进经验'。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/Linux-7.0-Sched-Fixes-Perf-Hang",
+      "Level": "interest",
+      "Reason": "Linux调度器修复大系统性能问题，属关键系统稳定性改进，契合'编程效率改进经验'（全局high_interest）与'Linux桌面技术'（来源interest）。"
+    },
+    {
+      "GUID": "https://www.phoronix.com/news/KDE-Linux-Adds-APFS",
+      "Level": "high_interest",
+      "Reason": "KDE Linux新增APFS支持，KDE明确在来源high_interest列表中；APFS支持扩展桌面Linux对苹果生态兼容性，属'新软件项目'与'Linux桌面技术'双重高兴趣交汇点。"
+    }
+  ]
+}
