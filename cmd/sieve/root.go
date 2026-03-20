@@ -14,18 +14,6 @@ import (
 	"github.com/liuerfire/sieve/internal/workflow"
 )
 
-type rootRunner func(cmd *cobra.Command, args []string, configPath string, dryRun bool) error
-
-var runRoot rootRunner = defaultRunRoot
-
-func swapRunRoot(fn rootRunner) func() {
-	prev := runRoot
-	runRoot = fn
-	return func() {
-		runRoot = prev
-	}
-}
-
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "sieve <source-name>",
@@ -41,12 +29,31 @@ func newRootCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return runRoot(cmd, args, configPath, dryRun)
+			return defaultRunRoot(cmd, args, configPath, dryRun)
 		},
 	}
 
 	cmd.Flags().String("config", "config.json", "path to config file")
 	cmd.Flags().Bool("dry-run", false, "run without persisting normal output effects")
+	cmd.AddCommand(newListSourcesCmd())
+	return cmd
+}
+
+func newListSourcesCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-sources",
+		Short: "List configured source names",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			configPath, err := cmd.Flags().GetString("config")
+			if err != nil {
+				return err
+			}
+			return defaultRunListSources(cmd, configPath)
+		},
+	}
+
+	cmd.Flags().String("config", "config.json", "path to config file")
 	return cmd
 }
 
@@ -94,6 +101,18 @@ func defaultRunRoot(cmd *cobra.Command, args []string, configPath string, dryRun
 			})
 		},
 	})
+}
+
+func defaultRunListSources(cmd *cobra.Command, configPath string) error {
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		return err
+	}
+
+	for i := range cfg.Sources {
+		fmt.Fprintln(cmd.OutOrStdout(), cfg.Sources[i].Name)
+	}
+	return nil
 }
 
 func Execute() {

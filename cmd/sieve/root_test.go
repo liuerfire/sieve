@@ -71,31 +71,76 @@ func TestRootCommand_RequiresSourceName(t *testing.T) {
 	}
 }
 
-func TestRootCommand_ParsesConfigAndDryRun(t *testing.T) {
+func TestListSourcesCommand_ListsSourcesInConfigOrder(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+
+	err := os.WriteFile(configPath, []byte(`{
+  "llm": {
+    "provider": "openai",
+    "models": {
+      "fast": "gpt-fast",
+      "balanced": "gpt-balanced",
+      "powerful": "gpt-powerful"
+    }
+  },
+  "sources": [
+    {
+      "name": "alpha",
+      "plugins": ["builtin/collect-rss"]
+    },
+    {
+      "name": "beta",
+      "plugins": ["builtin/collect-rss"]
+    },
+    {
+      "name": "gamma",
+      "plugins": ["builtin/collect-rss"]
+    }
+  ]
+}`), 0o644)
+	if err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
 	root := newRootCmd()
-
-	called := false
-	restore := swapRunRoot(func(_ *cobra.Command, args []string, configPath string, dryRun bool) error {
-		called = true
-		if len(args) != 1 || args[0] != "hacker-news" {
-			t.Fatalf("unexpected args: %#v", args)
-		}
-		if configPath != "custom.json" {
-			t.Fatalf("unexpected config path: %q", configPath)
-		}
-		if !dryRun {
-			t.Fatal("expected dry-run to be true")
-		}
-		return nil
-	})
-	defer restore()
-
-	output, err := executeCommand(root, "hacker-news", "--config", "custom.json", "--dry-run")
+	output, err := executeCommand(root, "list-sources", "--config", configPath)
 	if err != nil {
 		t.Fatalf("expected no error, got %v with output %q", err, output)
 	}
-	if !called {
-		t.Fatal("expected runRoot to be called")
+
+	expected := "alpha\nbeta\ngamma\n"
+	if output != expected {
+		t.Fatalf("unexpected output: got %q want %q", output, expected)
+	}
+}
+
+func TestListSourcesCommand_ReturnsErrorOnConfigLoadFailure(t *testing.T) {
+	dir := t.TempDir()
+	configPath := filepath.Join(dir, "config.json")
+
+	err := os.WriteFile(configPath, []byte(`{
+  "llm": {
+    "provider": "openai",
+    "models": {
+      "fast": "gpt-fast",
+      "balanced": "gpt-balanced",
+      "powerful": "gpt-powerful"
+    }
+  },
+  "sources": []
+}`), 0o644)
+	if err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	root := newRootCmd()
+	output, err := executeCommand(root, "list-sources", "--config", configPath)
+	if err == nil {
+		t.Fatal("expected config validation failure")
+	}
+	if strings.Contains(output, "alpha") || strings.Contains(output, "beta") || strings.Contains(output, "gamma") {
+		t.Fatalf("expected no source list output on failure, got %q", output)
 	}
 }
 
@@ -149,5 +194,8 @@ func TestCLI_RunWorkflowForNamedSource(t *testing.T) {
 	}
 	if !strings.Contains(output, "workflow completed") {
 		t.Fatalf("expected completion log, got %q", output)
+	}
+	if _, err := os.Stat(outputPath); !os.IsNotExist(err) {
+		t.Fatalf("expected dry-run to skip output file, stat err=%v", err)
 	}
 }
