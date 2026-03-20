@@ -54,6 +54,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
+      - name: Restore previous source state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p output
+          if ! git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            echo "gh-pages branch not found, starting from empty state"
+            exit 0
+          fi
+
+          git fetch --depth=1 origin gh-pages
+          while IFS= read -r path; do
+            [[ "${path}" == "output/${{ matrix.source }}"* ]] || continue
+            mkdir -p "$(dirname "${path}")"
+            git show "FETCH_HEAD:${path}" > "${path}"
+          done < <(git ls-tree -r --name-only FETCH_HEAD -- output)
+
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
