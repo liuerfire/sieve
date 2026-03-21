@@ -31,7 +31,7 @@ vendor/
 tmp/
 .cache/
 SESSION.md
-docs/plans/
+docs/superpowers/
 
 # Web UI
 dist/
